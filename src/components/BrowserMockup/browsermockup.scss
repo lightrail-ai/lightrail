@@ -1,0 +1,103 @@
+$template-color: #dedede;
+$red:     #FF3737;
+$yellow:  #FFCE00;
+$green:   #32d74b;
+
+.browser-template {
+    overflow: hidden;
+    border: 2px solid $template-color;
+    border-top: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px 1px rgba(darken($template-color, 50%), 0.05);
+    background: #fff;
+
+    &__top-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 7px 10px;
+        background: $template-color;
+    }
+
+    &__buttons {
+        display: flex;
+        margin: 0;
+
+        &_item {
+            width: 10px;
+            height: 10px;
+            margin-top: 0;
+            margin-left: 5px;
+            list-style: none;
+            border-radius: 100px;
+            background: darken($template-color, 10%);
+
+            &:first-child {
+                margin-left: 0;
+                background-color: $red;
+            }
+
+            &:nth-child(2) {
+                background-color: $yellow;
+            }
+
+            &:nth-child(3) {
+                background-color: $green;
+            }
+        }
+    }
+
+    &__address {
+        flex-basis: 0;
+        flex-grow: 1;
+        max-width: 100%;
+        height: 23px;
+        margin: 0 15px;
+        border-radius: 4px;
+        background: lighten($template-color, 10%);
+        box-shadow: 0 1px 2px 0 rgba(darken($template-color, 50%), 0.05);
+        color: darken($template-color, 80%);
+        font-size: 12px;
+        line-height: 23px;
+        text-align: center;
+
+        svg {
+            display: inline;
+            height: 0.7em;
+            margin-right: 1px;
+            opacity: 0.8;
+            color: darken($green, 10%);
+            fill: currentColor;
+        }
+    }
+
+    &__controls {
+        display: flex;
+        margin: 0;
+
+        &_item {
+            width: 12px;
+            height: 12px;
+            margin-top: 0;
+            margin-left: 10px;
+            list-style: none;
+            color: darken($template-color, 15%);
+
+            &:first-child {
+                margin-left: 0;
+            }
+        }
+    }
+}
+
+
+.browser-template {
+    margin: auto auto;
+    max-width: 98%;
+    max-height: 98%;
+    width: 95%;
+    height: 95%;
+    min-height: 48px;
+    min-width: 256px;
+    resize: both;
+}
