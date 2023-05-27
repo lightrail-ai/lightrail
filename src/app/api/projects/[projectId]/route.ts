@@ -1,4 +1,4 @@
-import { getProject, projects } from "@/util/storage";
+import { getProject } from "@/util/storage";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -6,6 +6,6 @@ export async function GET(
   { params }: { params: { projectId: string } }
 ) {
   return NextResponse.json({
-    project: getProject(params.projectId),
+    project: await getProject(parseInt(params.projectId)),
   });
 }

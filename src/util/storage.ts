@@ -1,41 +1,75 @@
-export interface Project {
-  id: string;
-  name: string;
-  files: {
-    [filePath: string]: string;
-  };
+import { createClient } from "@supabase/supabase-js";
+import { Database } from "../supabase";
+
+const supabaseUrl = process.env.SUPABASE_ENDPOINT!;
+const supabaseKey = process.env.SUPABASE_KEY!;
+const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+
+export type Project = Database["public"]["Tables"]["projects"]["Row"];
+export type File = Database["public"]["Tables"]["files"]["Row"];
+export type ProjectWithFiles = Project & { files: File[] };
+
+export async function getProject(projectId: number): Promise<ProjectWithFiles> {
+  let project = await supabase
+    .from("projects")
+    .select()
+    .eq("id", projectId)
+    .single();
+  let files = await supabase.from("files").select().eq("project_id", projectId);
+
+  return { ...project.data!, files: files.data! };
 }
 
-export let projects: {
-  [id: string]: Project;
-} = {
-  "1": {
-    id: "1",
-    name: "Test Project",
-    files: {
-      index: `<div className="bg-green-600"><Wrapper>hello world</Wrapper></div>`,
-      Wrapper: `<div className="bg-blue-200 m-4 p-4"><Text>{children}</Text></div>`,
-      Text: `<div className="bg-red-400">{children}</div>`,
-    },
-  },
-};
+// export async function setProject(project: Project) {
+//   await supabase.from("projects").upsert(project);
+// }
 
-export function getProject(projectId: string) {
-  return projects[projectId];
+export async function createProject(name: string) {
+  const res = await supabase
+    .from("projects")
+    .insert({ name })
+    .select("id")
+    .single();
+  return res.data!.id;
 }
 
-export function setProject(projectId: string, project: Project) {
-  projects[projectId] = project;
+export async function getFile(
+  projectId: number,
+  filePath: string
+): Promise<string> {
+  const file = await supabase
+    .from("files")
+    .select("contents")
+    .eq("project_id", projectId)
+    .eq("path", filePath)
+    .single();
+  return file.data!.contents!;
 }
 
-export function getFile(projectId: string, filePath: string) {
-  return projects[projectId].files[filePath];
+export async function createFile(
+  projectId: number,
+  filePath: string,
+  contents: string
+) {
+  await supabase.from("files").insert({
+    project_id: projectId,
+    path: filePath,
+    contents,
+  });
 }
 
-export function setFile(projectId: string, filePath: string, file: string) {
-  projects[projectId].files[filePath] = file;
-}
+export async function updateFile(
+  projectId: number,
+  filePath: string,
+  contents: string
+) {
+  const updated = await supabase
+    .from("files")
+    .update({ contents })
+    .eq("path", filePath)
+    .eq("project_id", projectId)
+    .select()
+    .single();
 
-export function getProjectId() {
-  return Object.keys(projects).length + 1;
+  return updated.data!;
 }

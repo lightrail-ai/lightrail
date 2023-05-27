@@ -3,11 +3,11 @@ import { usePopper } from "react-popper";
 import { useRecoilValue } from "recoil";
 import { editingPopoverTarget } from "../PreviewRenderer/preview-renderer-state";
 import classNames from "classnames";
-import { Project } from "@/util/storage";
+import { ProjectWithFiles } from "@/util/storage";
 import ComponentEditingPane from "../ComponentEditingPane/ComponentEditingPane";
 
 export interface EditingPopoverProps {
-  project: Project;
+  project: ProjectWithFiles;
   onUpdate: (newContent: string) => void;
   onMessage: (message: string) => void;
 }

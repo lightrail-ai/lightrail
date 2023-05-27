@@ -1,11 +1,21 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./browsermockup.scss";
+import { useResizeDetector } from "react-resize-detector";
 
 export interface BrowserMockupProps {
   children?: React.ReactNode;
+  onOffsetUpdate: (offsets: [x: number, y: number]) => void;
 }
 
-function BrowserMockup({ children }: BrowserMockupProps) {
+function BrowserMockup({ children, onOffsetUpdate }: BrowserMockupProps) {
+  const { width, height, ref } = useResizeDetector();
+
+  useEffect(() => {
+    if (ref.current) {
+      onOffsetUpdate([ref.current.offsetLeft, ref.current.offsetTop]);
+    }
+  }, [width, height]);
+
   return (
     <div className="browser-template">
       <div className="browser-template__top-bar">
@@ -44,8 +54,13 @@ function BrowserMockup({ children }: BrowserMockupProps) {
           </li>
         </ul>
       </div>
-
-      {children}
+      <div
+        id="browser-template__contents"
+        className="browser-template__contents"
+        ref={ref}
+      >
+        {children}
+      </div>
     </div>
   );
 }

@@ -1,8 +1,8 @@
-import { getFile, setFile } from "@/util/storage";
+import { getFile, updateFile } from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
 import * as prompting from "@/util/prompting";
 import { NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 
 function createPreviewComponent(
   projectId: string,
@@ -10,8 +10,8 @@ function createPreviewComponent(
   jsx: string,
   r: string
 ) {
-  const componentImports = Array.from(jsx.matchAll(/\<([A-Z]\w+)/g)).map(
-    (m) => m[1]
+  const componentImports = Array.from(
+    new Set(Array.from(jsx.matchAll(/\<([A-Z]\w+)/g)).map((m) => m[1]))
   );
 
   return `
@@ -25,7 +25,7 @@ function createPreviewComponent(
       )
       .join("\n")}
 
-    export default function Component({children}) {
+    export default function Component(props) {
         return (<ComponentPreviewWrapper name="${name}">
             ${jsx}
         </ComponentPreviewWrapper>);
@@ -48,10 +48,12 @@ export async function GET(
     "node_modules/@babel/standalone/babel.min.js"
   );
 
+  console.log(params);
+
   const contents = createPreviewComponent(
     params.projectId,
     params.filePath,
-    getFile(params.projectId, params.filePath),
+    await getFile(parseInt(params.projectId), params.filePath),
     r
   );
 
@@ -74,14 +76,29 @@ export async function PUT(
   request: Request,
   { params }: { params: { projectId: string; filePath: string } }
 ) {
-  const { modification } = await request.json();
-  const old = getFile(params.projectId, params.filePath);
+  const { modification, contents } = await request.json();
+
+  if (!modification && contents) {
+    const file = await updateFile(
+      parseInt(params.projectId),
+      params.filePath,
+      contents
+    );
+
+    return NextResponse.json({
+      status: "ok",
+      file: contents,
+      message: "Component updated!",
+    });
+  }
+
+  const old = await getFile(parseInt(params.projectId), params.filePath);
   const { jsx, explanation } = await prompting.modifyComponent(
     old,
     modification
   );
   const newFile = jsx;
-  setFile(params.projectId, params.filePath, newFile!);
+  await updateFile(parseInt(params.projectId), params.filePath, newFile!);
   revalidatePath(`/api/projects/${params.projectId}/files/${params.filePath}`);
   revalidatePath(`/api/projects/${params.projectId}`);
 

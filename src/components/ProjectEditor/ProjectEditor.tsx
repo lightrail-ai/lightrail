@@ -1,7 +1,7 @@
 "use client";
 
 import { SERVER_URL } from "@/util/constants";
-import { Project } from "@/util/storage";
+import { Project, ProjectWithFiles } from "@/util/storage";
 import React, { useEffect, useState } from "react";
 import PreviewRenderer from "../PreviewRenderer";
 import EditorNavbar from "../EditorNavbar/EditorNavbar";
@@ -49,7 +49,9 @@ const toastMessage = (message: string) =>
   );
 
 function ProjectEditor({ projectId }: ProjectEditorProps) {
-  const [project, setProject] = useState<Project | undefined>();
+  const [project, setProject] = useState<ProjectWithFiles | undefined>();
+  const [previewOffset, setPreviewOffset] = useState<[number, number]>([0, 0]);
+
   useEffect(() => {
     getProject(projectId).then((p) => setProject(p.project));
   }, [projectId]);
@@ -57,7 +59,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
   return (
     <>
       <div
-        className="h-screen w-screen flex flex-col"
+        className="h-screen w-screen flex flex-col max-h-screen"
         style={{
           backgroundImage:
             "radial-gradient(circle at 1px 1px, #ccc 1px, transparent 0)",
@@ -65,10 +67,11 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
         }}
       >
         <EditorNavbar project={project} />
-        <div className="flex flex-row flex-1">
-          <BrowserMockup>
+        <div className="flex flex-row flex-1 min-h-0">
+          <BrowserMockup onOffsetUpdate={(offset) => setPreviewOffset(offset)}>
             {project && (
               <PreviewRenderer
+                offset={previewOffset}
                 project={project}
                 onUpdate={() =>
                   getProject(projectId).then((p) => setProject(p.project))

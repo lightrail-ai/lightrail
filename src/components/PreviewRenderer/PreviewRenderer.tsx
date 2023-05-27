@@ -8,7 +8,7 @@ import ComponentPreviewWrapper from "../ComponentPreviewWrapper";
 import { RecoilRoot, useSetRecoilState } from "recoil";
 import PreviewOverlayLayer from "../PreviewOverlayLayer/PreviewOverlayLayer";
 import { hoveringComponent } from "./preview-renderer-state";
-import { Project } from "@/util/storage";
+import { Project, ProjectWithFiles } from "@/util/storage";
 
 const importMapper = new ImportMapper({
   "@halloumi/react": ImportMapper.forceDefault(React),
@@ -20,15 +20,17 @@ const importMapper = new ImportMapper({
 importMapper.register();
 
 export interface PreviewRendererProps {
-  project: Project;
+  project: ProjectWithFiles;
   onUpdate: () => void;
   onMessage: (message: string) => void;
+  offset: [number, number];
 }
 
 function PreviewRenderer({
   project,
   onUpdate,
   onMessage,
+  offset,
 }: PreviewRendererProps) {
   const setHoveringComponent = useSetRecoilState(hoveringComponent);
   const [rootComponent, setRootComponent] =
@@ -56,6 +58,7 @@ function PreviewRenderer({
   return (
     <div onMouseLeave={() => setHoveringComponent(null)}>
       <PreviewOverlayLayer
+        offset={offset}
         project={project}
         onUpdate={() => {
           setRenderCount(renderCount + 1);

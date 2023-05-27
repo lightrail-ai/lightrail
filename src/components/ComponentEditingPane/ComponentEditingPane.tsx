@@ -1,18 +1,21 @@
 import { SERVER_URL } from "@/util/constants";
-import { Project } from "@/util/storage";
+import { ProjectWithFiles } from "@/util/storage";
 import React, { useEffect, useState } from "react";
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs";
 import "prismjs/components/prism-jsx";
 import "prismjs/themes/prism-solarizedlight.css";
 import xmlFormat from "xml-formatter";
-import { useRecoilValue } from "recoil";
-import { editingComponent } from "../PreviewRenderer/preview-renderer-state";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  editingComponent,
+  editingPopoverTarget,
+} from "../PreviewRenderer/preview-renderer-state";
 import classNames from "classnames";
 import Loader from "../Loader/Loader";
 
 export interface ComponentEditingPaneProps {
-  project: Project;
+  project: ProjectWithFiles;
   onUpdate: (newContent: string) => void;
   onMessage: (message: string) => void;
 }
@@ -24,12 +27,18 @@ function ComponentEditingPane({
 }: ComponentEditingPaneProps) {
   const [modification, setModification] = useState("");
   const editingComponentValue = useRecoilValue(editingComponent);
+  const setEditingPopoverTarget = useSetRecoilState(editingPopoverTarget);
   const [loading, setLoading] = useState(false);
   const [currentCode, setCurrentCode] = useState<string>("");
+  const [codeChanged, setCodeChanged] = useState(false);
 
   useEffect(() => {
     if (editingComponentValue?.name) {
-      setCurrentCode(xmlFormat(project.files[editingComponentValue.name]));
+      const file = project.files.find(
+        (f) => f.path === editingComponentValue.name
+      );
+      setCurrentCode(xmlFormat(file?.contents!));
+      setCodeChanged(false);
     }
   }, [project, editingComponentValue?.name]);
 
@@ -42,6 +51,7 @@ function ComponentEditingPane({
         method: "PUT",
         body: JSON.stringify({
           modification,
+          contents: codeChanged ? currentCode : undefined,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -63,11 +73,18 @@ function ComponentEditingPane({
   return (
     <div>
       <h1
-        className={classNames("font-semibold text-lg", {
+        className={classNames("font-semibold text-lg flex flex-row", {
           "pb-4": !loading,
         })}
       >
         {editingComponentValue.name}
+        <span className="flex-1" />
+        <button
+          className="text-slate-500 hover:text-slate-600 text-2xl"
+          onClick={() => setEditingPopoverTarget(null)}
+        >
+          ×
+        </button>
       </h1>
       <textarea
         className={classNames(
@@ -94,7 +111,10 @@ function ComponentEditingPane({
         {loading && <Loader />}
       </div>
       <Editor
-        onValueChange={setCurrentCode}
+        onValueChange={(newVal) => {
+          setCurrentCode(newVal);
+          setCodeChanged(true);
+        }}
         highlight={(code) => highlight(code, languages.jsx, "jsx")}
         padding={8}
         className={classNames(
