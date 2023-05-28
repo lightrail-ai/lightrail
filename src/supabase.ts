@@ -14,6 +14,7 @@ export interface Database {
           contents: string | null
           created_at: string | null
           id: number
+          owner: string | null
           path: string
           project_id: number
         }
@@ -21,6 +22,7 @@ export interface Database {
           contents?: string | null
           created_at?: string | null
           id?: number
+          owner?: string | null
           path: string
           project_id: number
         }
@@ -28,6 +30,7 @@ export interface Database {
           contents?: string | null
           created_at?: string | null
           id?: number
+          owner?: string | null
           path?: string
           project_id?: number
         }
@@ -37,16 +40,19 @@ export interface Database {
           created_at: string | null
           id: number
           name: string
+          owner: string | null
         }
         Insert: {
           created_at?: string | null
           id?: number
           name: string
+          owner?: string | null
         }
         Update: {
           created_at?: string | null
           id?: number
           name?: string
+          owner?: string | null
         }
       }
     }

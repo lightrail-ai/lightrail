@@ -110,6 +110,7 @@ function ComponentEditingPane({
       >
         {loading && <Loader />}
       </div>
+      <div className="italic">Or edit directly below:</div>
       <Editor
         onValueChange={(newVal) => {
           setCurrentCode(newVal);

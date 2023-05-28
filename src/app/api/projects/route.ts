@@ -1,6 +1,7 @@
 import { generateRoot } from "@/util/prompting";
-import { createProject, createFile } from "@/util/storage";
+import { Client } from "@/util/storage";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 const mockProject = {
   name: "test",
@@ -11,14 +12,16 @@ const mockProject = {
 };
 
 export async function POST(request: Request) {
+  const client = new Client({ cookies });
+
   const { description, name } = await request.json();
 
   const files = await generateRoot(description);
 
-  const project_id = await createProject(name);
+  const project_id = await client.createProject(name);
 
   for (const file of files) {
-    await createFile(project_id, file.path, file.contents || "");
+    await client.createFile(project_id, file.path, file.contents || "");
   }
 
   return NextResponse.json({

@@ -1,8 +1,9 @@
-import { getFile, updateFile } from "@/util/storage";
+import { Client } from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
 import * as prompting from "@/util/prompting";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 function createPreviewComponent(
   projectId: string,
@@ -42,6 +43,7 @@ export async function GET(
 ) {
   const { searchParams } = new URL(request.url);
   const r = searchParams.get("r") ?? "0"; // For cache busting
+  const client = new Client({ cookies });
 
   const Babel: any = await import(
     // @ts-ignore
@@ -53,7 +55,7 @@ export async function GET(
   const contents = createPreviewComponent(
     params.projectId,
     params.filePath,
-    await getFile(parseInt(params.projectId), params.filePath),
+    await client.getFile(parseInt(params.projectId), params.filePath),
     r
   );
 
@@ -76,10 +78,11 @@ export async function PUT(
   request: Request,
   { params }: { params: { projectId: string; filePath: string } }
 ) {
+  const client = new Client({ cookies });
   const { modification, contents } = await request.json();
 
   if (!modification && contents) {
-    const file = await updateFile(
+    const file = await client.updateFile(
       parseInt(params.projectId),
       params.filePath,
       contents
@@ -92,13 +95,17 @@ export async function PUT(
     });
   }
 
-  const old = await getFile(parseInt(params.projectId), params.filePath);
+  const old = await client.getFile(parseInt(params.projectId), params.filePath);
   const { jsx, explanation } = await prompting.modifyComponent(
     old,
     modification
   );
   const newFile = jsx;
-  await updateFile(parseInt(params.projectId), params.filePath, newFile!);
+  await client.updateFile(
+    parseInt(params.projectId),
+    params.filePath,
+    newFile!
+  );
   revalidatePath(`/api/projects/${params.projectId}/files/${params.filePath}`);
   revalidatePath(`/api/projects/${params.projectId}`);
 
