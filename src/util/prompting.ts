@@ -5,7 +5,7 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-export async function cleanJSX(jsx: string) {
+export function cleanJSX(jsx: string) {
   let cleaned = jsx.replaceAll(" class=", " className=");
   cleaned = cleaned.replaceAll(" for=", " htmlFor=");
   cleaned = cleaned.replaceAll("</img>", "");
@@ -16,21 +16,7 @@ export async function cleanJSX(jsx: string) {
 export async function generateRoot(description: string): Promise<File[]> {
   const system = `
         You are a helpful assistant for a React developer.
-        You are given a description, and you generate an array of React components in the JSON format described below:
-
-        \`\`\`
-        {
-            "name": "...",   // The name of the component, as a string
-            "dependencies": ["...", "..."],    // Other compoents that this component uses. List only the names of custom components
-            "props": ["...", "..."],   // The props that this component uses
-            "render": "...",    // The JSX for the component, as a string. Use only Tailwind CSS for styling. 
-        }
-        \`\`\`
-  `;
-
-  const initialPrompt = `
-
-        Using this React Component serialization format: 
+        You are given a description, and you generate an array of React components in the JSON format specified:
 
         \`\`\` 
         {
@@ -38,6 +24,21 @@ export async function generateRoot(description: string): Promise<File[]> {
           "dependencies": ["...", "..."],    // Other compoents that this component uses. List only the names of custom components
           "props": ["...", "..."],   // The props that this component uses
           "render": "...",    // The JSX for the component, as a string. Use only Tailwind CSS for styling. 
+        }
+        \`\`\`
+        
+  `;
+
+  const initialPrompt = `
+
+        Using the React Component serialization exemplified here: 
+
+        \`\`\`
+        {
+            "name": "ComponentName",   // The name of the component, as a string
+            "dependencies": ["Button", "PricingCard"],    // Other compoents that this component uses. List only the names of custom components
+            "props": ["price", "cta"],   // The props that this component uses
+            "render": "<div className=\"bg-slate-200 p-4\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\\n</div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
         }
         \`\`\`
 
@@ -48,7 +49,7 @@ export async function generateRoot(description: string): Promise<File[]> {
         The first component should be called Index and should be the top-level component. Come up with the names for the components you'd need to implement to satisfy this description.
         This should include components that describe semantic sections of the output, as well as components that represent sepcific UI elements.
         Output this list of names in the "dependencies" key of the first component's JSON. The "dependencies" list should ONLY include component names, not any other functions or libraries.
-        Then, using only these components and standard HTML elements, generate a React component tree (in JSX, using Tailwind CSS) that fulfills the description. Only provide the JSX for the top-level component, in the "render" key of the output JSON.
+        Then, using only these components and standard HTML elements, generate a React component tree (in JSX, using Tailwind CSS) that fulfills the description. Font Awesome icons are available to you, as css classes. Only provide the JSX for the top-level component, in the "render" key of the output JSON.
         Then, for each dependency component, follow the same process to generate a serialized JSON representation. Repeat until no dependencies are unimplemented. If a component requires props, provide those props with sample values whenever that component is used.
         When accessing props in the JSX, use the format \`props.propName\` to access the prop value. A component's children are available as \`props.children\`.
 
@@ -103,7 +104,7 @@ export async function generateRoot(description: string): Promise<File[]> {
 
   let files: File[] = response.map((comp: any) => ({
     path: comp.name === "Index" ? "index" : comp.name,
-    contents: comp.render,
+    contents: cleanJSX(comp.render),
   }));
 
   console.log(files);
@@ -138,7 +139,8 @@ export async function modifyComponent(old: string, modification: string) {
 
         
         
-        Do not assume that any custom components exist that aren't already used; use only standard HTML elements in your changes. Return the result with no other comments outside of the JSON. Here's my request:
+        Do not assume that any custom components exist that aren't already used; use only standard HTML elements in your changes. 
+        You can use Font Awesome icons, as CSS classes. Return the result with no other comments outside of the JSON. Here's my request:
         
         \`\`\`
         {
@@ -170,8 +172,6 @@ export async function modifyComponent(old: string, modification: string) {
     .replace(/^[^{]*{/, "{")
     .replace(/}[^}]*$/, "}");
 
-  console.log(jsonResponse);
-
   let parsed;
 
   try {
@@ -194,6 +194,8 @@ export async function modifyComponent(old: string, modification: string) {
   }
 
   parsed["jsx"] = cleanJSX(parsed["jsx"]);
+
+  console.log(parsed);
   return parsed;
 }
 

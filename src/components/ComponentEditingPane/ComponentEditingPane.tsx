@@ -1,18 +1,14 @@
 import { SERVER_URL } from "@/util/constants";
 import { ProjectWithFiles } from "@/util/storage";
 import React, { useEffect, useState } from "react";
-import Editor from "react-simple-code-editor";
-import { highlight, languages } from "prismjs";
-import "prismjs/components/prism-jsx";
-import "prismjs/themes/prism-solarizedlight.css";
-import xmlFormat from "xml-formatter";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import {
   editingComponent,
   editingPopoverTarget,
 } from "../PreviewRenderer/preview-renderer-state";
 import classNames from "classnames";
-import Loader from "../Loader/Loader";
+import TimerProgressBar from "../TimerProgressBar/TimerProgressBar";
+import CodeEditor from "../CodeEditor/CodeEditor";
 
 export interface ComponentEditingPaneProps {
   project: ProjectWithFiles;
@@ -37,11 +33,7 @@ function ComponentEditingPane({
       const file = project.files.find(
         (f) => f.path === editingComponentValue.name
       );
-      setCurrentCode(
-        xmlFormat(file?.contents!, {
-          throwOnFailure: false,
-        })
-      );
+      setCurrentCode(file?.contents!);
       setCodeChanged(false);
     }
   }, [project, editingComponentValue?.name]);
@@ -112,11 +104,13 @@ function ComponentEditingPane({
           }
         )}
       >
-        {loading && <Loader />}
+        {loading && (
+          <TimerProgressBar duration={20} caption="Rewriting component..." />
+        )}
       </div>
       {!loading && <div className="italic my-2">Or edit directly below:</div>}
       <div className="overflow-auto bg-slate-50 shadow-inner text-slate-900 rounded-lg mb-4">
-        <Editor
+        {/* <Editor
           onValueChange={(newVal) => {
             setCurrentCode(newVal);
             setCodeChanged(true);
@@ -128,7 +122,8 @@ function ComponentEditingPane({
           })}
           value={currentCode!}
           disabled={loading}
-        />
+        /> */}
+        <CodeEditor value={currentCode} />
       </div>
       <button
         className="w-full bg-slate-50 hover:bg-slate-200 active:bg-slate-300 shadow-md text-slate-900 p-1 rounded-lg disabled:opacity-20 font-semibold"

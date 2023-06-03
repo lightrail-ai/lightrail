@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "@babel/standalone": "^7.21.8",
+    "@codemirror/commands": "^6.2.4",
+    "@codemirror/lang-html": "^6.4.3",
+    "@codemirror/state": "^6.2.1",
+    "@codemirror/view": "^6.12.0",
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
     "@fortawesome/free-regular-svg-icons": "^6.4.0",
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
@@ -29,6 +33,7 @@
     "encoding": "^0.1.13",
     "file-saver": "^2.0.5",
     "import-mapper": "^0.0.4",
+    "indent.js": "^0.3.5",
     "jszip": "^3.10.1",
     "loaders.css": "^0.1.2",
     "next": "13.4.2",
@@ -50,8 +55,8 @@
     "recoil": "^0.7.7",
     "sass": "^1.62.1",
     "tailwindcss": "3.3.2",
-    "typescript": "5.0.4",
-    "xml-formatter": "^3.4.1"
+    "thememirror": "^2.0.1",
+    "typescript": "5.0.4"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.5",
