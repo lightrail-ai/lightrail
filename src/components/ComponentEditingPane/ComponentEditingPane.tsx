@@ -37,7 +37,11 @@ function ComponentEditingPane({
       const file = project.files.find(
         (f) => f.path === editingComponentValue.name
       );
-      setCurrentCode(xmlFormat(file?.contents!));
+      setCurrentCode(
+        xmlFormat(file?.contents!, {
+          throwOnFailure: false,
+        })
+      );
       setCodeChanged(false);
     }
   }, [project, editingComponentValue?.name]);
@@ -71,7 +75,7 @@ function ComponentEditingPane({
   }
 
   return (
-    <div>
+    <>
       <h1
         className={classNames("font-semibold text-lg flex flex-row", {
           "pb-4": !loading,
@@ -91,7 +95,7 @@ function ComponentEditingPane({
           "transition-all w-full bg-slate-50 shadow-inner text-slate-900 rounded-lg",
           {
             "h-0 p-0 overflow-hidden": loading,
-            "p-2": !loading,
+            "p-2 min-h-[2em]": !loading,
           }
         )}
         value={modification}
@@ -110,23 +114,22 @@ function ComponentEditingPane({
       >
         {loading && <Loader />}
       </div>
-      <div className="italic">Or edit directly below:</div>
-      <Editor
-        onValueChange={(newVal) => {
-          setCurrentCode(newVal);
-          setCodeChanged(true);
-        }}
-        highlight={(code) => highlight(code, languages.jsx, "jsx")}
-        padding={8}
-        className={classNames(
-          "w-full bg-slate-50 shadow-inner text-slate-900 rounded-lg mt-2 mb-4",
-          {
+      {!loading && <div className="italic my-2">Or edit directly below:</div>}
+      <div className="overflow-auto bg-slate-50 shadow-inner text-slate-900 rounded-lg mb-4">
+        <Editor
+          onValueChange={(newVal) => {
+            setCurrentCode(newVal);
+            setCodeChanged(true);
+          }}
+          highlight={(code) => highlight(code, languages.jsx, "jsx")}
+          padding={8}
+          className={classNames("w-full", {
             "h-0 p-0": loading,
-          }
-        )}
-        value={currentCode!}
-        disabled={loading}
-      />
+          })}
+          value={currentCode!}
+          disabled={loading}
+        />
+      </div>
       <button
         className="w-full bg-slate-50 hover:bg-slate-200 active:bg-slate-300 shadow-md text-slate-900 p-1 rounded-lg disabled:opacity-20 font-semibold"
         onClick={updateComponent}
@@ -134,7 +137,7 @@ function ComponentEditingPane({
       >
         Update
       </button>
-    </div>
+    </>
   );
 }
 

@@ -53,18 +53,10 @@ function OverlayDiv({
 }
 
 export interface PreviewOverlayLayerProps {
-  project: ProjectWithFiles;
-  onUpdate: (newContent: string) => void;
-  onMessage: (message: string) => void;
   offset: [number, number];
 }
 
-function PreviewOverlayLayer({
-  project,
-  onUpdate,
-  onMessage,
-  offset,
-}: PreviewOverlayLayerProps) {
+function PreviewOverlayLayer({ offset }: PreviewOverlayLayerProps) {
   const hoveringComponentValue = useRecoilValue(hoveringComponent);
   return (
     <>
@@ -72,11 +64,6 @@ function PreviewOverlayLayer({
         hoveringComponentValue.rects.map((rect, i) => (
           <OverlayDiv rect={rect} offset={offset} key={i} />
         ))}
-      <EditingPopover
-        project={project}
-        onUpdate={onUpdate}
-        onMessage={onMessage}
-      />
       <NamePopover />
     </>
   );

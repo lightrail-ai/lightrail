@@ -18,7 +18,8 @@ function FirstProjectFlow({}: FirstProjectFlowProps) {
         </button>
       </div>
       <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="max-w-2xl rounded-md bg-slate-50">
+        <div className="max-w-2xl rounded-md bg-slate-50 p-4">
+          <div className="font-semibold text-2xl pb-4">New Project</div>
           <ProjectCreationPane />
         </div>
       </div>

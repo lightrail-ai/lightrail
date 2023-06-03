@@ -1,8 +1,9 @@
-import React, { useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { useSetRecoilState } from "recoil";
 import {
   editingComponent,
   editingPopoverTarget,
+  errorsQueue,
   hoveringComponent,
   namePopoverTarget,
 } from "../PreviewRenderer/preview-renderer-state";
@@ -19,47 +20,77 @@ function ComponentPreviewWrapper({
 }: ComponentPreviewWrapperProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const setHoveringComponent = useSetRecoilState(hoveringComponent);
+  const setErrorsQueue = useSetRecoilState(errorsQueue);
   const setNamePopoverTarget = useSetRecoilState(namePopoverTarget);
   const setEditingComponent = useSetRecoilState(editingComponent);
   const setEditingPopoverTarget = useSetRecoilState(editingPopoverTarget);
 
+  const ErrorFallbackComponent = useMemo(
+    () =>
+      ({ error }: { error: Error }) => {
+        useEffect(() => {
+          setErrorsQueue((prev) =>
+            prev.find((e) => e.component === name)
+              ? prev
+              : [
+                  ...prev,
+                  {
+                    component: name,
+                    error: error.message,
+                  },
+                ]
+          );
+        }, [error]);
+
+        return (
+          <span
+            title={error.message}
+            className="inline-block text-red-500 bg-red-500 bg-opacity-10 border-red-500 border border-opacity-40 p-2 "
+          >
+            <b>{name}</b> failed to render, attempting to auto-fix...
+          </span>
+        );
+      },
+    [name]
+  );
+
   return (
-    <ErrorBoundary fallback={<div>Error</div>}>
-      <div
-        className="contents cursor-pointer"
-        ref={elementRef}
-        onMouseOver={(e) => {
-          if (!elementRef.current) return;
-          let rects: DOMRect[] = [];
-          const children = Array.from(elementRef.current.children);
-          children.forEach((node) => {
-            rects = rects.concat(Array.from(node.getClientRects()));
-          });
-          setHoveringComponent({
-            name,
-            rects,
-          });
-          setNamePopoverTarget(
-            (children.length ? children[0] : e.target) as HTMLElement
-          );
-          e.stopPropagation();
-          e.preventDefault();
-        }}
-        onClick={(e) => {
-          if (!elementRef.current) return;
-          setNamePopoverTarget(null);
-          setEditingComponent({ name });
-          const children = Array.from(elementRef.current.children);
-          setEditingPopoverTarget(
-            (children.length ? children[0] : e.target) as HTMLElement
-          );
-          e.stopPropagation();
-          e.preventDefault();
-        }}
-      >
+    <div
+      className="contents cursor-pointer"
+      ref={elementRef}
+      onMouseOver={(e) => {
+        if (!elementRef.current) return;
+        let rects: DOMRect[] = [];
+        const children = Array.from(elementRef.current.children);
+        children.forEach((node) => {
+          rects = rects.concat(Array.from(node.getClientRects()));
+        });
+        setHoveringComponent({
+          name,
+          rects,
+        });
+        setNamePopoverTarget(
+          (children.length ? children[0] : e.target) as HTMLElement
+        );
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+      onClick={(e) => {
+        if (!elementRef.current) return;
+        setNamePopoverTarget(null);
+        setEditingComponent({ name });
+        const children = Array.from(elementRef.current.children);
+        setEditingPopoverTarget(
+          (children.length ? children[0] : e.target) as HTMLElement
+        );
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+    >
+      <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
         {children}
-      </div>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </div>
   );
 }
 

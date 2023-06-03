@@ -5,24 +5,12 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-function parseJsonResponse(response: any, fallback?: any) {
-  const responseString = response.data.choices[0].message?.content!;
-
-  console.log(responseString);
-
-  let cleanedResponse = responseString
-    .replace(/^[^{]*{/, "{")
-    .replace(/}[^}]*$/, "}");
-
-  let val;
-  try {
-    val = JSON.parse(cleanedResponse);
-  } catch (e) {
-    console.log(e);
-    val = fallback;
-  }
-
-  return val;
+export async function cleanJSX(jsx: string) {
+  let cleaned = jsx.replaceAll(" class=", " className=");
+  cleaned = cleaned.replaceAll(" for=", " htmlFor=");
+  cleaned = cleaned.replaceAll("</img>", "");
+  cleaned = cleaned.replaceAll(/<img([^>/]*)>/g, "<img$1 />"); //replace img tags with self-closing tags, preserving attributes
+  return cleaned;
 }
 
 export async function generateRoot(description: string): Promise<File[]> {
@@ -66,7 +54,9 @@ export async function generateRoot(description: string): Promise<File[]> {
 
         Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
 
-        Make sure to respond only with an array of JSON objects and no other content or text. Do not have any text before or after the JSON. Do not output any explanation. `;
+        Make sure to respond only with an array of JSON objects and no other content or text. Do not have any text before or after the JSON. Do not output any explanation.
+        
+        All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)`;
 
   const folloupPrompt = (comp: string) => `
         Please use the same output format and rules as before to generate the JSX for the '${comp}' component that you described above. 
@@ -122,36 +112,43 @@ export async function generateRoot(description: string): Promise<File[]> {
 
 export async function modifyComponent(old: string, modification: string) {
   const system = `
-        You are a helpful assistant for a React developer.
-        You are given a React component tree (in JSX, using Tailwind CSS) and a description of a modification to make. 
-        You make the modification, explain the changes you made and return a new JSX component tree.
-        
-        You respond with JSON of the form:
+        You are a helpful JSON API for a React developer, and you modify React components to satisfy a given set of requirements.
+        You use Tailwind CSS for all styling, and only manipulate the component's JSX component tree. 
+        You receive requests in a standardized JSON format, and respond in a standardized JSON format that includes an explanation of your changes.`;
+  const prompt = `
+        I will give you the JSX component tree for a React component (as a string) as well as a description of a modification that needs to be made to the component, 
+        and you will modify the component tree to satisfy the modification (using Tailwind CSS for styling) and return it along with an explanation of your changes.
+        My request will be JSON with the keys "jsx" and "modification" (both strings), and your response should be JSON with the keys "explanation" (a string) and "jsx" (a string). For example: 
+
+        My Request: 
         \`\`\`
         {
-            "explanation": "...",
-            "jsx": "..."
+          "jsx": "<h1 className=\"text-md\">Hello, world!</h1>",
+          "modification": "Make the text larger"
+        }
+        \`\`\`
+
+        Your Response:
+        \`\`\`
+        {
+          "explanation": "I added the Tailwind CSS class 'text-lg' to the h1 tag to make the text larger.",
+          "jsx": "<h1 className=\"text-lg\">Hello, world!</h1>"
+        }
+        \`\`\`
+
+        
+        
+        Do not assume that any custom components exist that aren't already used; use only standard HTML elements in your changes. Return the result with no other comments outside of the JSON. Here's my request:
+        
+        \`\`\`
+        {
+          "jsx": "${old.replaceAll("\n", "\\n")}",
+          "modification": "${modification}"
         }
         \`\`\`
         
-        Where the value of \`jsx\` is the new JSX component tree (still using Tailwind for styling) and nothing else, 
-        and the value of \`explanation\` is a description of the changes you made and why you made them.
+        Respond only as a JSON object.`;
 
-        Only respond with the JSON, and no other text content. 
-        
-        Be very thorough in your explanation, and make sure to explain the changes you made.`;
-  const prompt = `
-        Modify this React component tree (in JSX, styled with Tailwind CSS): 
-
-        \`\`\`
-        ${old}
-        \`\`\`
-
-        To satisfy this modification:
-
-        ${modification}
-        
-        Do not assume that any custom components exist that aren't already used; use only standard HTML elements in your changes. Make sure to respond only with JSON and no other content or text. Do not output the explanation outside of the JSON. Do not have any text before or after the JSON. `;
   const rawResponse = await openai.createChatCompletion({
     model: "gpt-3.5-turbo-0301",
     messages: [
@@ -169,11 +166,107 @@ export async function modifyComponent(old: string, modification: string) {
   const responseString = rawResponse.data.choices[0].message?.content!;
 
   console.log(responseString);
-  const cleanedResponse = responseString
+  const jsonResponse = responseString
     .replace(/^[^{]*{/, "{")
     .replace(/}[^}]*$/, "}");
 
-  const response = JSON.parse(cleanedResponse);
+  console.log(jsonResponse);
 
-  return response;
+  let parsed;
+
+  try {
+    parsed = JSON.parse(jsonResponse);
+    if (!parsed.explanation || !parsed.jsx) {
+      throw new Error("Invalid response");
+    }
+  } catch (e) {
+    console.warn("JSON parse failed, constructing manually");
+    const parts = jsonResponse
+      .replace(/^([{"]|\s)*"explanation"\s*:\s*"/, "")
+      .replace(/([}"]|\s)*$/, "")
+      .split(/(?:[",]|\s)*"jsx"\s*:\s*"/);
+    const explanation = parts[0];
+    const jsx = parts[1];
+    parsed = {
+      explanation,
+      jsx,
+    };
+  }
+
+  parsed["jsx"] = cleanJSX(parsed["jsx"]);
+  return parsed;
+}
+
+export async function modifyComponentWithEdits(
+  old: string,
+  modification: string
+) {
+  const rawResponse = await openai.createEdit({
+    model: "text-davinci-edit-001",
+    input: old,
+    instruction: modification,
+  });
+
+  const responseString = rawResponse.data.choices[0].text;
+
+  console.log(responseString);
+
+  return {
+    jsx: responseString,
+    explanation: "I tried my best to make the changes you asked for!",
+  };
+}
+
+export async function modifyComponentWithCompletion(
+  old: string,
+  modification: string
+) {
+  const rawResponse = await openai.createCompletion({
+    model: "text-davinci-003",
+    prompt: `
+    Modify the following JSX component tree to match this description / request: "${modification}".
+
+    \`\`\`
+    ${old}
+    \`\`\`
+    
+    Present the modification as a JSON object with format {"explanation": "...", "jsx": "..."}, where the \`explanation\` explains the specific DOM/css-class changes made and why, and the \`jsx\` is the updated React component tree styled with Tailwind CSS classes, as a string.
+    
+    \`\`\`
+    {
+         "explanation": "`,
+    max_tokens: 3000,
+    stop: "```",
+  });
+
+  const responseString = rawResponse.data.choices[0].text;
+  console.log(responseString);
+
+  let parsed;
+
+  try {
+    const jsonResponse = `{ "explanation": "${responseString}`;
+    parsed = JSON.parse(jsonResponse);
+    if (!parsed.explanation || !parsed.jsx) {
+      throw new Error("Invalid response");
+    }
+  } catch (e) {
+    console.warn("JSON parse failed, constructing manually");
+    const parts = responseString!.split(/\s*"jsx"\s*:\s*/);
+    const explanation = parts[0].replace(/"\s*$/, "");
+    const jsx = parts[1]
+      .replace(/}\s*$/, "")
+      .replace(/^\s*"/, "")
+      .replace(/"\s*$/, "");
+    parsed = {
+      explanation,
+      jsx,
+    };
+  }
+
+  parsed["jsx"] = cleanJSX(parsed["jsx"]);
+
+  console.log(parsed);
+
+  return parsed;
 }

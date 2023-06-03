@@ -26,5 +26,15 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     status: "ok",
+    id: project_id,
+  });
+}
+
+export async function GET(request: Request) {
+  const client = new Client({ cookies });
+  const projects = await client.getUserProjects();
+
+  return NextResponse.json({
+    projects,
   });
 }

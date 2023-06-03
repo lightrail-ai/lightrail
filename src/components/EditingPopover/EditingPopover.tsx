@@ -26,6 +26,12 @@ function EditingPopover({ project, onUpdate, onMessage }: EditingPopoverProps) {
           offset: [0, 8],
         },
       },
+      {
+        name: "preventOverflow",
+        options: {
+          mainAxis: false, // true by default
+        },
+      },
     ],
   });
   return (

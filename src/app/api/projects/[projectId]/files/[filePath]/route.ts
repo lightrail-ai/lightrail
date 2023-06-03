@@ -4,6 +4,7 @@ import * as prompting from "@/util/prompting";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import path from "path";
 
 function createPreviewComponent(
   projectId: string,
@@ -33,8 +34,23 @@ function createPreviewComponent(
     } `;
 }
 
-function createExportComponent(jsx: string) {
-  return jsx;
+function createErrorPreviewComponent(name: string, error: string) {
+  return `
+      import React from "@halloumi/react";
+      import ComponentPreviewWrapper from "@halloumi/ComponentPreviewWrapper"
+
+      const ErrorComponent = () => {
+        React.useEffect(() => {
+          throw new Error("${error}");
+        }, [])
+        return <></>;
+      }
+  
+      export default function Component(props) {
+          return (<ComponentPreviewWrapper name="${name}">
+              <ErrorComponent />
+          </ComponentPreviewWrapper>);
+      } `;
 }
 
 export async function GET(
@@ -59,9 +75,22 @@ export async function GET(
     r
   );
 
-  const transpiled = Babel.transform(contents, {
-    presets: ["react"],
-  });
+  let transpiled;
+
+  try {
+    transpiled = Babel.transform(contents, {
+      presets: ["react"],
+    });
+  } catch (e: any) {
+    console.error(e);
+    const shortError = e.message.split("\n")[0];
+    transpiled = Babel.transform(
+      createErrorPreviewComponent(params.filePath, shortError),
+      {
+        presets: ["react"],
+      }
+    );
+  }
 
   if (!transpiled) {
     return new Response("Error", { status: 500 });
@@ -79,7 +108,26 @@ export async function PUT(
   { params }: { params: { projectId: string; filePath: string } }
 ) {
   const client = new Client({ cookies });
-  const { modification, contents } = await request.json();
+  const { modification, contents, error } = await request.json();
+
+  if (error) {
+    const old = await client.getFile(
+      parseInt(params.projectId),
+      params.filePath
+    );
+
+    const { jsx, explanation } = await prompting.modifyComponentWithCompletion(
+      old,
+      `The JSX currently fails to render with the error: '${error}'. Fix the JSX so that it renders properly.`
+    );
+
+    await client.updateFile(parseInt(params.projectId), params.filePath, jsx);
+
+    return NextResponse.json({
+      status: "ok",
+      message: explanation,
+    });
+  }
 
   if (!modification && contents) {
     const file = await client.updateFile(
@@ -96,6 +144,7 @@ export async function PUT(
   }
 
   const old = await client.getFile(parseInt(params.projectId), params.filePath);
+
   const { jsx, explanation } = await prompting.modifyComponent(
     old,
     modification

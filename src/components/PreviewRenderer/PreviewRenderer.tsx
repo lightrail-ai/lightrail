@@ -1,14 +1,14 @@
 "use client";
 
 import { SERVER_URL } from "@/util/constants";
-import React, { ReactElement, useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 // @ts-ignore
 import { ImportMapper } from "import-mapper";
 import ComponentPreviewWrapper from "../ComponentPreviewWrapper";
-import { RecoilRoot, useSetRecoilState } from "recoil";
+import { useSetRecoilState } from "recoil";
 import PreviewOverlayLayer from "../PreviewOverlayLayer/PreviewOverlayLayer";
 import { hoveringComponent } from "./preview-renderer-state";
-import { Project, ProjectWithFiles } from "@/util/storage";
+import { ProjectWithFiles } from "@/util/storage";
 
 const importMapper = new ImportMapper({
   "@halloumi/react": ImportMapper.forceDefault(React),
@@ -21,21 +21,20 @@ importMapper.register();
 
 export interface PreviewRendererProps {
   project: ProjectWithFiles;
-  onUpdate: () => void;
-  onMessage: (message: string) => void;
+  renderCount: number;
   offset: [number, number];
+  noOverlay?: boolean;
 }
 
-function PreviewRenderer({
+export default function PreviewRenderer({
   project,
-  onUpdate,
-  onMessage,
+  renderCount,
   offset,
+  noOverlay,
 }: PreviewRendererProps) {
   const setHoveringComponent = useSetRecoilState(hoveringComponent);
   const [rootComponent, setRootComponent] =
     useState<React.ComponentType | null>(null);
-  const [renderCount, setRenderCount] = useState(0);
 
   useEffect(() => {
     if (!project || !project.id) return;
@@ -57,24 +56,8 @@ function PreviewRenderer({
 
   return (
     <div onMouseLeave={() => setHoveringComponent(null)}>
-      <PreviewOverlayLayer
-        offset={offset}
-        project={project}
-        onUpdate={() => {
-          setRenderCount(renderCount + 1);
-          onUpdate();
-        }}
-        onMessage={onMessage}
-      />
+      {!noOverlay && <PreviewOverlayLayer offset={offset} />}
       <Component />
     </div>
-  );
-}
-
-export default function RecoiledPreviewRenderer(props: PreviewRendererProps) {
-  return (
-    <RecoilRoot>
-      <PreviewRenderer {...props} />
-    </RecoilRoot>
   );
 }

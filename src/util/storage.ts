@@ -30,9 +30,27 @@ export class Client {
       .select()
       .eq("project_id", projectId);
 
-    console.log(project, files);
-
     return { ...project.data!, files: files.data! };
+  }
+
+  async getProjectFileNames(projectId: number): Promise<string[]> {
+    const { data } = await this.supabase
+      .from("files")
+      .select("path")
+      .eq("project_id", projectId);
+
+    return data ? data.map((file) => file.path) : [];
+  }
+
+  async getUserProjects() {
+    const resp = await this.supabase.auth.getUser();
+    if (!resp.data.user?.id) return [];
+
+    const { data } = await this.supabase
+      .from("projects")
+      .select()
+      .eq("owner", resp.data.user.id);
+    return data;
   }
 
   async createProject(name: string) {

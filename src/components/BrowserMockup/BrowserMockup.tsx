@@ -12,7 +12,8 @@ function BrowserMockup({ children, onOffsetUpdate }: BrowserMockupProps) {
 
   useEffect(() => {
     if (ref.current) {
-      onOffsetUpdate([ref.current.offsetLeft, ref.current.offsetTop]);
+      const rect = ref.current.getBoundingClientRect();
+      onOffsetUpdate([rect.left, rect.top]);
     }
   }, [width, height]);
 

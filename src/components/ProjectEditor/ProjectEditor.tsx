@@ -7,6 +7,16 @@ import PreviewRenderer from "../PreviewRenderer";
 import EditorNavbar from "../EditorNavbar/EditorNavbar";
 import BrowserMockup from "../BrowserMockup/BrowserMockup";
 import toast, { Toaster } from "react-hot-toast";
+import EditingPopover from "../EditingPopover/EditingPopover";
+
+import "react-reflex/styles.css";
+import { ReflexContainer, ReflexElement, ReflexSplitter } from "react-reflex";
+import ComponentEditingPane from "../ComponentEditingPane/ComponentEditingPane";
+import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
+import { configState } from "../ConfigControls/config-state";
+import ComponentEditorPanel from "../ComponentEditorPanel/ComponentEditorPanel";
+import classNames from "classnames";
+import { errorsQueue } from "../PreviewRenderer/preview-renderer-state";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -23,14 +33,14 @@ const toastMessage = (message: string) =>
       <div
         className={`${
           t.visible ? "animate-enter" : "animate-leave"
-        } max-w-md w-full bg-slate-900 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-slate-50 ring-opacity-5`}
+        } max-w-md w-full bg-slate-900 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-slate-50 ring-opacity-50`}
       >
         <div className="flex-1 w-0 p-4">
           <div className="flex items-start">
-            <div className="flex-shrink-0 pt-0.5">
+            <div className="flex-shrink-0 pt-0.5 bg-slate-200 rounded-md">
               <img
                 className="h-10 w-10 rounded-full"
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixqx=6GHAjsWpt9&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2.2&w=160&h=160&q=80"
+                src="/assistant.png"
                 alt=""
               />
             </div>
@@ -51,10 +61,53 @@ const toastMessage = (message: string) =>
 function ProjectEditor({ projectId }: ProjectEditorProps) {
   const [project, setProject] = useState<ProjectWithFiles | undefined>();
   const [previewOffset, setPreviewOffset] = useState<[number, number]>([0, 0]);
+  const [renderCount, setRenderCount] = useState(0);
+  const [rendering, setRendering] = useState(false);
+  const config = useRecoilValue(configState);
+  const [errorsQueueValue, setErrorsQueue] = useRecoilState(errorsQueue);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [leftPanelVisible, setLeftPanelVisible] = useState(false);
+  const [rightPanelVisible, setRightPanelVisible] = useState(false);
 
   useEffect(() => {
     getProject(projectId).then((p) => setProject(p.project));
   }, [projectId]);
+
+  async function onUpdate() {
+    setRendering(true);
+    setRenderCount(renderCount + 1);
+    const p = await getProject(projectId);
+    setProject(p.project);
+    setRendering(false);
+  }
+
+  useEffect(() => {
+    if (errorsQueueValue.length > 0) {
+      setErrorsQueue((errorsQueueValue) => {
+        const err = errorsQueueValue[0];
+        fetch(
+          `${SERVER_URL}/api/projects/${projectId}/files/${err.component}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              error: err.error,
+            }),
+          }
+        )
+          .then((r) => r.json())
+          .then((r) => {
+            if (r.status === "ok") {
+              toastMessage(`Healed '${err.component}': ` + r.message);
+              onUpdate();
+            }
+          });
+        return errorsQueueValue.slice(1);
+      });
+    }
+  }, [errorsQueueValue]);
 
   return (
     <>
@@ -66,25 +119,73 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
           backgroundSize: "20px 20px",
         }}
       >
-        <EditorNavbar project={project} />
-        <div className="flex flex-row flex-1 min-h-0">
-          <BrowserMockup onOffsetUpdate={(offset) => setPreviewOffset(offset)}>
-            {project && (
-              <PreviewRenderer
-                offset={previewOffset}
+        <EditorNavbar
+          project={project}
+          isPreviewing={isPreviewing}
+          onTogglePreview={() => setIsPreviewing(!isPreviewing)}
+        />
+        {isPreviewing ? (
+          project && (
+            <PreviewRenderer
+              offset={previewOffset}
+              project={project}
+              renderCount={renderCount}
+              noOverlay
+            />
+          )
+        ) : (
+          <ReflexContainer orientation="horizontal">
+            <ReflexElement flex={3}>
+              <ReflexContainer orientation="vertical">
+                <ReflexElement flex={leftPanelVisible ? 1 : 0}></ReflexElement>
+                <ReflexSplitter />
+                <ReflexElement
+                  className={classNames("flex flex-row min-h-0", {
+                    "opacity-50": rendering,
+                  })}
+                  flex={3}
+                >
+                  <BrowserMockup
+                    onOffsetUpdate={(offset) => setPreviewOffset(offset)}
+                  >
+                    {project && (
+                      <PreviewRenderer
+                        offset={previewOffset}
+                        project={project}
+                        renderCount={renderCount}
+                      />
+                    )}
+                  </BrowserMockup>
+                </ReflexElement>
+                <ReflexSplitter />
+                <ReflexElement flex={rightPanelVisible ? 1 : 0}></ReflexElement>
+              </ReflexContainer>
+            </ReflexElement>
+            <ReflexSplitter />
+            {config.editUX === "panel" && (
+              <ComponentEditorPanel
                 project={project}
-                onUpdate={() =>
-                  getProject(projectId).then((p) => setProject(p.project))
-                }
+                onUpdate={onUpdate}
                 onMessage={(message) => toastMessage(message)}
               />
             )}
-          </BrowserMockup>
-        </div>
+          </ReflexContainer>
+        )}
       </div>
       <Toaster />
+      {project && config.editUX === "popover" && (
+        <EditingPopover
+          project={project}
+          onUpdate={onUpdate}
+          onMessage={(message) => toastMessage(message)}
+        />
+      )}
     </>
   );
 }
 
-export default ProjectEditor;
+export default (props: ProjectEditorProps) => (
+  <RecoilRoot>
+    <ProjectEditor {...props} />
+  </RecoilRoot>
+);
