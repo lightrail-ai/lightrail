@@ -17,6 +17,7 @@ import { configState } from "../ConfigControls/config-state";
 import ComponentEditorPanel from "../ComponentEditorPanel/ComponentEditorPanel";
 import classNames from "classnames";
 import { errorsQueue } from "../PreviewRenderer/preview-renderer-state";
+import ComponentsListPanel from "../ComponentsListPanel/ComponentsListPanel";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -66,8 +67,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
   const config = useRecoilValue(configState);
   const [errorsQueueValue, setErrorsQueue] = useRecoilState(errorsQueue);
   const [isPreviewing, setIsPreviewing] = useState(false);
-  const [leftPanelVisible, setLeftPanelVisible] = useState(false);
-  const [rightPanelVisible, setRightPanelVisible] = useState(false);
+  const [isShowingComponentList, setIsShowingComponentList] = useState(false);
 
   useEffect(() => {
     getProject(projectId).then((p) => setProject(p.project));
@@ -123,6 +123,10 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
           project={project}
           isPreviewing={isPreviewing}
           onTogglePreview={() => setIsPreviewing(!isPreviewing)}
+          isShowingComponentList={isShowingComponentList}
+          onToggleComponentList={() =>
+            setIsShowingComponentList(!isShowingComponentList)
+          }
         />
         {isPreviewing ? (
           project && (
@@ -137,8 +141,6 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
           <ReflexContainer orientation="horizontal">
             <ReflexElement flex={3}>
               <ReflexContainer orientation="vertical">
-                <ReflexElement flex={leftPanelVisible ? 1 : 0}></ReflexElement>
-                <ReflexSplitter />
                 <ReflexElement
                   className={classNames("flex flex-row min-h-0", {
                     "opacity-50": rendering,
@@ -158,7 +160,15 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
                   </BrowserMockup>
                 </ReflexElement>
                 <ReflexSplitter />
-                <ReflexElement flex={rightPanelVisible ? 1 : 0}></ReflexElement>
+                {project && (
+                  <ComponentsListPanel
+                    project={project}
+                    isOpen={isShowingComponentList}
+                    onToggleOpen={() =>
+                      setIsShowingComponentList(!isShowingComponentList)
+                    }
+                  />
+                )}
               </ReflexContainer>
             </ReflexElement>
             <ReflexSplitter />

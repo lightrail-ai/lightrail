@@ -1,7 +1,9 @@
-/* .cm-nogrow .cm-editor {
-  max-height: 100%;
+.cm-line {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
 }
 
-.cm-activeLine {
-  background-color: #636b3a !important;
-} */
+.cm-content {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}

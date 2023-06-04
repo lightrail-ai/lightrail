@@ -3,36 +3,27 @@ import { EditorState } from "@codemirror/state";
 import {
   EditorView,
   keymap,
-  lineNumbers,
   highlightActiveLineGutter,
   highlightSpecialChars,
   drawSelection,
   highlightActiveLine,
 } from "@codemirror/view";
 
-import {
-  foldGutter,
-  syntaxHighlighting,
-  defaultHighlightStyle,
-  bracketMatching,
-  foldKeymap,
-  StreamLanguage,
-} from "@codemirror/language";
+import { bracketMatching } from "@codemirror/language";
 
 import { defaultKeymap, historyKeymap } from "@codemirror/commands";
-import { html } from "@codemirror/lang-html";
-import { dracula } from "thememirror";
+import { tomorrow } from "thememirror";
 import "./custom-styles.css";
 import classNames from "classnames";
+import { langs } from "@uiw/codemirror-extensions-langs";
 
 export interface CodeEditorProps {
   value: string;
-  path?: string;
-  language?: string;
   className?: string;
+  onValueChange: (value: string) => void;
 }
 
-function CodeEditor({ value, className }: CodeEditorProps) {
+function CodeEditor({ value, className, onValueChange }: CodeEditorProps) {
   const editorRef = useRef(null);
 
   useEffect(() => {
@@ -40,14 +31,19 @@ function CodeEditor({ value, className }: CodeEditorProps) {
     const state = EditorState.create({
       doc: value,
       extensions: [
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            onValueChange(update.state.doc.toString());
+          }
+        }),
         highlightActiveLineGutter(),
         highlightSpecialChars(),
         drawSelection(),
         bracketMatching(),
         highlightActiveLine(),
-        keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap]),
-        html(),
-        dracula,
+        keymap.of([...defaultKeymap, ...historyKeymap]),
+        langs.jsx(),
+        tomorrow,
       ],
     });
 
@@ -66,7 +62,7 @@ function CodeEditor({ value, className }: CodeEditorProps) {
   return (
     <div
       className={classNames(
-        "border bg-neutral-100 dark:bg-[#3a3d41] dark:border-neutral-800 rounded-lg overflow-clip flex flex-col shadow-md",
+        "rounded-lg overflow-clip flex flex-col shadow-md",
         className
       )}
     >

@@ -30,7 +30,7 @@ function ConfigControls({}: ConfigControlsProps) {
               }
             >
               <option value="panel">Panel</option>
-              <option value="popover">Popover</option>
+              <option value="popover">Popover (WIP)</option>
             </select>
           </div>
         </div>

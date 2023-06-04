@@ -47,11 +47,13 @@ function EditingPopover({ project, onUpdate, onMessage }: EditingPopoverProps) {
       style={styles.popper}
       {...attributes.popper}
     >
-      <ComponentEditingPane
-        project={project}
-        onUpdate={onUpdate}
-        onMessage={onMessage}
-      />
+      <div className="max-h-[32rem] max-w-3xl flex flex-col min-h-0">
+        <ComponentEditingPane
+          project={project}
+          onUpdate={onUpdate}
+          onMessage={onMessage}
+        />
+      </div>
       <div
         className="popper-arrow"
         ref={setArrowElement}

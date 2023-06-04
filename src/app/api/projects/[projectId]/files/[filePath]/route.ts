@@ -17,8 +17,8 @@ function createPreviewComponent(
   );
 
   return `
-    import React from "@halloumi/react";
-    import ComponentPreviewWrapper from "@halloumi/ComponentPreviewWrapper"
+    import React from "@lightwand/react";
+    import ComponentPreviewWrapper from "@lightwand/ComponentPreviewWrapper"
 
     ${componentImports
       .map(
@@ -36,8 +36,8 @@ function createPreviewComponent(
 
 function createErrorPreviewComponent(name: string, error: string) {
   return `
-      import React from "@halloumi/react";
-      import ComponentPreviewWrapper from "@halloumi/ComponentPreviewWrapper"
+      import React from "@lightwand/react";
+      import ComponentPreviewWrapper from "@lightwand/ComponentPreviewWrapper"
 
       const ErrorComponent = () => {
         React.useEffect(() => {

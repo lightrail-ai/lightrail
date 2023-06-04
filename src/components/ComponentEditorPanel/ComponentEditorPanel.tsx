@@ -18,6 +18,7 @@ function ComponentEditorPanel({
   onMessage,
 }: ComponentEditorPanelProps) {
   const target = useRecoilValue(editingPopoverTarget);
+
   return (
     <ReflexElement
       className={classNames(

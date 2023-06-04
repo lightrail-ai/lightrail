@@ -56,7 +56,7 @@ function ComponentPreviewWrapper({
 
   return (
     <div
-      className="contents cursor-pointer"
+      className="contents cursor-pointer component-preview-wrapper"
       ref={elementRef}
       onMouseOver={(e) => {
         if (!elementRef.current) return;

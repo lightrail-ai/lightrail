@@ -9,6 +9,7 @@ import {
 import classNames from "classnames";
 import TimerProgressBar from "../TimerProgressBar/TimerProgressBar";
 import CodeEditor from "../CodeEditor/CodeEditor";
+// @ts-ignore
 
 export interface ComponentEditingPaneProps {
   project: ProjectWithFiles;
@@ -25,16 +26,17 @@ function ComponentEditingPane({
   const editingComponentValue = useRecoilValue(editingComponent);
   const setEditingPopoverTarget = useSetRecoilState(editingPopoverTarget);
   const [loading, setLoading] = useState(false);
-  const [currentCode, setCurrentCode] = useState<string>("");
-  const [codeChanged, setCodeChanged] = useState(false);
+  const [oldCode, setOldCode] = useState<string>("");
+  const [modifiedCode, setModifiedCode] = useState<string>("");
 
   useEffect(() => {
     if (editingComponentValue?.name) {
       const file = project.files.find(
         (f) => f.path === editingComponentValue.name
       );
-      setCurrentCode(file?.contents!);
-      setCodeChanged(false);
+      const formatted = file?.contents!; // TODO: Add formatter
+      setModifiedCode(formatted);
+      setOldCode(formatted);
     }
   }, [project, editingComponentValue?.name]);
 
@@ -47,7 +49,7 @@ function ComponentEditingPane({
         method: "PUT",
         body: JSON.stringify({
           modification,
-          contents: codeChanged ? currentCode : undefined,
+          contents: oldCode === modifiedCode ? undefined : modifiedCode,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -109,21 +111,14 @@ function ComponentEditingPane({
         )}
       </div>
       {!loading && <div className="italic my-2">Or edit directly below:</div>}
-      <div className="overflow-auto bg-slate-50 shadow-inner text-slate-900 rounded-lg mb-4">
-        {/* <Editor
-          onValueChange={(newVal) => {
-            setCurrentCode(newVal);
-            setCodeChanged(true);
-          }}
-          highlight={(code) => highlight(code, languages.jsx, "jsx")}
-          padding={8}
+      <div className="overflow-auto shadow-inner rounded-lg mb-4">
+        <CodeEditor
+          value={oldCode}
           className={classNames("w-full", {
             "h-0 p-0": loading,
           })}
-          value={currentCode!}
-          disabled={loading}
-        /> */}
-        <CodeEditor value={currentCode} />
+          onValueChange={(newValue) => setModifiedCode(newValue)}
+        />
       </div>
       <button
         className="w-full bg-slate-50 hover:bg-slate-200 active:bg-slate-300 shadow-md text-slate-900 p-1 rounded-lg disabled:opacity-20 font-semibold"

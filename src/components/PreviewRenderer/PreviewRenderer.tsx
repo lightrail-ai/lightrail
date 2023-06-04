@@ -10,9 +10,11 @@ import PreviewOverlayLayer from "../PreviewOverlayLayer/PreviewOverlayLayer";
 import { hoveringComponent } from "./preview-renderer-state";
 import { ProjectWithFiles } from "@/util/storage";
 
+import "./preview-styling.css";
+
 const importMapper = new ImportMapper({
-  "@halloumi/react": ImportMapper.forceDefault(React),
-  "@halloumi/ComponentPreviewWrapper": ImportMapper.forceDefault(
+  "@lightwand/react": ImportMapper.forceDefault(React),
+  "@lightwand/ComponentPreviewWrapper": ImportMapper.forceDefault(
     ComponentPreviewWrapper
   ),
 });

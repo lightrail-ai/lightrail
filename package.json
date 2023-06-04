@@ -1,5 +1,5 @@
 {
-  "name": "halloumi",
+  "name": "lightwand",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -28,6 +28,7 @@
     "@types/prismjs": "^1.26.0",
     "@types/react": "18.2.6",
     "@types/react-dom": "18.2.4",
+    "@uiw/codemirror-extensions-langs": "^4.20.3",
     "autoprefixer": "10.4.14",
     "classnames": "^2.3.2",
     "encoding": "^0.1.13",
