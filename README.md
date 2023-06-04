@@ -32,12 +32,12 @@ NEXT_PUBLIC_SERVER_URL="http://localhost:3000"
 Lightwand is very much a work-in-progress, and you're likely to run into bugs. Please report any bugs you find in the Issues section of this repository. PRs are also welcome!
 Below is a rough roadmap of development plans:
 
-[x] Generating Complete Component Trees
-[x] Editing individual components
-[x] User accounts
-[x] Exporting to Next.js
-[ ] Creating new components
-[ ] Linking Data Sources / DBs
-[ ] Uploading images
-[ ] Generating images
-[ ] Supporting interactivity
+- [x] Generating Complete Component Trees
+- [x] Editing individual components
+- [x] User accounts
+- [x] Exporting to Next.js
+- [ ] Creating new components
+- [ ] Linking Data Sources / DBs
+- [ ] Uploading images
+- [ ] Generating images
+- [ ] Supporting interactivity
