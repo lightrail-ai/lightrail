@@ -23,9 +23,10 @@ NEXT_PUBLIC_LOGIN_REDIRECT_URL="http://localhost:3000/auth/callback"
 NEXT_PUBLIC_SERVER_URL="http://localhost:3000"
 ```
 
-3. Run `npm install`
-4. Run `npm run dev`
-5. Lightwand should now be running locally. Navigate to [http://localhost:3000/projects](http://localhost:3000/projects) to begin using it.
+3. Make sure Auth in Supabase is configured to use the specified server / redirect URLs
+4. Run `npm install`
+5. Run `npm run dev`
+6. Lightwand should now be running locally. Navigate to [http://localhost:3000/projects](http://localhost:3000/projects) to begin using it.
 
 ## Roadmap
 
