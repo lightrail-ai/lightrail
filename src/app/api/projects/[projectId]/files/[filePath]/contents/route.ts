@@ -9,8 +9,10 @@ export async function PUT(
   request: Request,
   { params }: { params: { projectId: string; filePath: string } }
 ) {
+  const reqCookies = new RequestCookies(request.headers);
+
   const client = new Client({
-    cookies: () => new RequestCookies(request.headers),
+    cookies: () => reqCookies,
   });
 
   const { modification, contents, error } = await request.json();
