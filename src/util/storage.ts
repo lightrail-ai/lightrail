@@ -69,6 +69,11 @@ export class Client {
       .eq("project_id", projectId)
       .eq("path", filePath)
       .single();
+
+    if (file.error) {
+      throw new Error(file.error.message);
+    }
+
     return file.data!.contents!;
   }
 
