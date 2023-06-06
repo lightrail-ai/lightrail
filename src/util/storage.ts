@@ -15,8 +15,8 @@ export type ProjectWithFiles = Project & { files: File[] };
 export class Client {
   supabase: SupabaseClient<Database>;
 
-  constructor(options: any) {
-    this.supabase = createRouteHandlerClient<Database>(options);
+  constructor(options: any, supabase?: SupabaseClient<Database>) {
+    this.supabase = supabase ?? createRouteHandlerClient<Database>(options);
   }
 
   async getProject(projectId: number): Promise<ProjectWithFiles> {

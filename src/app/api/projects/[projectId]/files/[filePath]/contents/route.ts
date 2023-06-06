@@ -1,8 +1,7 @@
 import { Client } from "@/util/storage";
 import * as prompting from "@/util/prompting";
-import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { RequestCookies } from "@edge-runtime/cookies";
 
 export const runtime = "edge";
 
@@ -10,7 +9,10 @@ export async function PUT(
   request: Request,
   { params }: { params: { projectId: string; filePath: string } }
 ) {
-  const client = new Client({ cookies });
+  const client = new Client({
+    cookies: () => new RequestCookies(request.headers),
+  });
+
   const { modification, contents, error } = await request.json();
   const encoder = new TextEncoder();
 

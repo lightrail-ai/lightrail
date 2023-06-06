@@ -1,6 +1,6 @@
 import { Client } from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
-import { cookies } from "next/headers";
+import { RequestCookies } from "@edge-runtime/cookies";
 
 function createPreviewComponent(
   projectId: string,
@@ -55,7 +55,9 @@ export async function GET(
 ) {
   const { searchParams } = new URL(request.url);
   const r = searchParams.get("r") ?? "0"; // For cache busting
-  const client = new Client({ cookies });
+  const client = new Client({
+    cookies: () => new RequestCookies(request.headers),
+  });
 
   const Babel: any = await import(
     // @ts-ignore
