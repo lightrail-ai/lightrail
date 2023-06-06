@@ -1,10 +1,6 @@
 import { Client } from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
-import * as prompting from "@/util/prompting";
-import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import path from "path";
 
 function createPreviewComponent(
   projectId: string,
@@ -100,67 +96,5 @@ export async function GET(
     headers: {
       "Content-Type": "text/javascript",
     },
-  });
-}
-
-export async function PUT(
-  request: Request,
-  { params }: { params: { projectId: string; filePath: string } }
-) {
-  const client = new Client({ cookies });
-  const { modification, contents, error } = await request.json();
-
-  if (error) {
-    const old = await client.getFile(
-      parseInt(params.projectId),
-      params.filePath
-    );
-
-    const { jsx, explanation } = await prompting.modifyComponentWithCompletion(
-      old,
-      `The JSX currently fails to render with the error: '${error}'. Fix the JSX so that it renders properly.`
-    );
-
-    await client.updateFile(parseInt(params.projectId), params.filePath, jsx);
-
-    return NextResponse.json({
-      status: "ok",
-      message: explanation,
-    });
-  }
-
-  if (!modification && contents) {
-    const file = await client.updateFile(
-      parseInt(params.projectId),
-      params.filePath,
-      contents
-    );
-
-    return NextResponse.json({
-      status: "ok",
-      file: contents,
-      message: "Component updated!",
-    });
-  }
-
-  const old = await client.getFile(parseInt(params.projectId), params.filePath);
-
-  const { jsx, explanation } = await prompting.modifyComponent(
-    old,
-    modification
-  );
-  const newFile = jsx;
-  await client.updateFile(
-    parseInt(params.projectId),
-    params.filePath,
-    newFile!
-  );
-  revalidatePath(`/api/projects/${params.projectId}/files/${params.filePath}`);
-  revalidatePath(`/api/projects/${params.projectId}`);
-
-  return NextResponse.json({
-    status: "ok",
-    file: newFile,
-    message: explanation,
   });
 }

@@ -3,30 +3,42 @@ import { Client } from "@/util/storage";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-const mockProject = {
-  name: "test",
-  files: {
-    index: `<div><Text>hello world</Text></div>`,
-    Text: `<div className="text-green-600">{children}</div>`,
-  },
-};
+export const runtime = "edge";
 
 export async function POST(request: Request) {
   const client = new Client({ cookies });
+  const encoder = new TextEncoder();
+  const customReadable = new ReadableStream({
+    async start(controller) {
+      controller.enqueue(encoder.encode("\n"));
 
-  const { description, name } = await request.json();
+      const { description, name } = await request.json();
 
-  const files = await generateRoot(description);
+      const files = await generateRoot(description);
 
-  const project_id = await client.createProject(name);
+      const project_id = await client.createProject(name);
 
-  for (const file of files) {
-    await client.createFile(project_id, file.path, file.contents || "");
-  }
+      for (const file of files) {
+        await client.createFile(project_id, file.path, file.contents || "");
+      }
 
-  return NextResponse.json({
-    status: "ok",
-    id: project_id,
+      controller.enqueue(
+        encoder.encode(
+          JSON.stringify({
+            status: "ok",
+            id: project_id,
+          })
+        )
+      );
+
+      controller.close();
+    },
+  });
+
+  return new Response(customReadable, {
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+    },
   });
 }
 

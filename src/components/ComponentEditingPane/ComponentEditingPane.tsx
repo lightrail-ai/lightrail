@@ -44,7 +44,7 @@ function ComponentEditingPane({
     setLoading(true);
 
     const res = await fetch(
-      `${SERVER_URL}/api/projects/${project.id}/files/${editingComponentValue?.name}`,
+      `${SERVER_URL}/api/projects/${project.id}/files/${editingComponentValue?.name}/contents`,
       {
         method: "PUT",
         body: JSON.stringify({

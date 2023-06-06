@@ -86,7 +86,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
       setErrorsQueue((errorsQueueValue) => {
         const err = errorsQueueValue[0];
         fetch(
-          `${SERVER_URL}/api/projects/${projectId}/files/${err.component}`,
+          `${SERVER_URL}/api/projects/${projectId}/files/${err.component}/contents`,
           {
             method: "PUT",
             headers: {

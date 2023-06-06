@@ -1,9 +1,20 @@
-import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 import { File } from "./storage";
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { OpenAI } from "langchain/llms/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+
+const chat = new ChatOpenAI({
+  modelName: "gpt-3.5-turbo-0301",
+  openAIApiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
+
+const completion = new OpenAI({
+  modelName: "text-davinci-003",
+  maxTokens: -1,
+  stop: ["```"],
+  openAIApiKey: process.env.OPENAI_API_KEY,
+});
 
 export function cleanJSX(jsx: string) {
   let cleaned = jsx.replaceAll(" class=", " className=");
@@ -38,7 +49,7 @@ export async function generateRoot(description: string): Promise<File[]> {
             "name": "ComponentName",   // The name of the component, as a string
             "dependencies": ["Button", "PricingCard"],    // Other compoents that this component uses. List only the names of custom components
             "props": ["price", "cta"],   // The props that this component uses
-            "render": "<div className=\"bg-slate-200 p-4\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\\n</div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
+            "render": "<div className=\"bg-slate-200 p-4\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\n</div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
         }
         \`\`\`
 
@@ -59,40 +70,14 @@ export async function generateRoot(description: string): Promise<File[]> {
         
         All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)`;
 
-  const folloupPrompt = (comp: string) => `
-        Please use the same output format and rules as before to generate the JSX for the '${comp}' component that you described above. 
-        Remember to include the names of any new components you need to implement in the "dependencies" key of the output JSON. No other dependencies should be included in the "dependencies" key. 
-        Make sure the output is styled with Tailwind CSS to look modern and responsive. 
-
-        Provide output in this JSON format: 
-
-        \`\`\`
-        {
-            "dependencies": ["...", "..."],
-            "jsx": "...",
-        }
-        \`\`\`
-  `;
-
-  let messages: ChatCompletionRequestMessage[] = [
-    {
-      role: "system",
-      content: system,
-    },
-    {
-      role: "user",
-      content: initialPrompt,
-    },
+  let messages = [
+    new SystemChatMessage(system),
+    new HumanChatMessage(initialPrompt),
   ];
 
-  let rawResponse = await openai.createChatCompletion({
-    model: "gpt-3.5-turbo-0301",
-    messages,
-  });
+  let rawResponse = await chat.call(messages);
 
-  messages.push(rawResponse.data.choices[0].message!);
-
-  const responseString = rawResponse.data.choices[0].message?.content!;
+  const responseString = rawResponse.text;
 
   let cleanedResponse = responseString
     .replace(/^[^\[]*\[/, "[")
@@ -151,21 +136,12 @@ export async function modifyComponent(old: string, modification: string) {
         
         Respond only as a JSON object.`;
 
-  const rawResponse = await openai.createChatCompletion({
-    model: "gpt-3.5-turbo-0301",
-    messages: [
-      {
-        role: "system",
-        content: system,
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
-  });
+  const rawResponse = await chat.call([
+    new SystemChatMessage(system),
+    new HumanChatMessage(prompt),
+  ]);
 
-  const responseString = rawResponse.data.choices[0].message?.content!;
+  const responseString = rawResponse.text;
 
   console.log(responseString);
   const jsonResponse = responseString
@@ -199,33 +175,31 @@ export async function modifyComponent(old: string, modification: string) {
   return parsed;
 }
 
-export async function modifyComponentWithEdits(
-  old: string,
-  modification: string
-) {
-  const rawResponse = await openai.createEdit({
-    model: "text-davinci-edit-001",
-    input: old,
-    instruction: modification,
-  });
+// export async function modifyComponentWithEdits(
+//   old: string,
+//   modification: string
+// ) {
+//   const rawResponse = await openai.createEdit({
+//     model: "text-davinci-edit-001",
+//     input: old,
+//     instruction: modification,
+//   });
 
-  const responseString = rawResponse.data.choices[0].text;
+//   const responseString = rawResponse.data.choices[0].text;
 
-  console.log(responseString);
+//   console.log(responseString);
 
-  return {
-    jsx: responseString,
-    explanation: "I tried my best to make the changes you asked for!",
-  };
-}
+//   return {
+//     jsx: responseString,
+//     explanation: "I tried my best to make the changes you asked for!",
+//   };
+// }
 
 export async function modifyComponentWithCompletion(
   old: string,
   modification: string
 ) {
-  const rawResponse = await openai.createCompletion({
-    model: "text-davinci-003",
-    prompt: `
+  const responseString = await completion.call(`
     Modify the following JSX component tree to match this description / request: "${modification}".
 
     \`\`\`
@@ -236,12 +210,8 @@ export async function modifyComponentWithCompletion(
     
     \`\`\`
     {
-         "explanation": "`,
-    max_tokens: 3000,
-    stop: "```",
-  });
+         "explanation": "`);
 
-  const responseString = rawResponse.data.choices[0].text;
   console.log(responseString);
 
   let parsed;

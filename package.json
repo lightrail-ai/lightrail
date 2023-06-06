@@ -36,6 +36,7 @@
     "import-mapper": "^0.0.4",
     "indent.js": "^0.3.5",
     "jszip": "^3.10.1",
+    "langchain": "^0.0.91",
     "loaders.css": "^0.1.2",
     "next": "13.4.2",
     "node-loader": "^2.0.0",
