@@ -55,8 +55,10 @@ export async function GET(
 ) {
   const { searchParams } = new URL(request.url);
   const r = searchParams.get("r") ?? "0"; // For cache busting
+  const reqCookies = new RequestCookies(request.headers);
+
   const client = new Client({
-    cookies: () => new RequestCookies(request.headers),
+    cookies: () => reqCookies,
   });
 
   const Babel: any = await import(
