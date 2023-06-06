@@ -11,6 +11,7 @@ import FirstProjectFlow from "../FirstProjectFlow/FirstProjectFlow";
 import { Project } from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
 import { useRouter } from "next/navigation";
+import Loader from "../Loader/Loader";
 
 export interface ProjectLaunchpadProps {}
 
@@ -21,11 +22,16 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
   const [projectCreationModalVisible, setProjectCreationModalVisible] =
     useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error(error);
+      } else {
+        setSession(session);
+      }
       setAuthChecked(true);
     });
 
@@ -44,7 +50,8 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
       fetch(`${SERVER_URL}/api/projects`)
         .then((res) => res.json())
         .then(({ projects }) => {
-          setProjects(projects);
+          setProjects(projects ?? []);
+          setProjectsLoading(false);
         });
     }
   }, [session]);
@@ -54,26 +61,33 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
   if (session) {
     return (
       <div className="px-24">
-        <div className="flex gap-4 flex-wrap">
-          {projects.map((project) => (
-            <div
-              onClick={() => router.push(`/projects/${project.id}`)}
-              className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-100 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-70"
-            >
-              <div className="text-slate-800 text-xl pb-1">{project.name}</div>
-              <div className="text-slate-400 italic text-sm">
-                {new Date(project.created_at!).toLocaleDateString()}
+        {projectsLoading ? (
+          <Loader className="text-gray-200 fill-black" />
+        ) : (
+          <div className="flex gap-4 flex-wrap">
+            {projects.map((project) => (
+              <div
+                key={project.id}
+                onClick={() => router.push(`/projects/${project.id}`)}
+                className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-100 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-70"
+              >
+                <div className="text-slate-800 text-xl pb-1">
+                  {project.name}
+                </div>
+                <div className="text-slate-400 italic text-sm">
+                  {new Date(project.created_at!).toLocaleDateString()}
+                </div>
               </div>
+            ))}
+            <div
+              onClick={() => setProjectCreationModalVisible(true)}
+              className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-200 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-80"
+            >
+              <div className="text-2xl font-bold">+</div>
+              <div className="text-slate-400 italic">New Project</div>
             </div>
-          ))}
-          <div
-            onClick={() => setProjectCreationModalVisible(true)}
-            className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-200 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-80"
-          >
-            <div className="text-2xl font-bold">+</div>
-            <div className="text-slate-400 italic">New Project</div>
           </div>
-        </div>
+        )}
         <ProjectCreationModal
           onClose={() => setProjectCreationModalVisible(false)}
           visible={projectCreationModalVisible}
