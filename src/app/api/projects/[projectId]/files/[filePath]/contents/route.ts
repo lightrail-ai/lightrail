@@ -10,7 +10,6 @@ export async function PUT(
   { params }: { params: { projectId: string; filePath: string } }
 ) {
   const reqCookies = new RequestCookies(request.headers);
-
   const client = new Client({
     cookies: () => reqCookies,
   });

@@ -1,12 +1,16 @@
 import { generateRoot } from "@/util/prompting";
 import { Client } from "@/util/storage";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { RequestCookies } from "@edge-runtime/cookies";
 
 export const runtime = "edge";
 
 export async function POST(request: Request) {
-  const client = new Client({ cookies });
+  const reqCookies = new RequestCookies(request.headers);
+  const client = new Client({
+    cookies: () => reqCookies,
+  });
+
   const encoder = new TextEncoder();
   const customReadable = new ReadableStream({
     async start(controller) {
@@ -43,7 +47,11 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const client = new Client({ cookies });
+  const reqCookies = new RequestCookies(request.headers);
+  const client = new Client({
+    cookies: () => reqCookies,
+  });
+
   const projects = await client.getUserProjects();
 
   return NextResponse.json({
