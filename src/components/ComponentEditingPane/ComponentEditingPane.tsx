@@ -9,6 +9,7 @@ import {
 import classNames from "classnames";
 import TimerProgressBar from "../TimerProgressBar/TimerProgressBar";
 import CodeEditor from "../CodeEditor/CodeEditor";
+import { getJSONFromStream } from "@/util/transfers";
 // @ts-ignore
 
 export interface ComponentEditingPaneProps {
@@ -57,7 +58,8 @@ function ComponentEditingPane({
         },
       }
     );
-    const json = await res.json();
+
+    const json = await getJSONFromStream(res);
     onUpdate(json.file);
     if (json.message) onMessage(json.message);
     setModification("");

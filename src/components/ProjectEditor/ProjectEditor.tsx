@@ -19,6 +19,7 @@ import classNames from "classnames";
 import { errorsQueue } from "../PreviewRenderer/preview-renderer-state";
 import ComponentsListPanel from "../ComponentsListPanel/ComponentsListPanel";
 import TourModal from "../TourModal/TourModal";
+import { getJSONFromStream } from "@/util/transfers";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -98,7 +99,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
             }),
           }
         )
-          .then((r) => r.json())
+          .then((r) => getJSONFromStream(r))
           .then((r) => {
             if (r.status === "ok") {
               toastMessage(`Healed '${err.component}': ` + r.message);

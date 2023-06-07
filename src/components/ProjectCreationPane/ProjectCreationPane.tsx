@@ -3,6 +3,7 @@ import classNames from "classnames";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import TimerProgressBar from "../TimerProgressBar/TimerProgressBar";
+import { getJSONFromStream } from "@/util/transfers";
 
 export interface ProjectCreationPaneProps {}
 
@@ -25,7 +26,7 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
         Accept: "application/json",
       },
     });
-    const json = await res.json();
+    const json = await getJSONFromStream(res);
     setLoading(false);
     router.push("/projects/" + json.id);
   }
