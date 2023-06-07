@@ -8,5 +8,10 @@ export async function getJSONFromStream(res: Response) {
     if (done) break;
     textData += decoder.decode(value);
   }
+  reader.closed.then(() => {
+    console.log("Stream closed");
+  });
+  console.log("Parsing data:");
+  console.log(textData);
   return JSON.parse(textData.trim());
 }
