@@ -8,6 +8,7 @@ const chat = new ChatOpenAI({
   modelName: "gpt-3.5-turbo-0301",
   openAIApiKey: process.env.OPENAI_API_KEY,
   maxConcurrency: 5,
+  streaming: true,
 });
 
 const completion = new OpenAI({
@@ -16,6 +17,7 @@ const completion = new OpenAI({
   stop: ["```"],
   openAIApiKey: process.env.OPENAI_API_KEY,
   maxConcurrency: 5,
+  streaming: true,
 });
 
 export function cleanJSX(jsx: string) {
@@ -26,7 +28,10 @@ export function cleanJSX(jsx: string) {
   return cleaned;
 }
 
-export async function generateRoot(description: string): Promise<File[]> {
+export async function generateRoot(
+  description: string,
+  streamingCallback?: (token: string) => void
+): Promise<File[]> {
   const system = `
         You are a helpful assistant for a React developer.
         You are given a description, and you generate an array of React components in the JSON format specified:
@@ -77,7 +82,11 @@ export async function generateRoot(description: string): Promise<File[]> {
     new HumanChatMessage(initialPrompt),
   ];
 
-  let rawResponse = await chat.call(messages);
+  let rawResponse = await chat.call(messages, undefined, [
+    {
+      handleLLMNewToken: streamingCallback,
+    },
+  ]);
 
   const responseString = rawResponse.text;
 
@@ -98,7 +107,11 @@ export async function generateRoot(description: string): Promise<File[]> {
   return files;
 }
 
-export async function modifyComponent(old: string, modification: string) {
+export async function modifyComponent(
+  old: string,
+  modification: string,
+  streamingCallback?: (token: string) => void
+) {
   const system = `
         You are a helpful JSON API for a React developer, and you modify React components to satisfy a given set of requirements.
         You use Tailwind CSS for all styling, and only manipulate the component's JSX component tree. 
@@ -138,10 +151,15 @@ export async function modifyComponent(old: string, modification: string) {
         
         Respond only as a JSON object.`;
 
-  const rawResponse = await chat.call([
-    new SystemChatMessage(system),
-    new HumanChatMessage(prompt),
-  ]);
+  const rawResponse = await chat.call(
+    [new SystemChatMessage(system), new HumanChatMessage(prompt)],
+    undefined,
+    [
+      {
+        handleLLMNewToken: streamingCallback,
+      },
+    ]
+  );
 
   const responseString = rawResponse.text;
 
@@ -199,9 +217,11 @@ export async function modifyComponent(old: string, modification: string) {
 
 export async function modifyComponentWithCompletion(
   old: string,
-  modification: string
+  modification: string,
+  streamingCallback?: (token: string) => void
 ) {
-  const responseString = await completion.call(`
+  const responseString = await completion.call(
+    `
     Modify the following JSX component tree to match this description / request: "${modification}".
 
     \`\`\`
@@ -212,7 +232,14 @@ export async function modifyComponentWithCompletion(
     
     \`\`\`
     {
-         "explanation": "`);
+         "explanation": "`,
+    undefined,
+    [
+      {
+        handleLLMNewToken: streamingCallback,
+      },
+    ]
+  );
 
   console.log(responseString);
 

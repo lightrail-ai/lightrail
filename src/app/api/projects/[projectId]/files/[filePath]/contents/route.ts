@@ -30,7 +30,10 @@ export async function PUT(
         const { jsx, explanation } =
           await prompting.modifyComponentWithCompletion(
             old,
-            `The JSX currently fails to render with the error: '${error}'. Fix the JSX so that it renders properly.`
+            `The JSX currently fails to render with the error: '${error}'. Fix the JSX so that it renders properly.`,
+            (_token) => {
+              controller.enqueue(encoder.encode("\n"));
+            }
           );
 
         await client.updateFile(
@@ -71,7 +74,10 @@ export async function PUT(
 
         const { jsx, explanation } = await prompting.modifyComponent(
           old,
-          modification
+          modification,
+          (_token) => {
+            controller.enqueue(encoder.encode("\n"));
+          }
         );
         const newFile = jsx;
         await client.updateFile(

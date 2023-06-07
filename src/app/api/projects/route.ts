@@ -18,7 +18,9 @@ export async function POST(request: Request) {
 
       const { description, name } = await request.json();
 
-      const files = await generateRoot(description);
+      const files = await generateRoot(description, (_token) => {
+        controller.enqueue(encoder.encode("\n"));
+      });
 
       const project_id = await client.createProject(name);
 
