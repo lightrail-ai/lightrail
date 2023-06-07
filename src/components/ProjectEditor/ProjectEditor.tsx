@@ -18,6 +18,7 @@ import ComponentEditorPanel from "../ComponentEditorPanel/ComponentEditorPanel";
 import classNames from "classnames";
 import { errorsQueue } from "../PreviewRenderer/preview-renderer-state";
 import ComponentsListPanel from "../ComponentsListPanel/ComponentsListPanel";
+import TourModal from "../TourModal/TourModal";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -193,6 +194,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
           onMessage={(message) => toastMessage(message)}
         />
       )}
+      <TourModal />
     </>
   );
 }

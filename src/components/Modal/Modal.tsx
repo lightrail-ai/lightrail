@@ -8,6 +8,7 @@ export interface ModalProps {
   content: React.ReactNode;
   actions?: React.ReactNode;
   wide?: boolean;
+  blackout?: boolean;
 }
 
 function Modal({
@@ -17,13 +18,18 @@ function Modal({
   content,
   actions,
   wide,
+  blackout,
 }: ModalProps) {
   return (
     <div
       id="default-modal"
       className={classNames(
-        { hidden: !visible },
-        "overflow-x-hidden overflow-y-auto fixed h-full inset-0 z-50 flex justify-center items-center bg-black bg-opacity-10"
+        {
+          hidden: !visible,
+          "bg-opacity-80": blackout,
+          "bg-opacity-10": !blackout,
+        },
+        "overflow-x-hidden overflow-y-auto fixed h-full inset-0 z-[999] flex justify-center items-center bg-black"
       )}
     >
       <div

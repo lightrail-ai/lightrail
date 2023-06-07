@@ -12,6 +12,11 @@ import { Project } from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
 import { useRouter } from "next/navigation";
 import Loader from "../Loader/Loader";
+import MobileBlockingModal from "../MobileBlockingModal/MobileBlockingModal";
+import AccountNavbar from "../AccountNavbar/AccountNavbar";
+import Image from "next/image";
+import github from "@/assets/github-mark.svg";
+import Link from "next/link";
 
 export interface ProjectLaunchpadProps {}
 
@@ -60,42 +65,59 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
 
   if (session) {
     return (
-      <div className="px-24">
-        {projectsLoading ? (
-          <Loader className="text-gray-200 fill-black" />
-        ) : (
-          <div className="flex gap-4 flex-wrap">
-            {projects.map((project) => (
+      <div className="flex flex-col h-full">
+        <AccountNavbar />
+        <div className="px-24 flex-1">
+          {projectsLoading ? (
+            <Loader className="text-gray-200 fill-black" />
+          ) : (
+            <div className="flex gap-4 flex-wrap">
+              {projects.map((project) => (
+                <Link
+                  key={project.id}
+                  href={`/projects/${project.id}`}
+                  className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-100 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-70 hover:shadow-md active:shadow-inner"
+                >
+                  <div className="text-slate-800 text-xl pb-1">
+                    {project.name}
+                  </div>
+                  <div className="text-slate-400 italic text-sm">
+                    {new Date(project.created_at!).toLocaleDateString()}
+                  </div>
+                </Link>
+              ))}
               <div
-                key={project.id}
-                onClick={() => router.push(`/projects/${project.id}`)}
-                className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-100 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-70"
+                onClick={() => setProjectCreationModalVisible(true)}
+                className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-200 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-60"
               >
-                <div className="text-slate-800 text-xl pb-1">
-                  {project.name}
-                </div>
-                <div className="text-slate-400 italic text-sm">
-                  {new Date(project.created_at!).toLocaleDateString()}
-                </div>
+                <div className="text-2xl font-bold">+</div>
+                <div className="text-slate-400 italic">New Project</div>
               </div>
-            ))}
-            <div
-              onClick={() => setProjectCreationModalVisible(true)}
-              className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-200 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-80"
-            >
-              <div className="text-2xl font-bold">+</div>
-              <div className="text-slate-400 italic">New Project</div>
             </div>
-          </div>
-        )}
-        <ProjectCreationModal
-          onClose={() => setProjectCreationModalVisible(false)}
-          visible={projectCreationModalVisible}
-        />
+          )}
+          <ProjectCreationModal
+            onClose={() => setProjectCreationModalVisible(false)}
+            visible={projectCreationModalVisible}
+          />
+          <MobileBlockingModal />
+        </div>
+        <div className="flex flex-row justify-center pb-12 text-lg text-black">
+          <a
+            href="https://github.com/vishnumenon/lightwand"
+            className="opacity-30 hover:opacity-60 cursor-pointer"
+          >
+            <Image src={github} alt={"Github Repo"} width={48} />
+          </a>
+        </div>
       </div>
     );
   } else {
-    return <FirstProjectFlow />;
+    return (
+      <>
+        <FirstProjectFlow />
+        <MobileBlockingModal />
+      </>
+    );
   }
 }
 
