@@ -32,6 +32,7 @@
     "@uiw/codemirror-extensions-langs": "^4.20.3",
     "autoprefixer": "10.4.14",
     "classnames": "^2.3.2",
+    "diffable-html": "^5.0.0",
     "encoding": "^0.1.13",
     "file-saver": "^2.0.5",
     "import-mapper": "^0.0.4",

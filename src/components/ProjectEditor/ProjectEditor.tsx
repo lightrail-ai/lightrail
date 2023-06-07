@@ -155,6 +155,9 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
                         offset={previewOffset}
                         project={project}
                         renderCount={renderCount}
+                        onOpenComponentList={() =>
+                          setIsShowingComponentList(true)
+                        }
                       />
                     )}
                   </BrowserMockup>
