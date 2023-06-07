@@ -7,6 +7,7 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 const chat = new ChatOpenAI({
   modelName: "gpt-3.5-turbo-0301",
   openAIApiKey: process.env.OPENAI_API_KEY,
+  maxConcurrency: 5,
 });
 
 const completion = new OpenAI({
@@ -14,6 +15,7 @@ const completion = new OpenAI({
   maxTokens: -1,
   stop: ["```"],
   openAIApiKey: process.env.OPENAI_API_KEY,
+  maxConcurrency: 5,
 });
 
 export function cleanJSX(jsx: string) {
