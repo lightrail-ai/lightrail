@@ -1,6 +1,7 @@
 import { Client } from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
 import { cookies } from "next/headers";
+import * as buble from "buble";
 
 function createPreviewComponent(
   projectId: string,
@@ -24,9 +25,11 @@ function createPreviewComponent(
       .join("\n")}
 
     export default function Component(props) {
-        return (<ComponentPreviewWrapper name="${name}">
+        return ${
+          buble.transform(`<ComponentPreviewWrapper name="${name}">
             ${jsx}
-        </ComponentPreviewWrapper>);
+        </ComponentPreviewWrapper>`).code
+        };
     } `;
 }
 
@@ -39,13 +42,13 @@ function createErrorPreviewComponent(name: string, error: string) {
         React.useEffect(() => {
           throw new Error("${error}");
         }, [])
-        return <></>;
+        return React.createElement( React.Fragment, null );
       }
   
       export default function Component(props) {
-          return (<ComponentPreviewWrapper name="${name}">
-              <ErrorComponent />
-          </ComponentPreviewWrapper>);
+          return React.createElement(ComponentPreviewWrapper, { name: "${name}" },
+            React.createElement( ErrorComponent, null )
+          );
       } `;
 }
 
@@ -60,42 +63,28 @@ export async function GET(
     cookies,
   });
 
-  const Babel: any = await import(
-    // @ts-ignore
-    "node_modules/@babel/standalone/babel.min.js"
-  );
-
   console.log(params);
 
-  const contents = createPreviewComponent(
-    params.projectId,
-    params.filePath,
-    await client.getFile(parseInt(params.projectId), params.filePath),
-    r
-  );
-
-  let transpiled;
+  let contents;
 
   try {
-    transpiled = Babel.transform(contents, {
-      presets: ["react"],
-    });
+    contents = createPreviewComponent(
+      params.projectId,
+      params.filePath,
+      await client.getFile(parseInt(params.projectId), params.filePath),
+      r
+    );
   } catch (e: any) {
     console.error(e);
     const shortError = e.message.split("\n")[0];
-    transpiled = Babel.transform(
-      createErrorPreviewComponent(params.filePath, shortError),
-      {
-        presets: ["react"],
-      }
-    );
+    contents = createErrorPreviewComponent(params.filePath, shortError);
   }
 
-  if (!transpiled) {
+  if (!contents) {
     return new Response("Error", { status: 500 });
   }
 
-  return new Response(transpiled.code, {
+  return new Response(contents, {
     headers: {
       "Content-Type": "text/javascript",
     },
