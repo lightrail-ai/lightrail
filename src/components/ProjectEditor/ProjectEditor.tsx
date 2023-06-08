@@ -20,6 +20,7 @@ import { errorsQueue } from "../PreviewRenderer/preview-renderer-state";
 import ComponentsListPanel from "../ComponentsListPanel/ComponentsListPanel";
 import TourModal from "../TourModal/TourModal";
 import { getJSONFromStream } from "@/util/transfers";
+import PreviewFrame from "../PreviewFrame/PreviewFrame";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -63,7 +64,6 @@ const toastMessage = (message: string) =>
 
 function ProjectEditor({ projectId }: ProjectEditorProps) {
   const [project, setProject] = useState<ProjectWithFiles | undefined>();
-  const [previewOffset, setPreviewOffset] = useState<[number, number]>([0, 0]);
   const [renderCount, setRenderCount] = useState(0);
   const [rendering, setRendering] = useState(false);
   const config = useRecoilValue(configState);
@@ -132,12 +132,15 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
         />
         {isPreviewing ? (
           project && (
-            <PreviewRenderer
-              offset={previewOffset}
-              project={project}
-              renderCount={renderCount}
-              noOverlay
-            />
+            <div className="flex-1">
+              <PreviewFrame>
+                <PreviewRenderer
+                  project={project}
+                  renderCount={renderCount}
+                  noOverlay
+                />
+              </PreviewFrame>
+            </div>
           )
         ) : (
           <ReflexContainer orientation="horizontal">
@@ -149,12 +152,9 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
                   })}
                   flex={3}
                 >
-                  <BrowserMockup
-                    onOffsetUpdate={(offset) => setPreviewOffset(offset)}
-                  >
+                  <BrowserMockup>
                     {project && (
                       <PreviewRenderer
-                        offset={previewOffset}
                         project={project}
                         renderCount={renderCount}
                         onOpenComponentList={() =>

@@ -25,7 +25,6 @@ importMapper.register();
 export interface PreviewRendererProps {
   project: ProjectWithFiles;
   renderCount: number;
-  offset: [number, number];
   noOverlay?: boolean;
   onOpenComponentList?: () => void;
 }
@@ -33,7 +32,6 @@ export interface PreviewRendererProps {
 export default function PreviewRenderer({
   project,
   renderCount,
-  offset,
   noOverlay,
   onOpenComponentList,
 }: PreviewRendererProps) {
@@ -71,7 +69,7 @@ export default function PreviewRenderer({
           </div>
         );
       },
-    [name]
+    []
   );
 
   if (!rootComponent) {
@@ -83,7 +81,7 @@ export default function PreviewRenderer({
   return (
     <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
       <div onMouseLeave={() => setHoveringComponent(null)}>
-        {!noOverlay && <PreviewOverlayLayer offset={offset} />}
+        {!noOverlay && <PreviewOverlayLayer />}
         <Component />
       </div>
     </ErrorBoundary>
