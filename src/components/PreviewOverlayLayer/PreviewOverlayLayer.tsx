@@ -1,15 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import {
-  editingPopoverTarget,
   hoveringComponent,
-  namePopoverTarget,
+  previewIframeRef,
 } from "../PreviewRenderer/preview-renderer-state";
-import { Tooltip } from "react-tooltip";
-import { Project, ProjectWithFiles } from "@/util/storage";
-import ComponentEditingPane from "../ComponentEditingPane/ComponentEditingPane";
 import NamePopover from "../NamePopover/NamePopover";
-import EditingPopover from "../EditingPopover/EditingPopover";
 
 export interface Rect {
   top: number;
@@ -18,29 +13,24 @@ export interface Rect {
   height: number;
 }
 
-function OverlayDiv({
-  offset,
-  rect,
-}: {
-  offset: [number, number];
-  rect: Rect;
-}) {
+function OverlayDiv({ rect }: { rect: Rect }) {
   const [correctedRect, setCorrectedRect] = useState<Rect | null>();
+  const previewIframeRefValue = useRecoilValue(previewIframeRef);
 
   useEffect(() => {
     setCorrectedRect({
       top:
         rect.top +
-        document.getElementById("browser-template__contents")!.scrollTop -
-        offset[1],
+        (previewIframeRefValue?.contentWindow?.document.body.scrollTop ?? 0),
+
       left:
         rect.left +
-        document.getElementById("browser-template__contents")!.scrollLeft -
-        offset[0],
+        (previewIframeRefValue?.contentWindow?.document.body.scrollLeft ?? 0),
+
       width: rect.width,
       height: rect.height,
     });
-  }, [rect, offset]);
+  }, [rect]);
 
   if (!correctedRect) return null;
 
@@ -52,17 +42,16 @@ function OverlayDiv({
   );
 }
 
-export interface PreviewOverlayLayerProps {
-  offset: [number, number];
-}
+export interface PreviewOverlayLayerProps {}
 
-function PreviewOverlayLayer({ offset }: PreviewOverlayLayerProps) {
+function PreviewOverlayLayer({}: PreviewOverlayLayerProps) {
   const hoveringComponentValue = useRecoilValue(hoveringComponent);
+
   return (
     <>
       {hoveringComponentValue &&
         hoveringComponentValue.rects.map((rect, i) => (
-          <OverlayDiv rect={rect} offset={offset} key={i} />
+          <OverlayDiv rect={rect} key={i} />
         ))}
       <NamePopover />
     </>

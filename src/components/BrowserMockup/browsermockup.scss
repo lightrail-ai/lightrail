@@ -6,6 +6,8 @@ $green:   #32d74b;
 .browser-template {
     overflow: hidden;
     border: 2px solid $template-color;
+    display: flex;
+    flex-direction: column;
     border-top: none;
     border-radius: 8px;
     box-shadow: 0 4px 10px 1px rgba(darken($template-color, 50%), 0.05);
@@ -90,13 +92,8 @@ $green:   #32d74b;
     }
 
     &__contents {
-        position: relative;
         flex-grow: 1;
-        width: 100%;
-        height: 100%;
         background: #fff;
-        overflow: auto;
-        max-height: 100%;
     }
 }
 

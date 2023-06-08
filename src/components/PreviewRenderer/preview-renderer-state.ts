@@ -25,6 +25,11 @@ export const editingPopoverTarget = atom<null | HTMLElement>({
   default: null,
 });
 
+export const previewIframeRef = atom<null | HTMLIFrameElement>({
+  key: "previewIframeRef",
+  default: null,
+});
+
 export const errorsQueue = atom<
   {
     component: string;
