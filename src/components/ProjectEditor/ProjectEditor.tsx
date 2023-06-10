@@ -198,10 +198,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
                 project={project}
                 onUpdate={onUpdate}
                 onMessage={(message) => toastMessage(message)}
-                onCreateComponent={(
-                  name: string,
-                  callback: ComponentCreationCallback
-                ) => {
+                onCreateComponent={(name, callback) => {
                   setCreatingComponent(name);
                   setOnComponentCreated(() => callback);
                 }}
@@ -216,6 +213,10 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
           project={project}
           onUpdate={onUpdate}
           onMessage={(message) => toastMessage(message)}
+          onCreateComponent={(name, callback) => {
+            setCreatingComponent(name);
+            setOnComponentCreated(() => callback);
+          }}
         />
       )}
       {project && (
