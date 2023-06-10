@@ -16,14 +16,29 @@ import { tomorrow } from "thememirror";
 import "./custom-styles.css";
 import classNames from "classnames";
 import { langs } from "@uiw/codemirror-extensions-langs";
+import { autocompletion } from "@codemirror/autocomplete";
+import { ProjectWithFiles } from "@/util/storage";
+import { componentAutocompletion } from "./component-autocomplete";
+import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 
 export interface CodeEditorProps {
   value: string;
   className?: string;
   onValueChange: (value: string) => void;
+  project?: ProjectWithFiles;
+  onCreateComponent: (
+    name: string,
+    callback: ComponentCreationCallback
+  ) => void;
 }
 
-function CodeEditor({ value, className, onValueChange }: CodeEditorProps) {
+function CodeEditor({
+  value,
+  className,
+  onValueChange,
+  project,
+  onCreateComponent,
+}: CodeEditorProps) {
   const editorRef = useRef(null);
 
   useEffect(() => {
@@ -40,10 +55,11 @@ function CodeEditor({ value, className, onValueChange }: CodeEditorProps) {
         highlightSpecialChars(),
         drawSelection(),
         bracketMatching(),
-        highlightActiveLine(),
+        // highlightActiveLine(),
         keymap.of([...defaultKeymap, ...historyKeymap]),
         langs.jsx(),
         tomorrow,
+        componentAutocompletion(project, onCreateComponent),
       ],
     });
 
@@ -52,7 +68,7 @@ function CodeEditor({ value, className, onValueChange }: CodeEditorProps) {
     return () => {
       view.destroy();
     };
-  }, [value]);
+  }, [value, project]);
 
   const editorDom = useMemo(
     () => <div className="flex-1 min-h-0" ref={editorRef} />,

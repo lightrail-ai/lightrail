@@ -12,7 +12,7 @@ function PreviewFrame({ children }: PreviewFrameProps) {
 
   useEffect(() => {
     if (iframeRef && iframeRef.contentWindow) {
-      const doc = iframeRef.contentWindow.document;
+      const doc = iframeRef.contentWindow!.document;
       var tailwind = doc.createElement("script");
       tailwind.src = "https://cdn.tailwindcss.com";
       doc.head.appendChild(tailwind);

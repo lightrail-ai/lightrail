@@ -5,14 +5,24 @@ import { editingPopoverTarget } from "../PreviewRenderer/preview-renderer-state"
 import classNames from "classnames";
 import { ProjectWithFiles } from "@/util/storage";
 import ComponentEditingPane from "../ComponentEditingPane/ComponentEditingPane";
+import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 
 export interface EditingPopoverProps {
   project: ProjectWithFiles;
   onUpdate: (newContent: string) => void;
   onMessage: (message: string) => void;
+  onCreateComponent: (
+    name: string,
+    callback: ComponentCreationCallback
+  ) => void;
 }
 
-function EditingPopover({ project, onUpdate, onMessage }: EditingPopoverProps) {
+function EditingPopover({
+  project,
+  onUpdate,
+  onMessage,
+  onCreateComponent,
+}: EditingPopoverProps) {
   const target = useRecoilValue(editingPopoverTarget);
 
   const [popperElement, setPopperElement] = useState<HTMLElement | null>(null);
@@ -52,6 +62,7 @@ function EditingPopover({ project, onUpdate, onMessage }: EditingPopoverProps) {
           project={project}
           onUpdate={onUpdate}
           onMessage={onMessage}
+          onCreateComponent={onCreateComponent}
         />
       </div>
       <div

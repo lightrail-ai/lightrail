@@ -5,17 +5,23 @@ import ComponentEditingPane from "../ComponentEditingPane/ComponentEditingPane";
 import { useRecoilValue } from "recoil";
 import { editingPopoverTarget } from "../PreviewRenderer/preview-renderer-state";
 import classNames from "classnames";
+import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 
 export interface ComponentEditorPanelProps {
   project: ProjectWithFiles | undefined;
   onUpdate: (newContent: string) => void;
   onMessage: (message: string) => void;
+  onCreateComponent: (
+    name: string,
+    callback: ComponentCreationCallback
+  ) => void;
 }
 
 function ComponentEditorPanel({
   project,
   onUpdate,
   onMessage,
+  onCreateComponent,
 }: ComponentEditorPanelProps) {
   const target = useRecoilValue(editingPopoverTarget);
 
@@ -34,6 +40,7 @@ function ComponentEditorPanel({
           project={project}
           onUpdate={onUpdate}
           onMessage={onMessage}
+          onCreateComponent={onCreateComponent}
         />
       )}
     </ReflexElement>

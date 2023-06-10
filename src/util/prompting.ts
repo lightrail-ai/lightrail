@@ -25,6 +25,8 @@ export function cleanJSX(jsx: string) {
   cleaned = cleaned.replaceAll(" for=", " htmlFor=");
   cleaned = cleaned.replaceAll("</img>", "");
   cleaned = cleaned.replaceAll(/<img([^>/]*)>/g, "<img$1 />"); //replace img tags with self-closing tags, preserving attributes
+  cleaned = cleaned.replaceAll("</input>", "");
+  cleaned = cleaned.replaceAll(/<input([^>/]*)>/g, "<input$1 />"); //replace input tags with self-closing tags, preserving attributes
   return cleaned;
 }
 
@@ -105,6 +107,98 @@ export async function generateRoot(
 
   console.log(files);
   return files;
+}
+
+export async function generateComponent(
+  name: string,
+  props: string[],
+  description: string,
+  streamingCallback?: (token: string) => void
+) {
+  const system = `
+  You are a helpful assistant for a React developer.
+  You are given a name, list of props, and description for a component, and you generate a serialized React component in this JSON format:
+
+  \`\`\` 
+  {
+    "name": "...",   // The name of the component
+    "props": ["...", "..."],   // The props that this component uses
+    "render": "...",    // The JSX for the component, as a string. Use only Tailwind CSS for styling. Use only props requested in the description.
+  }
+  \`\`\`
+  
+`;
+
+  const initialPrompt = `
+  Generate a JSON-serialized React component for the provided name/props/description. For example, if given the input:
+
+  Name: PriceDisplayBox
+  Props: price, currency
+  Description: A box that displays a price and currency on a gray background with rounded corners
+
+  You produce:
+
+  \`\`\`
+  {
+      "name": "PriceDisplayBox",   // The name of the component, as a string
+      "props": ["price", "currency"],   // The props that this component uses
+      "render": "<div className=\"bg-slate-200 px-2 py-1 rounded-md\">\\n  {props.price} ({props.currency})\\n</div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
+  }
+  \`\`\`
+
+  The JSX you generate should only use Tailwind CSS for styling. Font Awesome icons are also available to you, as css classes.
+  When accessing props in the JSX, use the format \`props.propName\` to access the prop value.
+  A component's children are available as \`props.children\`.  All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)
+
+  ${description}
+
+  Make sure each component uses all the required props and doesn't use any props that aren't requested. 
+
+  Here is your input:
+
+  Name: ${name}
+  Props: ${props.join(", ")}
+  Description: ${description}
+
+  Make sure to respond only with a JSON object in the specified format and no other content or text. Do not have any text before or after the JSON. Do not output any explanation.`;
+
+  let messages = [
+    new SystemChatMessage(system),
+    new HumanChatMessage(initialPrompt),
+  ];
+
+  let rawResponse = await chat.call(messages, undefined, [
+    {
+      handleLLMNewToken: streamingCallback,
+    },
+  ]);
+
+  const responseString = rawResponse.text;
+
+  const jsonResponse = responseString
+    .replace(/^[^{]*{/, "{")
+    .replace(/}[^}]*$/, "}");
+
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonResponse);
+    if (!parsed.name || !parsed.render) {
+      throw new Error("Invalid JSON");
+    }
+  } catch (e) {
+    console.log(e);
+    parsed = {
+      name,
+      render: `<div>${name}</div>`,
+    };
+  }
+
+  console.log(parsed);
+
+  return {
+    path: name,
+    contents: cleanJSX(parsed.render),
+  };
 }
 
 export async function modifyComponent(
