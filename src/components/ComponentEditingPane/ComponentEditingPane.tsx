@@ -10,18 +10,24 @@ import classNames from "classnames";
 import TimerProgressBar from "../TimerProgressBar/TimerProgressBar";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import { getJSONFromStream } from "@/util/transfers";
+import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 // @ts-ignore
 
 export interface ComponentEditingPaneProps {
   project: ProjectWithFiles;
   onUpdate: (newContent: string) => void;
   onMessage: (message: string) => void;
+  onCreateComponent: (
+    name: string,
+    callback: ComponentCreationCallback
+  ) => void;
 }
 
 function ComponentEditingPane({
   project,
   onUpdate,
   onMessage,
+  onCreateComponent,
 }: ComponentEditingPaneProps) {
   const [modification, setModification] = useState("");
   const editingComponentValue = useRecoilValue(editingComponent);
@@ -115,11 +121,13 @@ function ComponentEditingPane({
       {!loading && <div className="italic my-2">Or edit directly below:</div>}
       <div className="overflow-auto shadow-inner rounded-lg mb-4">
         <CodeEditor
+          project={project}
           value={oldCode}
           className={classNames("w-full", {
             "h-0 p-0": loading,
           })}
           onValueChange={(newValue) => setModifiedCode(newValue)}
+          onCreateComponent={onCreateComponent}
         />
       </div>
       <button

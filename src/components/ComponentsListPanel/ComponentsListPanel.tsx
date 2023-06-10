@@ -11,12 +11,13 @@ export interface ComponentsListPanelProps {
   isOpen: boolean;
   onToggleOpen: () => void;
   project: ProjectWithFiles;
+  onCreateComponent: (name: string) => void;
 }
 
 function ComponentsListPanel({
   isOpen,
-  onToggleOpen,
   project,
+  onCreateComponent,
 }: ComponentsListPanelProps) {
   const setEditingComponent = useSetRecoilState(editingComponent);
   const setEditingPopoverTarget = useSetRecoilState(editingPopoverTarget);
@@ -35,6 +36,12 @@ function ComponentsListPanel({
       <div className="flex flex-col min-h-full bg-slate-800 text-slate-100 px-4 py-2">
         <div className="text-xl font-semibold">Components</div>
         <div className="space-y-2 my-4">
+          <div
+            className="text-md px-2 py-1 text-slate-900 bg-slate-100 rounded-md hover:bg-opacity-90 font-semibold cursor-pointer"
+            onClick={(e) => onCreateComponent("")}
+          >
+            + New component
+          </div>
           {orderedComponents.map((file) => (
             <div
               className="text-md px-2 py-1 bg-opacity-5 bg-slate-100 rounded-md hover:bg-opacity-10 cursor-pointer"

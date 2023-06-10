@@ -21,6 +21,8 @@ import ComponentsListPanel from "../ComponentsListPanel/ComponentsListPanel";
 import TourModal from "../TourModal/TourModal";
 import { getJSONFromStream } from "@/util/transfers";
 import PreviewFrame from "../PreviewFrame/PreviewFrame";
+import ComponentCreationModal from "../ComponentCreationModal/ComponentCreationModal";
+import { ComponentCreationCallback } from "./editor-types";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -70,16 +72,26 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
   const [errorsQueueValue, setErrorsQueue] = useRecoilState(errorsQueue);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isShowingComponentList, setIsShowingComponentList] = useState(false);
+  const [creatingComponent, setCreatingComponent] = useState<string | false>(
+    false
+  );
+  const [onComponentCreated, setOnComponentCreated] = useState<
+    ComponentCreationCallback | undefined
+  >(undefined);
 
   useEffect(() => {
     getProject(projectId).then((p) => setProject(p.project));
   }, [projectId]);
 
+  async function refreshProject() {
+    const p = await getProject(projectId);
+    setProject(p.project);
+  }
+
   async function onUpdate() {
     setRendering(true);
     setRenderCount(renderCount + 1);
-    const p = await getProject(projectId);
-    setProject(p.project);
+    refreshProject();
     setRendering(false);
   }
 
@@ -172,6 +184,10 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
                     onToggleOpen={() =>
                       setIsShowingComponentList(!isShowingComponentList)
                     }
+                    onCreateComponent={() => {
+                      setCreatingComponent("");
+                      setOnComponentCreated(() => refreshProject);
+                    }}
                   />
                 )}
               </ReflexContainer>
@@ -182,6 +198,13 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
                 project={project}
                 onUpdate={onUpdate}
                 onMessage={(message) => toastMessage(message)}
+                onCreateComponent={(
+                  name: string,
+                  callback: ComponentCreationCallback
+                ) => {
+                  setCreatingComponent(name);
+                  setOnComponentCreated(() => callback);
+                }}
               />
             )}
           </ReflexContainer>
@@ -193,6 +216,14 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
           project={project}
           onUpdate={onUpdate}
           onMessage={(message) => toastMessage(message)}
+        />
+      )}
+      {project && (
+        <ComponentCreationModal
+          componentName={creatingComponent}
+          setComponentName={setCreatingComponent}
+          project={project}
+          onComponentCreated={onComponentCreated}
         />
       )}
       <TourModal />
