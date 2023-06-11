@@ -71,7 +71,7 @@ function ComponentCreationPane({
         )}
         value={name}
         disabled={loading}
-        placeholder="Project Name"
+        placeholder="Component Name"
         onChange={(e) => setName(e.target.value)}
       />
       <ReactTags

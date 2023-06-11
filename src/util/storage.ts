@@ -78,11 +78,15 @@ export class Client {
   }
 
   async createFile(projectId: number, filePath: string, contents: string) {
-    await this.supabase.from("files").insert({
+    const result = await this.supabase.from("files").insert({
       project_id: projectId,
       path: filePath,
       contents,
     });
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
   }
 
   async updateFile(projectId: number, filePath: string, contents: string) {

@@ -12,6 +12,7 @@ import {
   faWindowMaximize,
 } from "@fortawesome/free-solid-svg-icons";
 import IconToggle from "../IconToggle/IconToggle";
+import classNames from "classnames";
 
 export interface EditorNavbarProps {
   project: Project | undefined;
@@ -46,7 +47,14 @@ function EditorNavbar({
       />
       {project && <ProjectExporter project={project} />}
       <ConfigControls />
-      <div className="text-slate-300 hover:text-white cursor-pointer">
+      <div
+        className={classNames(
+          `text-slate-300 hover:text-white cursor-pointer rounded-md p-2`,
+          {
+            "bg-slate-100 bg-opacity-20": isShowingComponentList,
+          }
+        )}
+      >
         <FontAwesomeIcon icon={faList} onClick={onToggleComponentList} />
       </div>
     </div>

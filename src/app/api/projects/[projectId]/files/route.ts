@@ -30,7 +30,7 @@ export async function POST(
         }
       );
 
-      client.createFile(
+      await client.createFile(
         parseInt(params.projectId),
         file.path,
         file.contents || ""
