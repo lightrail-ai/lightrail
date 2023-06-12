@@ -37,6 +37,7 @@
     "classnames": "^2.3.2",
     "encoding": "^0.1.13",
     "file-saver": "^2.0.5",
+    "hint.css": "^2.7.0",
     "import-mapper": "^0.0.4",
     "jszip": "^3.10.1",
     "langchain": "^0.0.91",

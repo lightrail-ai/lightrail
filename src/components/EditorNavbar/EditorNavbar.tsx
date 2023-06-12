@@ -37,7 +37,15 @@ function EditorNavbar({
       >
         <FontAwesomeIcon icon={faArrowLeft} />
       </Link>
-      <span className="font-semibold text-slate-100">{project?.name}</span>
+      <span className="font-semibold text-slate-100 inline-flex flex-row items-center gap-2">
+        {project?.name}{" "}
+        {project?.type && (
+          <div className="bg-slate-100 bg-opacity-30 text-xs px-2 py-0.5 rounded-lg text-slate-200">
+            {project.type}
+          </div>
+        )}
+      </span>
+
       <div className="flex-1" />
       <IconToggle
         trueIcon={faWindowMaximize}
@@ -46,7 +54,7 @@ function EditorNavbar({
         value={isPreviewing}
       />
       {project && <ProjectExporter project={project} />}
-      <ConfigControls />
+      {/* <ConfigControls /> */}
       <div
         className={classNames(
           `text-slate-300 hover:text-white cursor-pointer rounded-md p-2`,

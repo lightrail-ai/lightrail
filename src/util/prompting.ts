@@ -3,6 +3,8 @@ import { File } from "./storage";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { OpenAI } from "langchain/llms/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { Library } from "./starter-library";
+import { SERVER_URL } from "./constants";
 
 const chat = new ChatOpenAI({
   modelName: "gpt-3.5-turbo-0301",
@@ -30,6 +32,17 @@ export function cleanJSX(jsx: string) {
   return cleaned;
 }
 
+const libraryForPrompt = Object.entries(Library)
+  .map(
+    ([name, details]) =>
+      `${name}: ${details.description} (example usage: ${details.example})`
+  )
+  .join("\n");
+
+type LibraryComponent = keyof typeof Library;
+
+const libraryComponents = Object.keys(Library) as LibraryComponent[];
+
 export async function generateRoot(
   description: string,
   streamingCallback?: (token: string) => void
@@ -55,29 +68,30 @@ export async function generateRoot(
 
         \`\`\`
         {
-            "name": "ComponentName",   // The name of the component, as a string
-            "dependencies": ["Button", "PricingCard"],    // Other compoents that this component uses. List only the names of custom components
-            "props": ["price", "cta"],   // The props that this component uses
-            "render": "<div className=\"bg-slate-200 p-4\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\n</div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
+            "name": "ComponentName",
+            "dependencies": ["Button", "PricingCard"],
+            "props": ["price", "cta"],
+            "render": "<div className=\"bg-slate-200 p-4\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\\n</div>",
         }
         \`\`\`
 
-        generate an array of React components (use Tailwind CSS) that fulfill this description:
-
-        ${description}
+        generate an array of React components (use Tailwind CSS) that fulfill this description: "${description}"
 
         The first component should be called Index and should be the top-level component. Come up with the names for the components you'd need to implement to satisfy this description.
         This should include components that describe semantic sections of the output, as well as components that represent sepcific UI elements.
         Output this list of names in the "dependencies" key of the first component's JSON. The "dependencies" list should ONLY include component names, not any other functions or libraries.
-        Then, using only these components and standard HTML elements, generate a React component tree (in JSX, using Tailwind CSS) that fulfills the description. Font Awesome icons are available to you, as css classes. Only provide the JSX for the top-level component, in the "render" key of the output JSON.
-        Then, for each dependency component, follow the same process to generate a serialized JSON representation. Repeat until no dependencies are unimplemented. If a component requires props, provide those props with sample values whenever that component is used.
+        Then, using only these components and standard HTML elements (or the components listed below), generate a React component tree, in JSX (as a string) & styled with Tailwind CSS classes, that fulfills the description. Font Awesome icons are available to you, as css classes. Only provide the JSX for the top-level component, in the "render" key of the output JSON.
+        Then, for each dependency component that isn't already implemented, follow the same process to generate a serialized JSON representation. Repeat until no dependencies are unimplemented. If a component requires props, provide those props with sample values whenever that component is used.
         When accessing props in the JSX, use the format \`props.propName\` to access the prop value. A component's children are available as \`props.children\`.
 
-        Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
+        The following components can also be used implementing them yourself, IF they are appropriate for the description requested:
 
-        Make sure to respond only with an array of JSON objects and no other content or text. Do not have any text before or after the JSON. Do not output any explanation.
-        
-        All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)`;
+        ${libraryForPrompt}
+
+        ONLY use components from that list if they are appropriate for the description requested. You will be penalized for misusing them.  
+        Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
+        All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)
+        Respond only with an array of RFC-compliant JSON objects and no other content, comments, titles, explanations, or text.`;
 
   let messages = [
     new SystemChatMessage(system),
@@ -92,13 +106,37 @@ export async function generateRoot(
 
   const responseString = rawResponse.text;
 
+  console.log(initialPrompt);
+  console.log(responseString);
+
   let cleanedResponse = responseString
     .replace(/^[^\[]*\[/, "[")
     .replace(/\][^\]]*$/, "]");
 
   console.log(cleanedResponse);
 
-  let response = JSON.parse(cleanedResponse);
+  let response;
+
+  try {
+    response = JSON.parse(cleanedResponse);
+  } catch (e) {
+    cleanedResponse = cleanedResponse.replaceAll(
+      /"render":\s*`(.+?[^\\])`/gms,
+      (_, jsxstr) =>
+        `"render": ${JSON.stringify(jsxstr.replaceAll("\\`", "`"))}`
+    );
+    try {
+      response = JSON.parse(cleanedResponse);
+    } catch (e) {
+      cleanedResponse = cleanedResponse.replaceAll("\n", " ");
+      try {
+        response = JSON.parse(cleanedResponse);
+      } catch (e) {
+        cleanedResponse = cleanedResponse.replace(/(.*}),\s*{.*$/gs, "$1]");
+        response = JSON.parse(cleanedResponse);
+      }
+    }
+  }
 
   let files: File[] = response.map((comp: any) => ({
     path: comp.name === "Index" ? "index" : comp.name,
@@ -106,6 +144,36 @@ export async function generateRoot(
   }));
 
   console.log(files);
+
+  let usedLibraryComponents = new Set<keyof typeof Library>();
+
+  files = files.filter((file) => {
+    if (libraryComponents.includes(file.path as LibraryComponent)) {
+      return false;
+    }
+
+    for (const libComp of libraryComponents) {
+      if (file.contents?.includes(`<${libComp}`)) {
+        usedLibraryComponents.add(libComp);
+      }
+    }
+
+    return true;
+  });
+
+  for (const libComp of Array.from(usedLibraryComponents)) {
+    const contentsPath = Library[libComp].src;
+    const resp = await fetch(
+      SERVER_URL + "/starter-components/" + contentsPath
+    );
+    const contents = await resp.text();
+
+    files.push({
+      path: libComp,
+      contents,
+    } as File);
+  }
+
   return files;
 }
 

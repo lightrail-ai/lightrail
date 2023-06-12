@@ -29,17 +29,18 @@ function ComponentPreviewWrapper({
     () =>
       ({ error }: { error: Error }) => {
         useEffect(() => {
-          setErrorsQueue((prev) =>
-            prev.find((e) => e.component === name)
-              ? prev
-              : [
-                  ...prev,
-                  {
-                    component: name,
-                    error: error.message,
-                  },
-                ]
-          );
+          // TODO: Try to heal ONCE but then stop.
+          // setErrorsQueue((prev) =>
+          //   prev.find((e) => e.component === name)
+          //     ? prev
+          //     : [
+          //         ...prev,
+          //         {
+          //           component: name,
+          //           error: error.message,
+          //         },
+          //       ]
+          // );
         }, [error]);
 
         return (
@@ -47,7 +48,7 @@ function ComponentPreviewWrapper({
             title={error.message}
             className="inline-block text-red-500 bg-red-500 bg-opacity-10 border-red-500 border border-opacity-40 p-2 "
           >
-            <b>{name}</b> failed to render, attempting to auto-fix...
+            <b>{name}</b> failed to render, please inspect manually.
           </span>
         );
       },

@@ -53,10 +53,15 @@ export class Client {
     return data;
   }
 
-  async createProject(name: string) {
+  async createProject(
+    name: string,
+    description?: string,
+    type?: string,
+    libraries?: string[]
+  ) {
     const res = await this.supabase
       .from("projects")
-      .insert({ name })
+      .insert({ name, description, type, libraries })
       .select("id")
       .single();
     return res.data!.id;

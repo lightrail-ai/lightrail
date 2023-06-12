@@ -1,5 +1,6 @@
 import Script from "next/script";
 import "./globals.css";
+import "hint.css/hint.css";
 
 export const metadata = {
   title: "Lightwand",
