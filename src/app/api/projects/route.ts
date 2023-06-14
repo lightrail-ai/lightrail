@@ -1,5 +1,5 @@
-import { generateRoot } from "@/util/prompting";
-import { Client } from "@/util/storage";
+import { generateComponent, generateRoot } from "@/util/prompting";
+import { Client, File } from "@/util/storage";
 import { NextResponse } from "next/server";
 import { RequestCookies } from "@edge-runtime/cookies";
 
@@ -16,13 +16,42 @@ export async function POST(request: Request) {
     async start(controller) {
       controller.enqueue(encoder.encode("\n"));
 
-      const { description, name } = await request.json();
+      const { description, name, type, libraries, props } =
+        await request.json();
 
-      const files = await generateRoot(description, (_token) => {
-        controller.enqueue(encoder.encode("\n"));
-      });
+      let files: File[];
 
-      const project_id = await client.createProject(name);
+      if (type === "component") {
+        let mainFile = await generateComponent(
+          name,
+          props,
+          description,
+          (_token) => {
+            controller.enqueue(encoder.encode("\n"));
+          }
+        );
+
+        files = [
+          {
+            path: "index",
+            contents: `<div className="w-full h-full flex items-center justify-center"><${name} ${props
+              .map((p: string) => `${p}={undefined}`)
+              .join(" ")} /></div>`,
+          },
+          mainFile,
+        ] as File[];
+      } else {
+        files = await generateRoot(name, description, libraries, (_token) => {
+          controller.enqueue(encoder.encode("\n"));
+        });
+      }
+
+      const project_id = await client.createProject(
+        name,
+        description,
+        type,
+        libraries
+      );
 
       for (const file of files) {
         await client.createFile(project_id, file.path, file.contents || "");

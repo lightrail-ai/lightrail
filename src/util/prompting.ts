@@ -3,9 +3,18 @@ import { File } from "./storage";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { OpenAI } from "langchain/llms/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { CompleteLibrary, type Library } from "./starter-library";
+import { SERVER_URL } from "./constants";
 
 const chat = new ChatOpenAI({
   modelName: "gpt-3.5-turbo-0301",
+  openAIApiKey: process.env.OPENAI_API_KEY,
+  maxConcurrency: 5,
+  streaming: true,
+});
+
+const chat4 = new ChatOpenAI({
+  modelName: "gpt-4",
   openAIApiKey: process.env.OPENAI_API_KEY,
   maxConcurrency: 5,
   streaming: true,
@@ -30,10 +39,35 @@ export function cleanJSX(jsx: string) {
   return cleaned;
 }
 
+function getProjectSpecificLibrary(libraries: string[]): Library {
+  return Object.fromEntries(
+    Object.entries(CompleteLibrary).filter(([_, details]) =>
+      details.categories.some((c) => libraries.includes(c))
+    )
+  );
+}
+
+function formatLibraryForPrompt(lib: Library) {
+  return Object.entries(lib)
+    .map(
+      ([name, details]) =>
+        `${name}: ${details.description} (example usage: ${details.example})`
+    )
+    .join("\n");
+}
+
+function getComponentsFromLibrary(lib: Library) {
+  return Object.keys(lib);
+}
+
 export async function generateRoot(
+  name: string,
   description: string,
+  libraries: string[],
   streamingCallback?: (token: string) => void
 ): Promise<File[]> {
+  const usableLibrary = getProjectSpecificLibrary(libraries);
+
   const system = `
         You are a helpful assistant for a React developer.
         You are given a description, and you generate an array of React components in the JSON format specified:
@@ -46,6 +80,8 @@ export async function generateRoot(
           "render": "...",    // The JSX for the component, as a string. Use only Tailwind CSS for styling. 
         }
         \`\`\`
+
+        You output only JSON arrays. 
         
   `;
 
@@ -55,36 +91,37 @@ export async function generateRoot(
 
         \`\`\`
         {
-            "name": "ComponentName",   // The name of the component, as a string
-            "dependencies": ["Button", "PricingCard"],    // Other compoents that this component uses. List only the names of custom components
-            "props": ["price", "cta"],   // The props that this component uses
-            "render": "<div className=\"bg-slate-200 p-4\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\n</div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
+            "name": "ComponentName",
+            "dependencies": ["Button", "PricingCard"],
+            "props": ["price", "cta"],
+            "render": "<div className=\"bg-slate-200 p-4\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\\n</div>",
         }
         \`\`\`
 
-        generate an array of React components (use Tailwind CSS) that fulfill this description:
-
-        ${description}
+        generate an array of React components (use Tailwind CSS) for a project called "${name}" that fulfills this description: "${description}"
 
         The first component should be called Index and should be the top-level component. Come up with the names for the components you'd need to implement to satisfy this description.
         This should include components that describe semantic sections of the output, as well as components that represent sepcific UI elements.
         Output this list of names in the "dependencies" key of the first component's JSON. The "dependencies" list should ONLY include component names, not any other functions or libraries.
-        Then, using only these components and standard HTML elements, generate a React component tree (in JSX, using Tailwind CSS) that fulfills the description. Font Awesome icons are available to you, as css classes. Only provide the JSX for the top-level component, in the "render" key of the output JSON.
-        Then, for each dependency component, follow the same process to generate a serialized JSON representation. Repeat until no dependencies are unimplemented. If a component requires props, provide those props with sample values whenever that component is used.
+        Then, using only these components and standard HTML elements (or the components listed below), generate a React component tree, in JSX (as a string) & styled with Tailwind CSS classes, that fulfills the description. Font Awesome icons are available to you, as css classes. Only provide the JSX for the top-level component, in the "render" key of the output JSON.
+        Then, for each dependency component that isn't already implemented, follow the same process to generate a serialized JSON representation. Repeat until no dependencies are unimplemented. If a component requires props, provide those props with sample values whenever that component is used.
         When accessing props in the JSX, use the format \`props.propName\` to access the prop value. A component's children are available as \`props.children\`.
 
-        Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
+        The following components can also be used implementing them yourself, IF they are appropriate for the description requested:
 
-        Make sure to respond only with an array of JSON objects and no other content or text. Do not have any text before or after the JSON. Do not output any explanation.
-        
-        All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)`;
+        ${formatLibraryForPrompt(usableLibrary)}
+
+        ONLY use components from that list if they are appropriate for the description requested. You will be penalized for misusing them.  
+        Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
+        All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)
+        Respond only with an array of RFC-compliant JSON objects and no other content, comments, titles, explanations, or text.`;
 
   let messages = [
     new SystemChatMessage(system),
     new HumanChatMessage(initialPrompt),
   ];
 
-  let rawResponse = await chat.call(messages, undefined, [
+  let rawResponse = await chat4.call(messages, undefined, [
     {
       handleLLMNewToken: streamingCallback,
     },
@@ -92,13 +129,37 @@ export async function generateRoot(
 
   const responseString = rawResponse.text;
 
+  console.log(initialPrompt);
+  console.log(responseString);
+
   let cleanedResponse = responseString
     .replace(/^[^\[]*\[/, "[")
     .replace(/\][^\]]*$/, "]");
 
   console.log(cleanedResponse);
 
-  let response = JSON.parse(cleanedResponse);
+  let response;
+
+  try {
+    response = JSON.parse(cleanedResponse);
+  } catch (e) {
+    cleanedResponse = cleanedResponse.replaceAll(
+      /"render":\s*`(.+?[^\\])`/gms,
+      (_, jsxstr) =>
+        `"render": ${JSON.stringify(jsxstr.replaceAll("\\`", "`"))}`
+    );
+    try {
+      response = JSON.parse(cleanedResponse);
+    } catch (e) {
+      cleanedResponse = cleanedResponse.replaceAll("\n", " ");
+      try {
+        response = JSON.parse(cleanedResponse);
+      } catch (e) {
+        cleanedResponse = cleanedResponse.replace(/(.*}),\s*{.*$/gs, "$1]");
+        response = JSON.parse(cleanedResponse);
+      }
+    }
+  }
 
   let files: File[] = response.map((comp: any) => ({
     path: comp.name === "Index" ? "index" : comp.name,
@@ -106,6 +167,45 @@ export async function generateRoot(
   }));
 
   console.log(files);
+
+  let usedLibraryComponents = new Set<keyof typeof usableLibrary>();
+  let libraryComponents = getComponentsFromLibrary(usableLibrary);
+
+  files = files
+    .filter((file) => {
+      return !libraryComponents.includes(file.path);
+    })
+    .map((file) => {
+      for (const libComp of libraryComponents) {
+        if (file.contents?.match(new RegExp(`<${libComp}\\W`))) {
+          usedLibraryComponents.add(libComp);
+          file.contents = file.contents?.replaceAll(
+            new RegExp(`<${libComp}(\\W)`, "g"),
+            `<${usableLibrary[libComp].as}$1`
+          );
+          file.contents = file.contents?.replaceAll(
+            `</${libComp}>`,
+            `</${usableLibrary[libComp].as}>`
+          );
+        }
+      }
+
+      return file;
+    });
+
+  for (const libComp of Array.from(usedLibraryComponents)) {
+    const contentsPath = usableLibrary[libComp].src;
+    const resp = await fetch(
+      SERVER_URL + "/starter-components/" + contentsPath
+    );
+    const contents = await resp.text();
+
+    files.push({
+      path: usableLibrary[libComp].as,
+      contents,
+    } as File);
+  }
+
   return files;
 }
 
@@ -167,7 +267,7 @@ export async function generateComponent(
     new HumanChatMessage(initialPrompt),
   ];
 
-  let rawResponse = await chat.call(messages, undefined, [
+  let rawResponse = await chat4.call(messages, undefined, [
     {
       handleLLMNewToken: streamingCallback,
     },

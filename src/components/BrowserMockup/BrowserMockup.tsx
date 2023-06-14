@@ -49,7 +49,7 @@ function BrowserMockup({ children }: BrowserMockupProps) {
         id="browser-template__contents"
         className="browser-template__contents"
       >
-        <PreviewFrame>{children}</PreviewFrame>
+        {children}
       </div>
     </div>
   );

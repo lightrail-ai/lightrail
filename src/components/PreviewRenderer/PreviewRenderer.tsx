@@ -27,6 +27,8 @@ export interface PreviewRendererProps {
   renderCount: number;
   noOverlay?: boolean;
   onOpenComponentList?: () => void;
+  onRenderComplete?: () => void;
+  ready?: boolean;
 }
 
 export default function PreviewRenderer({
@@ -34,10 +36,19 @@ export default function PreviewRenderer({
   renderCount,
   noOverlay,
   onOpenComponentList,
+  onRenderComplete,
+  ready,
 }: PreviewRendererProps) {
   const setHoveringComponent = useSetRecoilState(hoveringComponent);
   const [rootComponent, setRootComponent] =
     useState<React.ComponentType | null>(null);
+  const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (wrapper) {
+      onRenderComplete?.();
+    }
+  }, [wrapper]);
 
   useEffect(() => {
     if (!project || !project.id) return;
@@ -60,6 +71,7 @@ export default function PreviewRenderer({
 
         return (
           <div
+            ref={setWrapper}
             title={error.message}
             className="h-full text-red-500 bg-red-500 bg-opacity-10 border-red-500 border-4 border-opacity-40 p-2 "
           >
@@ -80,9 +92,9 @@ export default function PreviewRenderer({
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
-      <div onMouseLeave={() => setHoveringComponent(null)}>
+      <div onMouseLeave={() => setHoveringComponent(null)} ref={setWrapper}>
         {!noOverlay && <PreviewOverlayLayer />}
-        <Component />
+        {ready && <Component />}
       </div>
     </ErrorBoundary>
   );

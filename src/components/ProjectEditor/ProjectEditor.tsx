@@ -23,6 +23,8 @@ import { getJSONFromStream } from "@/util/transfers";
 import PreviewFrame from "../PreviewFrame/PreviewFrame";
 import ComponentCreationModal from "../ComponentCreationModal/ComponentCreationModal";
 import { ComponentCreationCallback } from "./editor-types";
+import ComponentPreviewDressing from "../ComponentPreviewDressing/ComponentPreviewDressing";
+import LoadingSplashOverlay from "../LoadingSplashOverlay/LoadingSplashOverlay";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -66,6 +68,7 @@ const toastMessage = (message: string) =>
 
 function ProjectEditor({ projectId }: ProjectEditorProps) {
   const [project, setProject] = useState<ProjectWithFiles | undefined>();
+  const [preparingFrame, setPreparingFrame] = useState(true);
   const [renderCount, setRenderCount] = useState(0);
   const [rendering, setRendering] = useState(false);
   const config = useRecoilValue(configState);
@@ -79,7 +82,13 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
     ComponentCreationCallback | undefined
   >(undefined);
 
+  function updateRenderCount() {
+    setRenderCount(Date.now());
+  }
+
   useEffect(() => {
+    setPreparingFrame(true);
+    updateRenderCount();
     getProject(projectId).then((p) => setProject(p.project));
   }, [projectId]);
 
@@ -90,8 +99,8 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
 
   async function onUpdate() {
     setRendering(true);
-    setRenderCount(renderCount + 1);
-    refreshProject();
+    updateRenderCount();
+    await refreshProject();
     setRendering(false);
   }
 
@@ -125,6 +134,9 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
 
   return (
     <>
+      {(!project || preparingFrame) && (
+        <LoadingSplashOverlay message={"Loading Project..."} />
+      )}
       <div
         className="h-screen w-screen flex flex-col max-h-screen"
         style={{
@@ -145,13 +157,12 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
         {isPreviewing ? (
           project && (
             <div className="flex-1">
-              <PreviewFrame>
-                <PreviewRenderer
-                  project={project}
-                  renderCount={renderCount}
-                  noOverlay
-                />
-              </PreviewFrame>
+              <PreviewFrame
+                project={project}
+                renderCount={renderCount}
+                onRenderComplete={() => setPreparingFrame(false)}
+                noOverlay
+              />
             </div>
           )
         ) : (
@@ -164,17 +175,32 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
                   })}
                   flex={3}
                 >
-                  <BrowserMockup>
-                    {project && (
-                      <PreviewRenderer
+                  {project?.type === "component" ? (
+                    <ComponentPreviewDressing>
+                      <PreviewFrame
+                        transparent
                         project={project}
                         renderCount={renderCount}
                         onOpenComponentList={() =>
                           setIsShowingComponentList(true)
                         }
+                        onRenderComplete={() => setPreparingFrame(false)}
                       />
-                    )}
-                  </BrowserMockup>
+                    </ComponentPreviewDressing>
+                  ) : (
+                    <BrowserMockup>
+                      {project && (
+                        <PreviewFrame
+                          project={project}
+                          renderCount={renderCount}
+                          onOpenComponentList={() =>
+                            setIsShowingComponentList(true)
+                          }
+                          onRenderComplete={() => setPreparingFrame(false)}
+                        />
+                      )}
+                    </BrowserMockup>
+                  )}
                 </ReflexElement>
                 <ReflexSplitter />
                 {project && (
@@ -208,7 +234,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
         )}
       </div>
       <Toaster />
-      {project && config.editUX === "popover" && (
+      {/* {project && config.editUX === "popover" && (
         <EditingPopover
           project={project}
           onUpdate={onUpdate}
@@ -218,7 +244,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
             setOnComponentCreated(() => callback);
           }}
         />
-      )}
+      )} */}
       {project && (
         <ComponentCreationModal
           componentName={creatingComponent}
