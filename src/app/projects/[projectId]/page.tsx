@@ -1,5 +1,9 @@
 import ProjectEditor from "@/components/ProjectEditor/ProjectEditor";
 
+export const metadata = {
+  title: "Lightwand – Editor",
+};
+
 export default async function Project({
   params,
 }: {

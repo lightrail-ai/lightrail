@@ -1,5 +1,5 @@
-<header class="pb-6 bg-white lg:pb-0">
-    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+<header class="pb-6  bg-white lg:pb-0 pb-0 ">
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 ">
         <nav class="flex items-center justify-between h-16 lg:h-20">
             <div class="flex-shrink-0">
                 <a href="#" title="" class="flex">

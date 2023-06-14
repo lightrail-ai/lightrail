@@ -41,7 +41,7 @@ export async function POST(request: Request) {
           mainFile,
         ] as File[];
       } else {
-        files = await generateRoot(description, (_token) => {
+        files = await generateRoot(name, description, libraries, (_token) => {
           controller.enqueue(encoder.encode("\n"));
         });
       }

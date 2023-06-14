@@ -3,11 +3,18 @@ import { File } from "./storage";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { OpenAI } from "langchain/llms/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
-import { Library } from "./starter-library";
+import { CompleteLibrary, type Library } from "./starter-library";
 import { SERVER_URL } from "./constants";
 
 const chat = new ChatOpenAI({
   modelName: "gpt-3.5-turbo-0301",
+  openAIApiKey: process.env.OPENAI_API_KEY,
+  maxConcurrency: 5,
+  streaming: true,
+});
+
+const chat4 = new ChatOpenAI({
+  modelName: "gpt-4",
   openAIApiKey: process.env.OPENAI_API_KEY,
   maxConcurrency: 5,
   streaming: true,
@@ -32,21 +39,35 @@ export function cleanJSX(jsx: string) {
   return cleaned;
 }
 
-const libraryForPrompt = Object.entries(Library)
-  .map(
-    ([name, details]) =>
-      `${name}: ${details.description} (example usage: ${details.example})`
-  )
-  .join("\n");
+function getProjectSpecificLibrary(libraries: string[]): Library {
+  return Object.fromEntries(
+    Object.entries(CompleteLibrary).filter(([_, details]) =>
+      details.categories.some((c) => libraries.includes(c))
+    )
+  );
+}
 
-type LibraryComponent = keyof typeof Library;
+function formatLibraryForPrompt(lib: Library) {
+  return Object.entries(lib)
+    .map(
+      ([name, details]) =>
+        `${name}: ${details.description} (example usage: ${details.example})`
+    )
+    .join("\n");
+}
 
-const libraryComponents = Object.keys(Library) as LibraryComponent[];
+function getComponentsFromLibrary(lib: Library) {
+  return Object.keys(lib);
+}
 
 export async function generateRoot(
+  name: string,
   description: string,
+  libraries: string[],
   streamingCallback?: (token: string) => void
 ): Promise<File[]> {
+  const usableLibrary = getProjectSpecificLibrary(libraries);
+
   const system = `
         You are a helpful assistant for a React developer.
         You are given a description, and you generate an array of React components in the JSON format specified:
@@ -59,6 +80,8 @@ export async function generateRoot(
           "render": "...",    // The JSX for the component, as a string. Use only Tailwind CSS for styling. 
         }
         \`\`\`
+
+        You output only JSON arrays. 
         
   `;
 
@@ -75,7 +98,7 @@ export async function generateRoot(
         }
         \`\`\`
 
-        generate an array of React components (use Tailwind CSS) that fulfill this description: "${description}"
+        generate an array of React components (use Tailwind CSS) for a project called "${name}" that fulfills this description: "${description}"
 
         The first component should be called Index and should be the top-level component. Come up with the names for the components you'd need to implement to satisfy this description.
         This should include components that describe semantic sections of the output, as well as components that represent sepcific UI elements.
@@ -86,7 +109,7 @@ export async function generateRoot(
 
         The following components can also be used implementing them yourself, IF they are appropriate for the description requested:
 
-        ${libraryForPrompt}
+        ${formatLibraryForPrompt(usableLibrary)}
 
         ONLY use components from that list if they are appropriate for the description requested. You will be penalized for misusing them.  
         Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
@@ -98,7 +121,7 @@ export async function generateRoot(
     new HumanChatMessage(initialPrompt),
   ];
 
-  let rawResponse = await chat.call(messages, undefined, [
+  let rawResponse = await chat4.call(messages, undefined, [
     {
       handleLLMNewToken: streamingCallback,
     },
@@ -145,31 +168,40 @@ export async function generateRoot(
 
   console.log(files);
 
-  let usedLibraryComponents = new Set<keyof typeof Library>();
+  let usedLibraryComponents = new Set<keyof typeof usableLibrary>();
+  let libraryComponents = getComponentsFromLibrary(usableLibrary);
 
-  files = files.filter((file) => {
-    if (libraryComponents.includes(file.path as LibraryComponent)) {
-      return false;
-    }
-
-    for (const libComp of libraryComponents) {
-      if (file.contents?.includes(`<${libComp}`)) {
-        usedLibraryComponents.add(libComp);
+  files = files
+    .filter((file) => {
+      return !libraryComponents.includes(file.path);
+    })
+    .map((file) => {
+      for (const libComp of libraryComponents) {
+        if (file.contents?.match(new RegExp(`<${libComp}\\W`))) {
+          usedLibraryComponents.add(libComp);
+          file.contents = file.contents?.replaceAll(
+            new RegExp(`<${libComp}(\\W)`, "g"),
+            `<${usableLibrary[libComp].as}$1`
+          );
+          file.contents = file.contents?.replaceAll(
+            `</${libComp}>`,
+            `</${usableLibrary[libComp].as}>`
+          );
+        }
       }
-    }
 
-    return true;
-  });
+      return file;
+    });
 
   for (const libComp of Array.from(usedLibraryComponents)) {
-    const contentsPath = Library[libComp].src;
+    const contentsPath = usableLibrary[libComp].src;
     const resp = await fetch(
       SERVER_URL + "/starter-components/" + contentsPath
     );
     const contents = await resp.text();
 
     files.push({
-      path: libComp,
+      path: usableLibrary[libComp].as,
       contents,
     } as File);
   }
@@ -235,7 +267,7 @@ export async function generateComponent(
     new HumanChatMessage(initialPrompt),
   ];
 
-  let rawResponse = await chat.call(messages, undefined, [
+  let rawResponse = await chat4.call(messages, undefined, [
     {
       handleLLMNewToken: streamingCallback,
     },
