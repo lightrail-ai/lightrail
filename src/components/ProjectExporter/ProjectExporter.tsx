@@ -46,7 +46,7 @@ function ProjectExporter({ project }: ProjectExporterProps) {
   }
 
   return (
-    <div className="text-slate-300 hover:text-white cursor-pointer relative">
+    <div className="text-slate-700 hover:text-slate-900 cursor-pointer relative">
       {loading ? (
         <svg
           className="animate-spin h-4 w-4 text-white"

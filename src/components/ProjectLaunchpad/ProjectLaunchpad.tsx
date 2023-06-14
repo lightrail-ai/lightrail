@@ -76,7 +76,7 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
                 <Link
                   key={project.id}
                   href={`/projects/${project.id}`}
-                  className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-100 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-70 hover:shadow-md active:shadow-inner"
+                  className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-100 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-70 hover:shadow-md active:shadow-inner hover:border-sky-300"
                 >
                   <div className="text-slate-800 text-xl pb-1">
                     {project.name}

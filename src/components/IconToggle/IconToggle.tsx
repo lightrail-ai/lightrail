@@ -12,16 +12,14 @@ export interface IconToggleProps {
 function IconToggle({ trueIcon, falseIcon, onToggle, value }: IconToggleProps) {
   return (
     <div
-      className="flex items-center cursor-pointer theme-toggle text-slate-300"
+      className="flex items-center cursor-pointer theme-toggle text-slate-700"
       onClick={onToggle}
     >
       <span className="font-semibold text-xs mr-2">
         <FontAwesomeIcon icon={falseIcon} />
       </span>
       <div
-        className={`rounded-full w-12 h-4 p-0.5 transition ${
-          value ? "bg-slate-300" : "bg-slate-600"
-        }`}
+        className={`rounded-full w-12 h-4 p-0.5 transition shadow-inner bg-slate-300`}
       >
         <div
           className={`rounded-full w-3 h-3 bg-slate-700 ${

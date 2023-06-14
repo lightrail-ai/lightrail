@@ -11,23 +11,24 @@ export interface FirstProjectFlowProps {}
 function FirstProjectFlow({}: FirstProjectFlowProps) {
   const [authModalVisible, setAuthModalVisible] = useState(false);
   return (
-    <div className="w-screen h-screen absolute top-0 left-0 bg-slate-200 flex flex-col">
-      <div className="text-right p-8">
-        <button
-          className="text-slate-500 bg-slate-900 bg-opacity-10 p-4 rounded-md font-semibold hover:bg-opacity-20 cursor-pointer"
-          onClick={() => setAuthModalVisible(true)}
-        >
-          Log In / Sign Up
-        </button>
-      </div>
-      <div className="flex-1 gap-4 flex flex-col items-center justify-center">
+    <div className="w-screen min-h-screen bg-slate-200 flex flex-col">
+      <div className="flex flex-row p-8 ">
         <Image
           src={logo}
           alt={"Lightrail Logo"}
           className="inline-block"
           width={48}
         />
-        <div className="bg-orange-300 bg-opacity-50 rounded-md border-2 border-orange-600 text-orange-700 p-4 mt-12 max-w-2xl">
+        <div className="flex-1" />
+        <button
+          className="place-self-end text-slate-500 bg-slate-900 bg-opacity-10 p-4 rounded-md font-semibold hover:bg-opacity-20 cursor-pointer"
+          onClick={() => setAuthModalVisible(true)}
+        >
+          Log In / Sign Up
+        </button>
+      </div>
+      <div className="flex-1 gap-4 flex flex-col items-center justify-center">
+        <div className="bg-orange-300 bg-opacity-50 rounded-md border-2 border-orange-600 text-orange-700 p-4 mt-2 max-w-2xl">
           <span className="font-bold">
             Projects created without logging in will be viewable and editable by
             everyone!
@@ -41,7 +42,7 @@ function FirstProjectFlow({}: FirstProjectFlowProps) {
           <ProjectCreationPane />
         </div>
       </div>
-      <div className="flex flex-row justify-center pb-12 text-lg text-black">
+      <div className="flex flex-row justify-center py-12 text-lg text-black">
         <a
           href="https://github.com/vishnumenon/lightrail"
           className="opacity-30 hover:opacity-60 cursor-pointer"

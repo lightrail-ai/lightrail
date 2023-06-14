@@ -6,6 +6,8 @@ import {
   editingPopoverTarget,
 } from "../PreviewRenderer/preview-renderer-state";
 import { useSetRecoilState } from "recoil";
+import Button from "../Button/Button";
+import classNames from "classnames";
 
 export interface ComponentsListPanelProps {
   isOpen: boolean;
@@ -33,18 +35,23 @@ function ComponentsListPanel({
 
   return (
     <ReflexElement flex={isOpen ? 0.5 : 0}>
-      <div className="flex flex-col min-h-full bg-slate-800 text-slate-100 px-4 py-2">
+      <div className="flex flex-col min-h-full bg-slate-50 text-slate-800 px-4 py-2">
         <div className="text-xl font-semibold">Components</div>
         <div className="space-y-2 my-4">
-          <div
-            className="text-md px-2 py-1 text-slate-900 bg-slate-100 rounded-md hover:bg-opacity-90 font-semibold cursor-pointer"
+          <Button
+            className="w-full mt-4"
             onClick={(e) => onCreateComponent("")}
           >
             + New component
-          </div>
+          </Button>
           {orderedComponents.map((file) => (
             <div
-              className="text-md px-2 py-1 bg-opacity-5 bg-slate-100 rounded-md hover:bg-opacity-10 cursor-pointer"
+              className={classNames(
+                `text-md px-2 py-1 bg-slate-100 rounded-md text-slate-800 cursor-pointer border-2 border-slate-300 hover:opacity-70 hover:shadow-md active:shadow-inner hover:border-sky-300`,
+                {
+                  "border-green-600": file.path === "index",
+                }
+              )}
               onClick={(e) => {
                 setEditingComponent({ name: file.path });
                 setEditingPopoverTarget(e.target as HTMLElement);

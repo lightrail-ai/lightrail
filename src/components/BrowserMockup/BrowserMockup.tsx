@@ -8,7 +8,7 @@ export interface BrowserMockupProps {
 
 function BrowserMockup({ children }: BrowserMockupProps) {
   return (
-    <div className="browser-template">
+    <div className="browser-template shadow-md">
       <div className="browser-template__top-bar">
         <ul className="browser-template__buttons">
           <li className="browser-template__buttons_item"></li>

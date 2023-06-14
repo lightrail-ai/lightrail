@@ -28,7 +28,7 @@ function ComponentEditorPanel({
   return (
     <ReflexElement
       className={classNames(
-        "bg-slate-900 text-slate-200 flex flex-col min-h-0",
+        "bg-slate-100 text-slate-800 flex flex-col min-h-0",
         {
           "p-4": target,
         }

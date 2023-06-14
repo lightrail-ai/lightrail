@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Modal from "../Modal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faListDots } from "@fortawesome/free-solid-svg-icons";
+import Button from "../Button/Button";
 
 export interface TourModalProps {}
 
@@ -51,12 +52,9 @@ function TourModal({}: TourModalProps) {
         </div>
       }
       actions={[
-        <button
-          className="w-full bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-300 shadow-md p-2 rounded-lg disabled:opacity-20 font-semibold mt-4"
-          onClick={handleAck}
-        >
+        <Button className="w-full mt-4" onClick={handleAck}>
           Got it!
-        </button>,
+        </Button>,
       ]}
     />
   );

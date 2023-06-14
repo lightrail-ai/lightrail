@@ -6,6 +6,7 @@ import { SERVER_URL } from "@/util/constants";
 import { type Tag, WithContext as ReactTags } from "react-tag-input";
 import { ProjectWithFiles } from "@/util/storage";
 import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
+import Button from "../Button/Button";
 
 export interface ComponentCreationPaneProps {
   initialName: string | false;
@@ -107,13 +108,13 @@ function ComponentCreationPane({
           />
         </div>
       )}
-      <button
-        className="w-full bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-300 shadow-md p-2 rounded-lg disabled:opacity-20 font-semibold mt-4"
+      <Button
+        className="w-full mt-4"
         onClick={createProject}
         disabled={loading}
       >
         Generate!
-      </button>
+      </Button>
     </div>
   );
 }

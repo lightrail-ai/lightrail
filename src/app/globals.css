@@ -37,3 +37,18 @@ div[data-popper-placement^="left"] > .popper-arrow {
 div[data-popper-placement^="right"] > .popper-arrow {
   left: -4px;
 }
+
+/* Scrollbar styles */
+
+::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(127, 127, 127, 0.5);
+  border-radius: 20px;
+  border: transparent;
+}

@@ -7,3 +7,12 @@
   padding-top: 0.5rem !important;
   padding-bottom: 0.5rem !important;
 }
+
+.cm-editor {
+  height: 100%;
+  background-color: transparent;
+}
+
+.cm-scroller {
+  overflow: auto;
+}

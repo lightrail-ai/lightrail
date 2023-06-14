@@ -6,13 +6,12 @@ import {
   highlightActiveLineGutter,
   highlightSpecialChars,
   drawSelection,
-  highlightActiveLine,
 } from "@codemirror/view";
 
 import { bracketMatching } from "@codemirror/language";
 
 import { defaultKeymap, historyKeymap } from "@codemirror/commands";
-import { tomorrow } from "thememirror";
+import { solarizedLight } from "thememirror";
 import "./custom-styles.css";
 import classNames from "classnames";
 import { langs } from "@uiw/codemirror-extensions-langs";
@@ -58,7 +57,7 @@ function CodeEditor({
         // highlightActiveLine(),
         keymap.of([...defaultKeymap, ...historyKeymap]),
         langs.jsx(),
-        tomorrow,
+        solarizedLight,
         componentAutocompletion(project, onCreateComponent),
       ],
     });
@@ -71,19 +70,12 @@ function CodeEditor({
   }, [value, project]);
 
   const editorDom = useMemo(
-    () => <div className="flex-1 min-h-0" ref={editorRef} />,
+    () => <div className="w-full h-full" ref={editorRef} />,
     []
   );
 
   return (
-    <div
-      className={classNames(
-        "rounded-lg overflow-clip flex flex-col shadow-md",
-        className
-      )}
-    >
-      {editorDom}
-    </div>
+    <div className={classNames("overflow-clip", className)}>{editorDom}</div>
   );
 }
 

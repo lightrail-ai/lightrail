@@ -8,6 +8,7 @@ import Select from "../Select/Select";
 import { LibraryCategories } from "@/util/starter-library";
 import Explanation from "../Explanation/Explanation";
 import { type Tag, WithContext as ReactTags } from "react-tag-input";
+import Button from "../Button/Button";
 
 export interface ProjectCreationPaneProps {}
 
@@ -152,13 +153,13 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
           />
         </div>
       )}
-      <button
-        className="w-full bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-300 shadow-md p-2 rounded-lg disabled:opacity-20 font-semibold mt-4"
+      <Button
+        className="w-full mt-4"
         onClick={createProject}
         disabled={loading}
       >
         Generate!
-      </button>
+      </Button>
     </div>
   );
 }

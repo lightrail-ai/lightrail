@@ -140,9 +140,11 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
       <div
         className="h-screen w-screen flex flex-col max-h-screen"
         style={{
+          backgroundColor: "#fff",
           backgroundImage:
-            "radial-gradient(circle at 1px 1px, #ccc 1px, transparent 0)",
+            "linear-gradient(45deg, #f1f5f9 25%, transparent 25%), linear-gradient(-45deg, #f1f5f9 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f1f5f9 75%), linear-gradient(-45deg, transparent 75%, #f1f5f9 75%)",
           backgroundSize: "20px 20px",
+          backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
         }}
       >
         <EditorNavbar
