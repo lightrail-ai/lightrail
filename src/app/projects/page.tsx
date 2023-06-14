@@ -2,7 +2,7 @@ import AccountNavbar from "@/components/AccountNavbar/AccountNavbar";
 import ProjectLaunchpad from "@/components/ProjectLaunchpad/ProjectLaunchpad";
 
 export const metadata = {
-  title: "Lightwand – Projects",
+  title: "Lightrail – Projects",
 };
 
 export default async function Projects() {

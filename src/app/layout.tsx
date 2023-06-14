@@ -4,7 +4,7 @@ import "hint.css/hint.css";
 
 export const metadata = {
   title: {
-    default: "Lightwand",
+    default: "Lightrail",
   },
 };
 

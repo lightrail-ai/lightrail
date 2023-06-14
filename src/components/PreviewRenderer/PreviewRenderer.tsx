@@ -14,8 +14,8 @@ import { ErrorBoundary } from "react-error-boundary";
 import "./preview-styling.css";
 
 const importMapper = new ImportMapper({
-  "@lightwand/react": ImportMapper.forceDefault(React),
-  "@lightwand/ComponentPreviewWrapper": ImportMapper.forceDefault(
+  "@lightrail/react": ImportMapper.forceDefault(React),
+  "@lightrail/ComponentPreviewWrapper": ImportMapper.forceDefault(
     ComponentPreviewWrapper
   ),
 });

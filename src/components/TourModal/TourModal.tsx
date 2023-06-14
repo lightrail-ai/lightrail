@@ -9,14 +9,14 @@ function TourModal({}: TourModalProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const hasSeen = localStorage.getItem("lightwand-tour-shown");
+    const hasSeen = localStorage.getItem("lightrail-tour-shown");
     if (!hasSeen) {
       setIsVisible(true);
     }
   }, []);
 
   const handleAck = () => {
-    localStorage.setItem("lightwand-tour-shown", "true");
+    localStorage.setItem("lightrail-tour-shown", "true");
     setIsVisible(false);
   };
 
@@ -24,11 +24,11 @@ function TourModal({}: TourModalProps) {
     <Modal
       visible={isVisible}
       onClose={handleAck}
-      title="Welcome to Lightwand!"
+      title="Welcome to Lightrail!"
       blackout
       content={
         <div className="text-slate-600">
-          The Lightwand Editor lets you build React/Tailwind front-ends with the
+          The Lightrail Editor lets you build React/Tailwind front-ends with the
           help of an LLM. There's a few basics to know before you start
           building:
           <ul className="list-disc list-inside p-4 space-y-2 text-slate-800 font-semibold">

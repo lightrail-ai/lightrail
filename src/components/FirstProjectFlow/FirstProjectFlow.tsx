@@ -23,7 +23,7 @@ function FirstProjectFlow({}: FirstProjectFlowProps) {
       <div className="flex-1 gap-4 flex flex-col items-center justify-center">
         <Image
           src={logo}
-          alt={"Lightwand Logo"}
+          alt={"Lightrail Logo"}
           className="inline-block"
           width={48}
         />
@@ -43,7 +43,7 @@ function FirstProjectFlow({}: FirstProjectFlowProps) {
       </div>
       <div className="flex flex-row justify-center pb-12 text-lg text-black">
         <a
-          href="https://github.com/vishnumenon/lightwand"
+          href="https://github.com/vishnumenon/lightrail"
           className="opacity-30 hover:opacity-60 cursor-pointer"
         >
           <Image src={github} alt={"Github Repo"} width={48} />

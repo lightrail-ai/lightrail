@@ -10,7 +10,7 @@ function AccountNavbar({}: AccountNavbarProps) {
     <div className="pt-12 pb-8 mb-8 mx-20 px-4 flex flex-row items-center border-b">
       <Image
         src={logo}
-        alt={"Lightwand Logo"}
+        alt={"Lightrail Logo"}
         className="inline-block"
         width={36}
       />

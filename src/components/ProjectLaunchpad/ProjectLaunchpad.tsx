@@ -103,7 +103,7 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
         </div>
         <div className="flex flex-row justify-center pb-12 text-lg text-black">
           <a
-            href="https://github.com/vishnumenon/lightwand"
+            href="https://github.com/vishnumenon/lightrail"
             className="opacity-30 hover:opacity-60 cursor-pointer"
           >
             <Image src={github} alt={"Github Repo"} width={48} />
