@@ -8,7 +8,7 @@ The hosted version of Lightwand is available at: https://lightwand.dev
 
 ## Dependencies / Structure
 
-Lightwand is a [Next.js](https://nextjs.org/) application that relies on the [OpenAI GPT-3.5 API](https://platform.openai.com/) as well as [Supabase](https://supabase.com/).
+Lightwand is a [Next.js](https://nextjs.org/) application that relies on the [OpenAI GPT-3.5/4 API](https://platform.openai.com/) as well as [Supabase](https://supabase.com/).
 
 ## Running / Developing Locally
 
@@ -37,7 +37,7 @@ Below is a rough roadmap of development plans:
 - [x] Editing individual components
 - [x] User accounts
 - [x] Exporting to Next.js
-- [ ] Creating new components
+- [x] Creating new components
 - [ ] Linking Data Sources / DBs
 - [ ] Uploading images
 - [ ] Generating images
