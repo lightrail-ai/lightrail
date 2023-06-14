@@ -11,8 +11,6 @@ import { hoveringComponent } from "./preview-renderer-state";
 import { ProjectWithFiles } from "@/util/storage";
 import { ErrorBoundary } from "react-error-boundary";
 
-import "./preview-styling.css";
-
 const importMapper = new ImportMapper({
   "@lightrail/react": ImportMapper.forceDefault(React),
   "@lightrail/ComponentPreviewWrapper": ImportMapper.forceDefault(
@@ -93,8 +91,8 @@ export default function PreviewRenderer({
   return (
     <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
       <div onMouseLeave={() => setHoveringComponent(null)} ref={setWrapper}>
-        {!noOverlay && <PreviewOverlayLayer />}
         {ready && <Component />}
+        {!noOverlay && <PreviewOverlayLayer />}
       </div>
     </ErrorBoundary>
   );

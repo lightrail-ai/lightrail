@@ -5,6 +5,7 @@ import { previewIframeRef } from "../PreviewRenderer/preview-renderer-state";
 import classNames from "classnames";
 import { PreviewRendererProps } from "../PreviewRenderer";
 import PreviewRenderer from "../PreviewRenderer/PreviewRenderer";
+import { SERVER_URL } from "@/util/constants";
 
 export type PreviewFrameProps = PreviewRendererProps & {
   transparent?: boolean;
@@ -42,6 +43,10 @@ function PreviewFrame({
       faJs.src =
         "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js";
       doc.head.appendChild(faJs);
+      const previewCss = doc.createElement("link");
+      previewCss.rel = "stylesheet";
+      previewCss.href = SERVER_URL + "/preview-styling.css";
+      doc.head.appendChild(previewCss);
     }
   }
 
