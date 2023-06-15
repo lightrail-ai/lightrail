@@ -55,6 +55,7 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
     setLoading(false);
 
     if (json.status === "error") {
+      console.log(json);
       toast.error("Project generation failed -- Please try again!", {
         position: "top-center",
       });

@@ -70,6 +70,7 @@ function ComponentEditingPane({
     const json = await getJSONFromStream(res);
 
     if (json.status === "error") {
+      console.log(json);
       toast.error("Failed to edit component -- please try again!", {
         position: "bottom-center",
       });
