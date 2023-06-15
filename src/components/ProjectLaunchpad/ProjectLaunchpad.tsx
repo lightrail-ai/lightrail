@@ -17,6 +17,7 @@ import AccountNavbar from "../AccountNavbar/AccountNavbar";
 import Image from "next/image";
 import github from "@/assets/github-mark.svg";
 import Link from "next/link";
+import { Toaster } from "react-hot-toast";
 
 export interface ProjectLaunchpadProps {}
 
@@ -109,6 +110,7 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
             <Image src={github} alt={"Github Repo"} width={48} />
           </a>
         </div>
+        <Toaster />
       </div>
     );
   } else {
@@ -116,6 +118,7 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
       <>
         <FirstProjectFlow />
         <MobileBlockingModal />
+        <Toaster />
       </>
     );
   }

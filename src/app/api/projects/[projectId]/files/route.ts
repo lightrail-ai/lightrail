@@ -19,33 +19,45 @@ export async function POST(
 
   const customReadable = new ReadableStream({
     async start(controller) {
-      controller.enqueue(encoder.encode("\n"));
+      try {
+        controller.enqueue(encoder.encode("\n"));
 
-      const file = await prompting.generateComponent(
-        name,
-        props,
-        description,
-        (_token) => {
-          controller.enqueue(encoder.encode("\n"));
-        }
-      );
+        const file = await prompting.generateComponent(
+          name,
+          props,
+          description,
+          (_token) => {
+            controller.enqueue(encoder.encode("\n"));
+          }
+        );
 
-      await client.createFile(
-        parseInt(params.projectId),
-        file.path,
-        file.contents || ""
-      );
+        await client.createFile(
+          parseInt(params.projectId),
+          file.path,
+          file.contents || ""
+        );
 
-      controller.enqueue(
-        encoder.encode(
-          JSON.stringify({
-            status: "ok",
-            message: "Component created!",
-          })
-        )
-      );
+        controller.enqueue(
+          encoder.encode(
+            JSON.stringify({
+              status: "ok",
+              message: "Component created!",
+            })
+          )
+        );
 
-      controller.close();
+        controller.close();
+      } catch (e: any) {
+        controller.enqueue(
+          encoder.encode(
+            JSON.stringify({
+              status: "error",
+              error: e,
+            })
+          )
+        );
+        controller.close();
+      }
     },
   });
 

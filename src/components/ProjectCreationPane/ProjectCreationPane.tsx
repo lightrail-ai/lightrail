@@ -9,11 +9,14 @@ import { LibraryCategories } from "@/util/starter-library";
 import Explanation from "../Explanation/Explanation";
 import { type Tag, WithContext as ReactTags } from "react-tag-input";
 import Button from "../Button/Button";
+import { sanitizeComponentName } from "@/util/util";
+import { toast } from "react-hot-toast";
 
 export interface ProjectCreationPaneProps {}
 
 function ProjectCreationPane({}: ProjectCreationPaneProps) {
   const [name, setName] = useState("");
+  const [componentName, setComponentName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState<"webpage" | "component">("webpage");
@@ -22,7 +25,10 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
   const router = useRouter();
 
   function handleAddDesiredProp(prop: Tag) {
-    setDesiredProps([...desiredProps, prop]);
+    setDesiredProps([
+      ...desiredProps,
+      { ...prop, text: prop.text.charAt(0).toLowerCase() + prop.text.slice(1) },
+    ]);
   }
 
   function handleDeleteDesiredProp(i: number) {
@@ -34,7 +40,7 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
     const res = await fetch(`${SERVER_URL}/api/projects`, {
       method: "POST",
       body: JSON.stringify({
-        name,
+        name: type === "component" ? componentName : name,
         description,
         type,
         libraries: category === "none" ? [] : [category],
@@ -47,20 +53,45 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
     });
     const json = await getJSONFromStream(res);
     setLoading(false);
+
+    if (json.status === "error") {
+      toast.error("Project generation failed -- Please try again!", {
+        position: "top-center",
+      });
+      return;
+    }
+
     router.push("/projects/" + json.id);
   }
 
   return (
     <div className="pb-4">
-      <input
-        className={classNames(
-          "transition-all w-full bg-slate-200 shadow-inner text-slate-900 rounded-lg p-3 mt-0.5 mb-4 disabled:opacity-20"
-        )}
-        value={name}
-        disabled={loading}
-        placeholder="Project Name"
-        onChange={(e) => setName(e.target.value)}
-      />
+      {type === "component" ? (
+        <input
+          className={classNames(
+            "transition-all w-full bg-slate-200 shadow-inner text-slate-900 rounded-lg p-3 mt-0.5 mb-4 disabled:opacity-20"
+          )}
+          value={componentName}
+          disabled={loading}
+          placeholder={`Component Name`}
+          onChange={(e) => {
+            setComponentName(sanitizeComponentName(e.target.value));
+          }}
+        />
+      ) : (
+        <input
+          className={classNames(
+            "transition-all w-full bg-slate-200 shadow-inner text-slate-900 rounded-lg p-3 mt-0.5 mb-4 disabled:opacity-20"
+          )}
+          value={name}
+          disabled={loading}
+          placeholder={`Project Name`}
+          onChange={(e) => {
+            setName(e.target.value);
+            setComponentName(sanitizeComponentName(e.target.value));
+          }}
+        />
+      )}
       <div className="pb-4">
         <div
           onClick={() => setType("webpage")}

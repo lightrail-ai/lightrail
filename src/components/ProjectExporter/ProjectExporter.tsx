@@ -75,14 +75,14 @@ function ProjectExporter({ project }: ProjectExporterProps) {
         />
       )}
       {open && (
-        <div className="absolute right-0 bg-slate-900 z-[60] p-4 rounded-md border">
-          <div
+        <div className="absolute right-0 bg-slate-50 z-[60] p-2 rounded-md border border-slate-300">
+          <button
             onClick={exportNextJs}
-            className="flex flex-row gap-2 items-center bg-slate-100 bg-opacity-10 rounded-md py-1 px-2 hover:bg-opacity-20 cursor-pointer whitespace-nowrap"
+            className="flex flex-row gap-2 items-center hover:bg-slate-400 rounded-md py-1 px-2 hover:bg-opacity-20 cursor-pointer whitespace-nowrap"
           >
             <FontAwesomeIcon icon={faFileExport} />
             Export as Next.js app...
-          </div>
+          </button>
         </div>
       )}
     </div>

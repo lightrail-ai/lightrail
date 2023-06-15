@@ -6,10 +6,9 @@ import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
-  faEdit,
+  faEye,
   faList,
   faPenToSquare,
-  faWindowMaximize,
 } from "@fortawesome/free-solid-svg-icons";
 import IconToggle from "../IconToggle/IconToggle";
 import classNames from "classnames";
@@ -48,24 +47,26 @@ function EditorNavbar({
 
       <div className="flex-1" />
       <IconToggle
-        trueIcon={faWindowMaximize}
+        trueIcon={faEye}
         falseIcon={faPenToSquare}
         onToggle={onTogglePreview}
         value={isPreviewing}
       />
       {project && <ProjectExporter project={project} />}
       {/* <ConfigControls /> */}
-      <div
-        onClick={onToggleComponentList}
-        className={classNames(
-          `text-slate-700 hover:text-slate-900 cursor-pointer rounded-md p-2`,
-          {
-            "bg-slate-700 bg-opacity-20": isShowingComponentList,
-          }
-        )}
-      >
-        <FontAwesomeIcon icon={faList} />
-      </div>
+      {!isPreviewing && (
+        <div
+          onClick={onToggleComponentList}
+          className={classNames(
+            `text-slate-700 hover:text-slate-900 cursor-pointer rounded-md p-2`,
+            {
+              "bg-slate-700 bg-opacity-20": isShowingComponentList,
+            }
+          )}
+        >
+          <FontAwesomeIcon icon={faList} />
+        </div>
+      )}
     </div>
   );
 }

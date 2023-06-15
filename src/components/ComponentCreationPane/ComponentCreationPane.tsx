@@ -7,6 +7,8 @@ import { type Tag, WithContext as ReactTags } from "react-tag-input";
 import { ProjectWithFiles } from "@/util/storage";
 import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 import Button from "../Button/Button";
+import { sanitizeComponentName } from "@/util/util";
+import { toast } from "react-hot-toast";
 
 export interface ComponentCreationPaneProps {
   initialName: string | false;
@@ -26,7 +28,7 @@ function ComponentCreationPane({
 
   useEffect(() => {
     if (initialName) {
-      setName(initialName);
+      setName(sanitizeComponentName(initialName));
     }
   }, [initialName]);
 
@@ -45,8 +47,14 @@ function ComponentCreationPane({
       },
     });
     const json = await getJSONFromStream(res);
-    console.log(json);
     setLoading(false);
+    console.log(json);
+    if (json.status === "error") {
+      toast.error("Component generation failed -- Please try again!", {
+        position: "top-center",
+      });
+      return;
+    }
     onCreated(
       name,
       desiredProps.map((p) => p.text)
@@ -54,7 +62,10 @@ function ComponentCreationPane({
   }
 
   function handleAddDesiredProp(prop: Tag) {
-    setDesiredProps([...desiredProps, prop]);
+    setDesiredProps([
+      ...desiredProps,
+      { ...prop, text: prop.text.charAt(0).toLowerCase() + prop.text.slice(1) },
+    ]);
   }
 
   function handleDeleteDesiredProp(i: number) {
@@ -73,7 +84,7 @@ function ComponentCreationPane({
         value={name}
         disabled={loading}
         placeholder="Component Name"
-        onChange={(e) => setName(e.target.value)}
+        onChange={(e) => setName(sanitizeComponentName(e.target.value))}
       />
       <ReactTags
         tags={desiredProps}

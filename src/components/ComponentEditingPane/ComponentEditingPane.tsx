@@ -12,6 +12,7 @@ import CodeEditor from "../CodeEditor/CodeEditor";
 import { getJSONFromStream } from "@/util/transfers";
 import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 import Button from "../Button/Button";
+import { toast } from "react-hot-toast";
 // @ts-ignore
 
 export interface ComponentEditingPaneProps {
@@ -67,6 +68,15 @@ function ComponentEditingPane({
     );
 
     const json = await getJSONFromStream(res);
+
+    if (json.status === "error") {
+      toast.error("Failed to edit component -- please try again!", {
+        position: "bottom-center",
+      });
+      setLoading(false);
+      return;
+    }
+
     onUpdate(json.file);
     if (json.message) onMessage(json.message);
     setModification("");
