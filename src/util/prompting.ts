@@ -100,11 +100,18 @@ export async function generateRoot(
 
         generate an array of React components (use Tailwind CSS) for a project called "${name}" that fulfills this description: "${description}"
 
-        The first component should be called Index and should be the top-level component. Come up with the names for the components you'd need to implement to satisfy this description.
-        This should include components that describe semantic sections of the output, as well as components that represent sepcific UI elements.
-        Output this list of names in the "dependencies" key of the first component's JSON. The "dependencies" list should ONLY include component names, not any other functions or libraries.
-        Then, using only these components and standard HTML elements (or the components listed below), generate a React component tree, in JSX (as a string) & styled with Tailwind CSS classes, that fulfills the description. Font Awesome icons are available to you, as css classes. Only provide the JSX for the top-level component, in the "render" key of the output JSON.
-        Then, for each dependency component that isn't already implemented, follow the same process to generate a serialized JSON representation. Repeat until no dependencies are unimplemented. If a component requires props, provide those props with sample values whenever that component is used.
+        You should create components in a modular, reusable, well-organized way. 
+        Start with the smallest, lowest-level component you'll need (i.e. components with no dependencies).
+        Then, build up to the top-level component, using the components you've already created. 
+        You should create components that describe semantic sections of the output, as well as components for sepcific reusable UI elements.
+        The final component should be called Index, and should be the top-level component, representing the webpage as a whole. 
+        For each component, list the other components that it uses in the "dependencies" key of its JSON. 
+        The "dependencies" list should ONLY include component names, not any other functions or libraries.
+        The "render" key of each component's JSON should be JSX (as a string) & styled with Tailwind CSS classes.
+        Font Awesome icons are available to you, as css classes.
+        Make all designs responsive, modern, and clean. Do not use bright colors excessively. 
+        Make sure no components are left unimplemented.
+        If a component requires props, provide those props with sample values whenever that component is used.
         When accessing props in the JSX, use the format \`props.propName\` to access the prop value. A component's children are available as \`props.children\`.
 
         The following components can also be used implementing them yourself, IF they are appropriate for the description requested:
