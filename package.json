@@ -19,6 +19,7 @@
     "@fortawesome/free-regular-svg-icons": "^6.4.0",
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
     "@fortawesome/react-fontawesome": "^0.2.0",
+    "@lezer/common": "^1.0.3",
     "@popperjs/core": "^2.11.7",
     "@react-hook/media-query": "^1.1.1",
     "@sentry/nextjs": "^7.54.0",
