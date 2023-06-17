@@ -1,33 +1,43 @@
-import { Client } from "@/util/storage";
+import { Client, File, FileStateItem } from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
 import { cookies } from "next/headers";
 import * as buble from "buble";
 
-function createPreviewComponent(
-  projectId: string,
-  name: string,
-  jsx: string,
-  r: string
-) {
+function createPreviewComponent(projectId: string, file: File, r: string) {
   const componentImports = Array.from(
-    new Set(Array.from(jsx.matchAll(/\<([A-Z]\w+)/g)).map((m) => m[1]))
-  );
+    new Set(
+      Array.from(file.contents!.matchAll(/\<([A-Z]\w+)/g)).map((m) => m[1])
+    )
+  )
+    .map(
+      (comp) =>
+        `const ${comp} = React.lazy(() => import("${SERVER_URL}/api/projects/${projectId}/files/${comp}?r=${r}").catch(e => console.log(e)));`
+    )
+    .join("\n");
+
+  const stateDeclarations = file.state
+    ? (file.state as unknown as FileStateItem[])
+        .map(
+          (s) =>
+            `const [${s.name}, ${
+              "set" + s.name.charAt(0).toUpperCase() + s.name.slice(1)
+            }] = React.useState(${s.initial});`
+        )
+        .join("\n")
+    : "";
 
   return `
     import React from "@lightrail/react";
     import ComponentPreviewWrapper from "@lightrail/ComponentPreviewWrapper"
 
-    ${componentImports
-      .map(
-        (comp) =>
-          `const ${comp} = React.lazy(() => import("${SERVER_URL}/api/projects/${projectId}/files/${comp}?r=${r}").catch(e => console.log(e)));`
-      )
-      .join("\n")}
+    ${componentImports}
 
     export default function Component(props) {
+        ${stateDeclarations}
+
         return ${
-          buble.transform(`<ComponentPreviewWrapper name="${name}">
-            ${jsx}
+          buble.transform(`<ComponentPreviewWrapper name="${file.path}">
+            ${file.contents!}
         </ComponentPreviewWrapper>`).code
         };
     } `;
@@ -70,7 +80,6 @@ export async function GET(
   try {
     contents = createPreviewComponent(
       params.projectId,
-      params.filePath,
       await client.getFile(parseInt(params.projectId), params.filePath),
       r
     );

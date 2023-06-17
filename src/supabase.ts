@@ -17,6 +17,7 @@ export interface Database {
           owner: string | null
           path: string
           project_id: number
+          state: Json[] | null
         }
         Insert: {
           contents?: string | null
@@ -25,6 +26,7 @@ export interface Database {
           owner?: string | null
           path: string
           project_id: number
+          state?: Json[] | null
         }
         Update: {
           contents?: string | null
@@ -33,6 +35,7 @@ export interface Database {
           owner?: string | null
           path?: string
           project_id?: number
+          state?: Json[] | null
         }
         Relationships: [
           {

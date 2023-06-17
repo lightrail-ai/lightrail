@@ -13,6 +13,8 @@ import { getJSONFromStream } from "@/util/transfers";
 import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 import Button from "../Button/Button";
 import { toast } from "react-hot-toast";
+import prettier from "prettier/standalone";
+import prettierBabelParser from "prettier/parser-babel";
 // @ts-ignore
 
 export interface ComponentEditingPaneProps {
@@ -43,7 +45,13 @@ function ComponentEditingPane({
       const file = project.files.find(
         (f) => f.path === editingComponentValue.name
       );
-      const formatted = file?.contents!; // TODO: Add formatter
+      const formatted = prettier
+        .format(file?.contents!, {
+          parser: "babel",
+          semi: false,
+          plugins: [prettierBabelParser],
+        })
+        .replace(/^;+|;+$/g, ""); // TODO: Add formatter
       setModifiedCode(formatted);
       setOldCode(formatted);
     }
