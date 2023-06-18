@@ -10,7 +10,7 @@ import {
 
 import { bracketMatching } from "@codemirror/language";
 
-import { defaultKeymap, historyKeymap } from "@codemirror/commands";
+import { defaultKeymap, historyKeymap, history } from "@codemirror/commands";
 import { solarizedLight } from "thememirror";
 import "./custom-styles.css";
 import classNames from "classnames";
@@ -50,6 +50,7 @@ function CodeEditor({
             onValueChange(update.state.doc.toString());
           }
         }),
+        history(),
         highlightActiveLineGutter(),
         highlightSpecialChars(),
         drawSelection(),
