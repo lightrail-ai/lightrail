@@ -21,7 +21,7 @@ function createPreviewComponent(projectId: string, file: File, r: string) {
           (s) =>
             `const [${s.name}, ${
               "set" + s.name.charAt(0).toUpperCase() + s.name.slice(1)
-            }] = React.useState(${s.initial});`
+            }] = React.useState(${JSON.stringify(s.initial)});`
         )
         .join("\n")
     : "";
