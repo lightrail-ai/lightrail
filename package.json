@@ -41,7 +41,7 @@
     "hint.css": "^2.7.0",
     "import-mapper": "^0.0.4",
     "jszip": "^3.10.1",
-    "langchain": "^0.0.91",
+    "langchain": "^0.0.95",
     "next": "13.4.2",
     "node-loader": "^2.0.0",
     "openai": "^3.2.1",

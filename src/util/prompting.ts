@@ -1,13 +1,17 @@
-import { File } from "./storage";
+import { File, FileUpdate } from "./storage";
 
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { OpenAI } from "langchain/llms/openai";
-import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import {
+  AIChatMessage,
+  HumanChatMessage,
+  SystemChatMessage,
+} from "langchain/schema";
 import { CompleteLibrary, type Library } from "./starter-library";
 import { SERVER_URL } from "./constants";
 
 const chat = new ChatOpenAI({
-  modelName: "gpt-3.5-turbo-0301",
+  modelName: "gpt-3.5-turbo-0613",
   openAIApiKey: process.env.OPENAI_API_KEY,
   maxConcurrency: 5,
   streaming: true,
@@ -32,10 +36,6 @@ const completion = new OpenAI({
 export function cleanJSX(jsx: string) {
   let cleaned = jsx.replaceAll(" class=", " className=");
   cleaned = cleaned.replaceAll(" for=", " htmlFor=");
-  cleaned = cleaned.replaceAll("</img>", "");
-  cleaned = cleaned.replaceAll(/<img([^>/]*)>/g, "<img$1 />"); //replace img tags with self-closing tags, preserving attributes
-  cleaned = cleaned.replaceAll("</input>", "");
-  cleaned = cleaned.replaceAll(/<input([^>/]*)>/g, "<input$1 />"); //replace input tags with self-closing tags, preserving attributes
   return cleaned;
 }
 
@@ -313,7 +313,10 @@ export async function modifyComponent(
   old: File,
   modification: string,
   streamingCallback?: (token: string) => void
-) {
+): Promise<{
+  explanation: string;
+  update: FileUpdate;
+}> {
   const system = `
         You are a helpful JSON API for a React developer, and you modify React components to satisfy a description of a change or issue to fix.
         You receive requests as a React component serialized in a JSON format, along with a description of a modification, and you respond with an explanation of the changes 
@@ -335,7 +338,7 @@ export async function modifyComponent(
         {
           "component": {
             "name": ${JSON.stringify(old.path)},
-            "state": ${JSON.stringify(old.state)},
+            "state": ${JSON.stringify(old.state || [])},
             "render": ${JSON.stringify(old.contents)},
           },
           "modification": "${modification}"
@@ -344,7 +347,62 @@ export async function modifyComponent(
 
   const rawResponse = await chat.call(
     [new SystemChatMessage(system), new HumanChatMessage(prompt)],
-    undefined,
+    {
+      functions: [
+        {
+          name: "send_component",
+          description:
+            "Send the developer the modified component with an explanation of the changes made.",
+          parameters: {
+            type: "object",
+            properties: {
+              explanation: {
+                type: "string",
+                description: "The explanation of the changes made.",
+              },
+              component: {
+                type: "object",
+                description: "The modified, serialized component.",
+                properties: {
+                  name: {
+                    type: "string",
+                    description:
+                      'The name of the component (e.g. "ComponentName")',
+                  },
+                  state: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      description:
+                        'The state variables that this component uses (e.g. [{name: "count", initial: 0}, {name: "text", initial: ""}])',
+                      properties: {
+                        name: {
+                          type: "string",
+                          description: "The name of the state variable",
+                        },
+                        initial: {
+                          type: "string",
+                          description:
+                            "The initial value of the state variable",
+                        },
+                      },
+                    },
+                  },
+                  render: {
+                    type: "string",
+                    description:
+                      'The JSX component tree for the component, as a string. Use Tailwind CSS for styling. (e.g. "<div className=\\"bg-slate-200 p-4\\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\\n</div>")',
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+      function_call: {
+        name: "send_component",
+      },
+    },
     [
       {
         handleLLMNewToken: streamingCallback,
@@ -352,38 +410,24 @@ export async function modifyComponent(
     ]
   );
 
-  const responseString = rawResponse.text;
+  const responseFunctionCall = rawResponse.additional_kwargs[
+    "function_call"
+  ] as any;
+  const responseArgString = responseFunctionCall["arguments"];
 
-  console.log(responseString);
-  const jsonResponse = responseString
-    .replace(/^[^{]*{/, "{")
-    .replace(/}[^}]*$/, "}");
+  console.log(responseArgString);
 
-  let parsed;
+  const response = JSON.parse(responseArgString);
 
-  try {
-    parsed = JSON.parse(jsonResponse);
-    if (!parsed.explanation || !parsed.jsx) {
-      throw new Error("Invalid response");
-    }
-  } catch (e) {
-    console.warn("JSON parse failed, constructing manually");
-    const parts = jsonResponse
-      .replace(/^([{"]|\s)*"explanation"\s*:\s*"/, "")
-      .replace(/([}"]|\s)*$/, "")
-      .split(/(?:[",]|\s)*"jsx"\s*:\s*"/);
-    const explanation = parts[0];
-    const jsx = parts[1];
-    parsed = {
-      explanation,
-      jsx,
-    };
-  }
+  console.log(response);
 
-  parsed["jsx"] = cleanJSX(parsed["jsx"]);
-
-  console.log(parsed);
-  return parsed;
+  return {
+    explanation: response.explanation,
+    update: {
+      state: response.component.state,
+      contents: cleanJSX(response.component.render),
+    },
+  };
 }
 
 export async function modifyComponentWithCompletion(

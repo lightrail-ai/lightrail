@@ -45,13 +45,19 @@ function ComponentEditingPane({
       const file = project.files.find(
         (f) => f.path === editingComponentValue.name
       );
-      const formatted = prettier
-        .format(file?.contents!, {
-          parser: "babel",
-          semi: false,
-          plugins: [prettierBabelParser],
-        })
-        .replace(/^;+|;+$/g, ""); // TODO: Add formatter
+      let formatted;
+      try {
+        formatted = prettier
+          .format(file?.contents!, {
+            parser: "babel",
+            semi: false,
+            plugins: [prettierBabelParser],
+          })
+          .replace(/^;+|;+$/g, "");
+      } catch (e) {
+        console.error(e);
+        formatted = file?.contents!;
+      }
       setModifiedCode(formatted);
       setOldCode(formatted);
     }

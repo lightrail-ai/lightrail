@@ -6,6 +6,7 @@ import { Database } from "../supabase";
 
 export type Project = Database["public"]["Tables"]["projects"]["Row"];
 export type File = Database["public"]["Tables"]["files"]["Row"];
+export type FileUpdate = Database["public"]["Tables"]["files"]["Update"];
 export type ProjectWithFiles = Project & { files: File[] };
 export interface FileStateItem {
   name: string;
@@ -104,10 +105,10 @@ export class Client {
     }
   }
 
-  async updateFile(projectId: number, filePath: string, contents: string) {
+  async updateFile(projectId: number, filePath: string, update: FileUpdate) {
     const updated = await this.supabase
       .from("files")
-      .update({ contents })
+      .update(update)
       .eq("path", filePath)
       .eq("project_id", projectId)
       .select()
