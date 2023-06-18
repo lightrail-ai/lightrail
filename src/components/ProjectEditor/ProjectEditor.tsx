@@ -25,6 +25,7 @@ import ComponentCreationModal from "../ComponentCreationModal/ComponentCreationM
 import { ComponentCreationCallback } from "./editor-types";
 import ComponentPreviewDressing from "../ComponentPreviewDressing/ComponentPreviewDressing";
 import LoadingSplashOverlay from "../LoadingSplashOverlay/LoadingSplashOverlay";
+import ComponentInfoPanel from "../ComponentInfoPanel/ComponentInfoPanel";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -171,6 +172,8 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
           <ReflexContainer orientation="horizontal">
             <ReflexElement flex={3}>
               <ReflexContainer orientation="vertical">
+                {project && <ComponentInfoPanel project={project} />}
+                <ReflexSplitter />
                 <ReflexElement
                   className={classNames("flex flex-row min-h-0", {
                     "opacity-50": rendering,

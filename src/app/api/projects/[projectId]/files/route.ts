@@ -34,7 +34,8 @@ export async function POST(
         await client.createFile(
           parseInt(params.projectId),
           file.path,
-          file.contents || ""
+          file.contents || "",
+          file.state
         );
 
         controller.enqueue(

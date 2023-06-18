@@ -6,7 +6,12 @@ import { Database } from "../supabase";
 
 export type Project = Database["public"]["Tables"]["projects"]["Row"];
 export type File = Database["public"]["Tables"]["files"]["Row"];
+export type FileUpdate = Database["public"]["Tables"]["files"]["Update"];
 export type ProjectWithFiles = Project & { files: File[] };
+export interface FileStateItem {
+  name: string;
+  initial: any;
+}
 
 // export async function setProject(project: Project) {
 //   await supabase.from("projects").upsert(project);
@@ -67,10 +72,10 @@ export class Client {
     return res.data!.id;
   }
 
-  async getFile(projectId: number, filePath: string): Promise<string> {
+  async getFile(projectId: number, filePath: string): Promise<File> {
     const file = await this.supabase
       .from("files")
-      .select("contents")
+      .select("*")
       .eq("project_id", projectId)
       .eq("path", filePath)
       .single();
@@ -79,14 +84,20 @@ export class Client {
       throw new Error(file.error.message);
     }
 
-    return file.data!.contents!;
+    return file.data;
   }
 
-  async createFile(projectId: number, filePath: string, contents: string) {
+  async createFile(
+    projectId: number,
+    filePath: string,
+    contents: string,
+    state?: any
+  ) {
     const result = await this.supabase.from("files").insert({
       project_id: projectId,
       path: filePath,
       contents,
+      state,
     });
 
     if (result.error) {
@@ -94,10 +105,10 @@ export class Client {
     }
   }
 
-  async updateFile(projectId: number, filePath: string, contents: string) {
+  async updateFile(projectId: number, filePath: string, update: FileUpdate) {
     const updated = await this.supabase
       .from("files")
-      .update({ contents })
+      .update(update)
       .eq("path", filePath)
       .eq("project_id", projectId)
       .select()

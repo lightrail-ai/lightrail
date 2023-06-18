@@ -30,18 +30,16 @@ export async function PUT(
 
           const { jsx, explanation } =
             await prompting.modifyComponentWithCompletion(
-              old,
+              old.contents!,
               `The JSX currently fails to render with the error: '${error}'. Fix the JSX so that it renders properly.`,
               (_token) => {
                 controller.enqueue(encoder.encode("\n"));
               }
             );
 
-          await client.updateFile(
-            parseInt(params.projectId),
-            params.filePath,
-            jsx
-          );
+          await client.updateFile(parseInt(params.projectId), params.filePath, {
+            contents: jsx,
+          });
 
           controller.enqueue(
             encoder.encode(
@@ -52,11 +50,9 @@ export async function PUT(
             )
           );
         } else if (!modification && contents) {
-          await client.updateFile(
-            parseInt(params.projectId),
-            params.filePath,
-            contents
-          );
+          await client.updateFile(parseInt(params.projectId), params.filePath, {
+            contents,
+          });
 
           controller.enqueue(
             encoder.encode(
@@ -73,18 +69,17 @@ export async function PUT(
             params.filePath
           );
 
-          const { jsx, explanation } = await prompting.modifyComponent(
+          const { update, explanation } = await prompting.modifyComponent(
             old,
             modification,
             (_token) => {
               controller.enqueue(encoder.encode("\n"));
             }
           );
-          const newFile = jsx;
           await client.updateFile(
             parseInt(params.projectId),
             params.filePath,
-            newFile!
+            update
           );
           revalidatePath(
             `/api/projects/${params.projectId}/files/${params.filePath}`
@@ -95,7 +90,6 @@ export async function PUT(
             encoder.encode(
               JSON.stringify({
                 status: "ok",
-                file: newFile,
                 message: explanation,
               })
             )
@@ -104,6 +98,7 @@ export async function PUT(
 
         controller.close();
       } catch (e: any) {
+        console.error(e);
         controller.enqueue(
           encoder.encode(
             JSON.stringify({

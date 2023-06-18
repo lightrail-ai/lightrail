@@ -47,9 +47,10 @@ function ComponentsListPanel({
           {orderedComponents.map((file) => (
             <div
               className={classNames(
-                `text-md px-2 py-1 bg-slate-100 rounded-md text-slate-800 cursor-pointer border-2 border-slate-300 hover:opacity-70 hover:shadow-md active:shadow-inner hover:border-sky-300`,
+                `text-md px-2 py-1 bg-slate-100 rounded-md text-slate-800 cursor-pointer border-2 hover:opacity-70 hover:shadow-md active:shadow-inner hover:border-sky-300`,
                 {
-                  "border-green-600": file.path === "index",
+                  "border-slate-300": file.path !== "index",
+                  "border-green-300": file.path === "index",
                 }
               )}
               onClick={(e) => {

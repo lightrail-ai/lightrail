@@ -55,7 +55,12 @@ export async function POST(request: Request) {
         );
 
         for (const file of files) {
-          await client.createFile(project_id, file.path, file.contents || "");
+          await client.createFile(
+            project_id,
+            file.path,
+            file.contents || "",
+            file.state
+          );
         }
 
         controller.enqueue(

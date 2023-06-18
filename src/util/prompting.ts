@@ -1,13 +1,17 @@
-import { File } from "./storage";
+import { File, FileUpdate } from "./storage";
 
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { OpenAI } from "langchain/llms/openai";
-import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import {
+  AIChatMessage,
+  HumanChatMessage,
+  SystemChatMessage,
+} from "langchain/schema";
 import { CompleteLibrary, type Library } from "./starter-library";
 import { SERVER_URL } from "./constants";
 
 const chat = new ChatOpenAI({
-  modelName: "gpt-3.5-turbo-0301",
+  modelName: "gpt-3.5-turbo-0613",
   openAIApiKey: process.env.OPENAI_API_KEY,
   maxConcurrency: 5,
   streaming: true,
@@ -32,10 +36,6 @@ const completion = new OpenAI({
 export function cleanJSX(jsx: string) {
   let cleaned = jsx.replaceAll(" class=", " className=");
   cleaned = cleaned.replaceAll(" for=", " htmlFor=");
-  cleaned = cleaned.replaceAll("</img>", "");
-  cleaned = cleaned.replaceAll(/<img([^>/]*)>/g, "<img$1 />"); //replace img tags with self-closing tags, preserving attributes
-  cleaned = cleaned.replaceAll("</input>", "");
-  cleaned = cleaned.replaceAll(/<input([^>/]*)>/g, "<input$1 />"); //replace input tags with self-closing tags, preserving attributes
   return cleaned;
 }
 
@@ -230,6 +230,7 @@ export async function generateComponent(
   {
     "name": "...",   // The name of the component
     "props": ["...", "..."],   // The props that this component uses
+    "state": ["...", "..."]   // The state that this component uses. 
     "render": "...",    // The JSX for the component, as a string. Use only Tailwind CSS for styling. Use only props requested in the description.
   }
   \`\`\`
@@ -239,26 +240,25 @@ export async function generateComponent(
   const initialPrompt = `
   Generate a JSON-serialized React component for the provided name/props/description. For example, if given the input:
 
-  Name: PriceDisplayBox
-  Props: price, currency
-  Description: A box that displays a price and currency on a gray background with rounded corners
+  Name: Counter
+  Props: delta
+  Description: A counter input that starts at 0 and allows the user to change the value by the specified delta. 
 
   You produce:
 
   \`\`\`
   {
-      "name": "PriceDisplayBox",   // The name of the component, as a string
-      "props": ["price", "currency"],   // The props that this component uses
-      "render": "<div className=\"bg-slate-200 px-2 py-1 rounded-md\">\\n  {props.price} ({props.currency})\\n</div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
+      "name": "Counter",   // The name of the component, as a string
+      "props": ["delta"],   // The props that this component uses
+      "state": [{name: "count", initial: 0}] // The state that this component uses. Each state variable has a name and an initial value.
+      "render": "<div className=\"flex items-center\">\n    <button className=\"bg-blue-400 hover:bg-blue-500 text-white font-bold py-1 px-2 rounded-l-md\" onClick={() => setCount(count - props.delta)}>-</button>\n        <div className=\"bg-white px-3 py-1 text-center border border-gray-300\">\n            {count}\n        </div>\n    <button className=\"bg-blue-400 hover:bg-blue-500 text-white font-bold py-1 px-2 rounded-r-md\" onClick={() => setCount(count + props.delta)}>+</button>\n</div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
   }
   \`\`\`
 
   The JSX you generate should only use Tailwind CSS for styling. Font Awesome icons are also available to you, as css classes.
-  When accessing props in the JSX, use the format \`props.propName\` to access the prop value.
-  A component's children are available as \`props.children\`.  All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)
-
-  ${description}
-
+  When accessing props in the JSX, use the format \`props.propName\` to access the prop value. A component's children are available as \`props.children\`. 
+  When accessing state in the JSX, use the state variable name (e.g. \`count\`) to access the state value, and the corresponding setter (e.g. \`setCount\`) to set the state value.
+  Define all event-handlers inline. All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.).
   Make sure each component uses all the required props and doesn't use any props that aren't requested. 
 
   Here is your input:
@@ -305,56 +305,104 @@ export async function generateComponent(
   return {
     path: name,
     contents: cleanJSX(parsed.render),
+    state: parsed.state,
   };
 }
 
 export async function modifyComponent(
-  old: string,
+  old: File,
   modification: string,
   streamingCallback?: (token: string) => void
-) {
+): Promise<{
+  explanation: string;
+  update: FileUpdate;
+}> {
   const system = `
-        You are a helpful JSON API for a React developer, and you modify React components to satisfy a given set of requirements.
-        You use Tailwind CSS for all styling, and only manipulate the component's JSX component tree. 
-        You receive requests in a standardized JSON format, and respond in a standardized JSON format that includes an explanation of your changes.`;
+        You are a helpful JSON API for a React developer, and you modify React components to satisfy a description of a change or issue to fix.
+        You receive requests as a React component serialized in a JSON format, along with a description of a modification, and you respond with an explanation of the changes 
+        made as well as the updated component in the same serialized JSON format.`;
   const prompt = `
-        I will give you the JSX component tree for a React component (as a string) as well as a description of a modification that needs to be made to the component, 
-        and you will modify the component tree to satisfy the modification (using Tailwind CSS for styling) and return it along with an explanation of your changes.
-        My request will be JSON with the keys "jsx" and "modification" (both strings), and your response should be JSON with the keys "explanation" (a string) and "jsx" (a string). For example: 
-
-        My Request: 
-        \`\`\`
-        {
-          "jsx": "<h1 className=\"text-md\">Hello, world!</h1>",
-          "modification": "Make the text larger"
-        }
-        \`\`\`
-
-        Your Response:
-        \`\`\`
-        {
-          "explanation": "I added the Tailwind CSS class 'text-lg' to the h1 tag to make the text larger.",
-          "jsx": "<h1 className=\"text-lg\">Hello, world!</h1>"
-        }
-        \`\`\`
-
+        I will give you a serialized JSON object representing a React component, as well as a modification to make to the component. 
+        You modify the component to satisfy the modification and return it along with an explanation of your changes.
+        You can add or remove state variables, or modify the JSX. For any state variables, you can use the state variable name (e.g. \`count\`) to access the state value,
+        and the corresponding setter (e.g. \`setCount\`) to set the state value. Define all event-handlers inline. Props are accessed as \`props.propName\` in the JSX.
+        My request will be JSON with the keys "component" (the serialized component) and "modification" (a string with a change description),
+        and you should send back a response with the keys "explanation" (a string) and "component" (an updated serialized component).
         
+        Do not assume that any custom components exist that aren't already used; use only standard HTML elements in your changes. Do not rely on any external libraries.
+        Only use Tailwind CSS for styling. You can use Font Awesome icons, as CSS classes. 
         
-        Do not assume that any custom components exist that aren't already used; use only standard HTML elements in your changes. 
-        You can use Font Awesome icons, as CSS classes. Return the result with no other comments outside of the JSON. Here's my request:
+        Here's my request:
         
         \`\`\`
         {
-          "jsx": "${old.replaceAll("\n", "\\n")}",
+          "component": {
+            "name": ${JSON.stringify(old.path)},
+            "state": ${JSON.stringify(old.state || [])},
+            "render": ${JSON.stringify(old.contents)},
+          },
           "modification": "${modification}"
         }
-        \`\`\`
-        
-        Respond only as a JSON object.`;
+        \`\`\``;
 
   const rawResponse = await chat.call(
     [new SystemChatMessage(system), new HumanChatMessage(prompt)],
-    undefined,
+    {
+      functions: [
+        {
+          name: "send_component",
+          description:
+            "Send the developer the modified component with an explanation of the changes made.",
+          parameters: {
+            type: "object",
+            properties: {
+              explanation: {
+                type: "string",
+                description: "The explanation of the changes made.",
+              },
+              component: {
+                type: "object",
+                description: "The modified, serialized component.",
+                properties: {
+                  name: {
+                    type: "string",
+                    description:
+                      'The name of the component (e.g. "ComponentName")',
+                  },
+                  state: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      description:
+                        'The state variables that this component uses (e.g. [{name: "count", initial: 0}, {name: "text", initial: ""}])',
+                      properties: {
+                        name: {
+                          type: "string",
+                          description: "The name of the state variable",
+                        },
+                        initial: {
+                          type: "string",
+                          description:
+                            "The initial value of the state variable",
+                        },
+                      },
+                    },
+                  },
+                  render: {
+                    type: "string",
+                    description:
+                      'The JSX component tree for the component, as a string. Use Tailwind CSS for styling. (e.g. "<div className=\\"bg-slate-200 p-4\\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\\n</div>")',
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+      function_call: {
+        name: "send_component",
+      },
+    },
     [
       {
         handleLLMNewToken: streamingCallback,
@@ -362,59 +410,25 @@ export async function modifyComponent(
     ]
   );
 
-  const responseString = rawResponse.text;
+  const responseFunctionCall = rawResponse.additional_kwargs[
+    "function_call"
+  ] as any;
+  const responseArgString = responseFunctionCall["arguments"];
 
-  console.log(responseString);
-  const jsonResponse = responseString
-    .replace(/^[^{]*{/, "{")
-    .replace(/}[^}]*$/, "}");
+  console.log(responseArgString);
 
-  let parsed;
+  const response = JSON.parse(responseArgString);
 
-  try {
-    parsed = JSON.parse(jsonResponse);
-    if (!parsed.explanation || !parsed.jsx) {
-      throw new Error("Invalid response");
-    }
-  } catch (e) {
-    console.warn("JSON parse failed, constructing manually");
-    const parts = jsonResponse
-      .replace(/^([{"]|\s)*"explanation"\s*:\s*"/, "")
-      .replace(/([}"]|\s)*$/, "")
-      .split(/(?:[",]|\s)*"jsx"\s*:\s*"/);
-    const explanation = parts[0];
-    const jsx = parts[1];
-    parsed = {
-      explanation,
-      jsx,
-    };
-  }
+  console.log(response);
 
-  parsed["jsx"] = cleanJSX(parsed["jsx"]);
-
-  console.log(parsed);
-  return parsed;
+  return {
+    explanation: response.explanation,
+    update: {
+      state: response.component.state,
+      contents: cleanJSX(response.component.render),
+    },
+  };
 }
-
-// export async function modifyComponentWithEdits(
-//   old: string,
-//   modification: string
-// ) {
-//   const rawResponse = await openai.createEdit({
-//     model: "text-davinci-edit-001",
-//     input: old,
-//     instruction: modification,
-//   });
-
-//   const responseString = rawResponse.data.choices[0].text;
-
-//   console.log(responseString);
-
-//   return {
-//     jsx: responseString,
-//     explanation: "I tried my best to make the changes you asked for!",
-//   };
-// }
 
 export async function modifyComponentWithCompletion(
   old: string,

@@ -41,11 +41,12 @@
     "hint.css": "^2.7.0",
     "import-mapper": "^0.0.4",
     "jszip": "^3.10.1",
-    "langchain": "^0.0.91",
+    "langchain": "^0.0.95",
     "next": "13.4.2",
     "node-loader": "^2.0.0",
     "openai": "^3.2.1",
     "postcss": "8.4.23",
+    "prettier": "^2.8.8",
     "prismjs": "^1.29.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -64,6 +65,7 @@
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.5",
+    "@types/prettier": "^2.7.3",
     "@types/react-tag-input": "^6.6.1",
     "supabase": "^1.63.1"
   }
