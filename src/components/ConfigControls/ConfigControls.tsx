@@ -18,19 +18,19 @@ function ConfigControls({}: ConfigControlsProps) {
       {configOpen && (
         <div className="absolute right-0 bg-slate-900 z-[60] p-4 rounded-md border">
           <div className="flex flex-row gap-4 items-center">
-            Editor:{" "}
+            Theme:{" "}
             <select
               className="text-slate-900 p-1"
-              value={config.editUX}
+              value={config.theme}
               onChange={(e) =>
                 setConfig({
                   ...config,
-                  editUX: e.target.value as typeof config.editUX,
+                  theme: e.target.value as typeof config.theme,
                 })
               }
             >
-              <option value="panel">Panel</option>
-              <option value="popover">Popover (WIP)</option>
+              <option value="light">light</option>
+              <option value="dark">dark</option>
             </select>
           </div>
         </div>

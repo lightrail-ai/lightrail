@@ -29,6 +29,7 @@ export interface CodeEditorProps {
     name: string,
     callback: ComponentCreationCallback
   ) => void;
+  readonly?: boolean;
 }
 
 function CodeEditor({
@@ -37,6 +38,7 @@ function CodeEditor({
   onValueChange,
   project,
   onCreateComponent,
+  readonly,
 }: CodeEditorProps) {
   const editorRef = useRef(null);
 
@@ -60,6 +62,7 @@ function CodeEditor({
         langs.jsx(),
         solarizedLight,
         componentAutocompletion(project, onCreateComponent),
+        readonly ? [EditorState.readOnly.of(true)] : [],
       ],
     });
 
@@ -68,7 +71,7 @@ function CodeEditor({
     return () => {
       view.destroy();
     };
-  }, [value, project]);
+  }, [value, project, readonly]);
 
   const editorDom = useMemo(
     () => <div className="w-full h-full" ref={editorRef} />,
