@@ -1,4 +1,4 @@
-import { Client } from "@/util/storage";
+import { Client, FileUpdate } from "@/util/storage";
 import * as prompting from "@/util/prompting";
 import { revalidatePath } from "next/cache";
 import { RequestCookies } from "@edge-runtime/cookies";
@@ -14,7 +14,7 @@ export async function PUT(
     cookies: () => reqCookies,
   });
 
-  const { modification, contents, error } = await request.json();
+  const { modification, contents, error, revision } = await request.json();
   const encoder = new TextEncoder();
 
   const customReadable = new ReadableStream({
@@ -46,6 +46,31 @@ export async function PUT(
               JSON.stringify({
                 status: "ok",
                 message: explanation,
+              })
+            )
+          );
+        } else if (revision) {
+          const revisionContent = await client.getRevision(parseInt(revision));
+
+          const update: FileUpdate = Object.assign({}, revisionContent);
+          delete update.id;
+          delete update.created_at;
+          delete update.project_id;
+          delete update.path;
+          delete update.owner;
+
+          await client.updateFile(
+            parseInt(params.projectId),
+            params.filePath,
+            update
+          );
+
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                status: "ok",
+                file: contents,
+                message: "Revision restored!",
               })
             )
           );

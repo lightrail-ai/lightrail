@@ -1,19 +1,15 @@
 "use client";
 
 import { SERVER_URL } from "@/util/constants";
-import { Project, ProjectWithFiles } from "@/util/storage";
+import { ProjectWithFiles } from "@/util/storage";
 import React, { useEffect, useState } from "react";
-import PreviewRenderer from "../PreviewRenderer";
 import EditorNavbar from "../EditorNavbar/EditorNavbar";
 import BrowserMockup from "../BrowserMockup/BrowserMockup";
 import toast, { Toaster } from "react-hot-toast";
-import EditingPopover from "../EditingPopover/EditingPopover";
 
 import "react-reflex/styles.css";
 import { ReflexContainer, ReflexElement, ReflexSplitter } from "react-reflex";
-import ComponentEditingPane from "../ComponentEditingPane/ComponentEditingPane";
-import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
-import { configState } from "../ConfigControls/config-state";
+import { RecoilRoot, useRecoilState } from "recoil";
 import ComponentEditorPanel from "../ComponentEditorPanel/ComponentEditorPanel";
 import classNames from "classnames";
 import { errorsQueue } from "../PreviewRenderer/preview-renderer-state";
@@ -72,7 +68,6 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
   const [preparingFrame, setPreparingFrame] = useState(true);
   const [renderCount, setRenderCount] = useState(0);
   const [rendering, setRendering] = useState(false);
-  const config = useRecoilValue(configState);
   const [errorsQueueValue, setErrorsQueue] = useRecoilState(errorsQueue);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isShowingComponentList, setIsShowingComponentList] = useState(false);
@@ -224,32 +219,19 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
               </ReflexContainer>
             </ReflexElement>
             <ReflexSplitter />
-            {config.editUX === "panel" && (
-              <ComponentEditorPanel
-                project={project}
-                onUpdate={onUpdate}
-                onMessage={(message) => toastMessage(message)}
-                onCreateComponent={(name, callback) => {
-                  setCreatingComponent(name);
-                  setOnComponentCreated(() => callback);
-                }}
-              />
-            )}
+            <ComponentEditorPanel
+              project={project}
+              onUpdate={onUpdate}
+              onMessage={(message) => toastMessage(message)}
+              onCreateComponent={(name, callback) => {
+                setCreatingComponent(name);
+                setOnComponentCreated(() => callback);
+              }}
+            />
           </ReflexContainer>
         )}
       </div>
       <Toaster />
-      {/* {project && config.editUX === "popover" && (
-        <EditingPopover
-          project={project}
-          onUpdate={onUpdate}
-          onMessage={(message) => toastMessage(message)}
-          onCreateComponent={(name, callback) => {
-            setCreatingComponent(name);
-            setOnComponentCreated(() => callback);
-          }}
-        />
-      )} */}
       {project && (
         <ComponentCreationModal
           componentName={creatingComponent}

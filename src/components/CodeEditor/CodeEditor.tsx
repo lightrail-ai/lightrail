@@ -10,7 +10,7 @@ import {
 
 import { bracketMatching } from "@codemirror/language";
 
-import { defaultKeymap, historyKeymap } from "@codemirror/commands";
+import { defaultKeymap, historyKeymap, history } from "@codemirror/commands";
 import { solarizedLight } from "thememirror";
 import "./custom-styles.css";
 import classNames from "classnames";
@@ -29,6 +29,7 @@ export interface CodeEditorProps {
     name: string,
     callback: ComponentCreationCallback
   ) => void;
+  readonly?: boolean;
 }
 
 function CodeEditor({
@@ -37,6 +38,7 @@ function CodeEditor({
   onValueChange,
   project,
   onCreateComponent,
+  readonly,
 }: CodeEditorProps) {
   const editorRef = useRef(null);
 
@@ -50,6 +52,7 @@ function CodeEditor({
             onValueChange(update.state.doc.toString());
           }
         }),
+        history(),
         highlightActiveLineGutter(),
         highlightSpecialChars(),
         drawSelection(),
@@ -59,6 +62,7 @@ function CodeEditor({
         langs.jsx(),
         solarizedLight,
         componentAutocompletion(project, onCreateComponent),
+        readonly ? [EditorState.readOnly.of(true)] : [],
       ],
     });
 
@@ -67,7 +71,7 @@ function CodeEditor({
     return () => {
       view.destroy();
     };
-  }, [value, project]);
+  }, [value, project, readonly]);
 
   const editorDom = useMemo(
     () => <div className="w-full h-full" ref={editorRef} />,

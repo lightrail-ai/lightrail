@@ -1,10 +1,10 @@
 import { atom } from "recoil";
 
 export const configState = atom<{
-  editUX: "popover" | "panel";
+  theme: "light" | "dark";
 }>({
   key: "configState",
   default: {
-    editUX: "panel",
+    theme: "light",
   },
 });

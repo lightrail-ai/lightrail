@@ -6,7 +6,11 @@ import { Database } from "../supabase";
 
 export type Project = Database["public"]["Tables"]["projects"]["Row"];
 export type File = Database["public"]["Tables"]["files"]["Row"];
+export type FileRevision =
+  Database["public"]["Tables"]["file_revisions"]["Row"];
 export type FileUpdate = Database["public"]["Tables"]["files"]["Update"];
+export type NewFileRevision =
+  Database["public"]["Tables"]["file_revisions"]["Insert"];
 export type ProjectWithFiles = Project & { files: File[] };
 export interface FileStateItem {
   name: string;
@@ -87,13 +91,58 @@ export class Client {
     return file.data;
   }
 
+  async getRevisions(
+    projectId: number,
+    filePath: string
+  ): Promise<FileRevision[]> {
+    const result = await this.supabase
+      .from("file_revisions")
+      .select("*")
+      .eq("project_id", projectId)
+      .eq("path", filePath)
+      .order("created_at", {
+        ascending: false,
+      });
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    return result.data;
+  }
+
+  async getRevision(revisionId: number): Promise<FileRevision> {
+    const result = await this.supabase
+      .from("file_revisions")
+      .select("*")
+      .eq("id", revisionId)
+      .single();
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    return result.data;
+  }
+
   async createFile(
     projectId: number,
     filePath: string,
     contents: string,
     state?: any
   ) {
-    const result = await this.supabase.from("files").insert({
+    let result = await this.supabase.from("files").insert({
+      project_id: projectId,
+      path: filePath,
+      contents,
+      state,
+    });
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    result = await this.supabase.from("file_revisions").insert({
       project_id: projectId,
       path: filePath,
       contents,
@@ -114,6 +163,22 @@ export class Client {
       .select()
       .single();
 
-    return updated.data!;
+    if (updated.error) {
+      throw new Error(updated.error.message);
+    }
+
+    let newRevision: NewFileRevision = Object.assign({}, updated.data);
+    delete newRevision["created_at"];
+    delete newRevision["id"];
+
+    const result = await this.supabase
+      .from("file_revisions")
+      .insert(newRevision);
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    return updated.data;
   }
 }

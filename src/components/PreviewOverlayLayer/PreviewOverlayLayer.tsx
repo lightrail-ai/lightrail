@@ -4,7 +4,6 @@ import {
   hoveringComponent,
   previewIframeRef,
 } from "../PreviewRenderer/preview-renderer-state";
-import NamePopover from "../NamePopover/NamePopover";
 
 export interface Rect {
   top: number;
@@ -62,7 +61,6 @@ function PreviewOverlayLayer({}: PreviewOverlayLayerProps) {
         hoveringComponentValue.rects.map((rect, i) => (
           <OverlayDiv name={hoveringComponentValue.name} rect={rect} key={i} />
         ))}
-      {/* <NamePopover /> */}
     </>
   );
 }
