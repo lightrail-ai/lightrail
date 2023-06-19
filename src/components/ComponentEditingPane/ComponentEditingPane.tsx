@@ -13,9 +13,8 @@ import { getJSONFromStream } from "@/util/transfers";
 import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 import Button from "../Button/Button";
 import { toast } from "react-hot-toast";
-import prettier from "prettier/standalone";
-import prettierBabelParser from "prettier/parser-babel";
 import RevisionSelect from "../RevisionSelect/RevisionSelect";
+import { formatComponentTree } from "@/util/util";
 // @ts-ignore
 
 export interface ComponentEditingPaneProps {
@@ -49,19 +48,7 @@ function ComponentEditingPane({
       const file = project.files.find(
         (f) => f.path === editingComponentValue.name
       );
-      let formatted;
-      try {
-        formatted = prettier
-          .format(file?.contents!, {
-            parser: "babel",
-            semi: false,
-            plugins: [prettierBabelParser],
-          })
-          .replace(/^;+|;+$/g, "");
-      } catch (e) {
-        console.error(e);
-        formatted = file?.contents!;
-      }
+      let formatted = formatComponentTree(file?.contents!);
       setModifiedCode(formatted);
       setOldCode(formatted);
     }
@@ -128,7 +115,14 @@ function ComponentEditingPane({
             project={project}
             filePath={editingComponentValue.name}
             onRevisionSelect={(revision) => {
-              setSelectedRevision(revision);
+              if (revision) {
+                setSelectedRevision({
+                  ...revision,
+                  contents: formatComponentTree(revision.contents!),
+                });
+              } else {
+                setSelectedRevision(null);
+              }
             }}
             currentRevision={selectedRevision}
           />
