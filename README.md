@@ -38,7 +38,7 @@ Below is a rough roadmap of development plans:
 - [x] User accounts
 - [x] Exporting to Next.js
 - [x] Creating new components
-- [ ] Linking Data Sources / DBs
+- [x] Supporting interactivity (partially done)
 - [ ] Uploading images
 - [ ] Generating images
-- [ ] Supporting interactivity
+- [ ] Linking Data Sources / DBs

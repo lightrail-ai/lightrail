@@ -8,6 +8,7 @@ import { Project } from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { analytics } from "@/util/analytics";
 
 export interface ProjectExporterProps {
   project: Project;
@@ -33,6 +34,11 @@ function ProjectExporter({ project }: ProjectExporterProps) {
   async function exportNextJs() {
     setLoading(true);
     setOpen(false);
+
+    analytics.track("Project Export Requested", {
+      projectId: project.id,
+    });
+
     const r = await fetch(`${SERVER_URL}/api/projects/${project.id}/export`);
     const { contents } = await r.json();
     let zip = new JSZip();

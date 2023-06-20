@@ -11,6 +11,7 @@ import { type Tag, WithContext as ReactTags } from "react-tag-input";
 import Button from "../Button/Button";
 import { sanitizeComponentName } from "@/util/util";
 import { toast } from "react-hot-toast";
+import { analytics } from "@/util/analytics";
 
 export interface ProjectCreationPaneProps {}
 
@@ -37,15 +38,20 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
 
   async function createProject() {
     setLoading(true);
+
+    const requestBody = {
+      name: type === "component" ? componentName : name,
+      description,
+      type,
+      libraries: category === "none" ? [] : [category],
+      props: desiredProps.map((p) => p.text),
+    };
+
+    analytics.track("Project Creation Requested", requestBody);
+
     const res = await fetch(`${SERVER_URL}/api/projects`, {
       method: "POST",
-      body: JSON.stringify({
-        name: type === "component" ? componentName : name,
-        description,
-        type,
-        libraries: category === "none" ? [] : [category],
-        props: desiredProps.map((p) => p.text),
-      }),
+      body: JSON.stringify(requestBody),
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",

@@ -9,7 +9,7 @@ import toast, { Toaster } from "react-hot-toast";
 
 import "react-reflex/styles.css";
 import { ReflexContainer, ReflexElement, ReflexSplitter } from "react-reflex";
-import { RecoilRoot, useRecoilState } from "recoil";
+import { useRecoilState } from "recoil";
 import ComponentEditorPanel from "../ComponentEditorPanel/ComponentEditorPanel";
 import classNames from "classnames";
 import { errorsQueue } from "../PreviewRenderer/preview-renderer-state";
@@ -245,8 +245,4 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
   );
 }
 
-export default (props: ProjectEditorProps) => (
-  <RecoilRoot>
-    <ProjectEditor {...props} />
-  </RecoilRoot>
-);
+export default ProjectEditor;

@@ -15,6 +15,7 @@ import Button from "../Button/Button";
 import { toast } from "react-hot-toast";
 import RevisionSelect from "../RevisionSelect/RevisionSelect";
 import { formatComponentTree } from "@/util/util";
+import { analytics } from "@/util/analytics";
 // @ts-ignore
 
 export interface ComponentEditingPaneProps {
@@ -65,6 +66,12 @@ function ComponentEditingPane({
           modification,
           contents: oldCode === modifiedCode ? undefined : modifiedCode,
         };
+
+    analytics.track("Component Update Requested", {
+      ...updateBody,
+      projectId: project.id,
+      componentName: editingComponentValue?.name,
+    });
 
     const res = await fetch(
       `${SERVER_URL}/api/projects/${project.id}/files/${editingComponentValue?.name}/contents`,

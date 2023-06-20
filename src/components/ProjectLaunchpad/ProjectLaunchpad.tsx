@@ -1,11 +1,5 @@
 "use client";
-import { Database } from "@/supabase";
-import {
-  Session,
-  createClientComponentClient,
-} from "@supabase/auth-helpers-nextjs";
 import React, { useEffect, useState } from "react";
-import AuthModal from "../AuthModal/AuthModal";
 import ProjectCreationModal from "../ProjectCreationModal/ProjectCreationModal";
 import FirstProjectFlow from "../FirstProjectFlow/FirstProjectFlow";
 import { Project } from "@/util/storage";
@@ -18,38 +12,17 @@ import Image from "next/image";
 import github from "@/assets/github-mark.svg";
 import Link from "next/link";
 import { Toaster } from "react-hot-toast";
+import { sessionState } from "../SessionDataProvider/session-data-state";
+import { useRecoilValue } from "recoil";
 
 export interface ProjectLaunchpadProps {}
 
 function ProjectLaunchpad({}: ProjectLaunchpadProps) {
-  const supabase = createClientComponentClient<Database>();
-  const [session, setSession] = useState<Session | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
   const [projectCreationModalVisible, setProjectCreationModalVisible] =
     useState(false);
+  let { session, loading: loadingAuth } = useRecoilValue(sessionState);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
-  const router = useRouter();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error(error);
-      } else {
-        setSession(session);
-      }
-      setAuthChecked(true);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setAuthChecked(true);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   useEffect(() => {
     if (session) {
@@ -62,7 +35,7 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
     }
   }, [session]);
 
-  if (!authChecked) return <></>;
+  if (loadingAuth) return <></>;
 
   if (session) {
     return (

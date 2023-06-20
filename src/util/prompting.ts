@@ -113,12 +113,15 @@ export async function generateRoot(
         Make sure no components are left unimplemented.
         If a component requires props, provide those props with sample values whenever that component is used.
         When accessing props in the JSX, use the format \`props.propName\` to access the prop value. A component's children are available as \`props.children\`.
-
+        ${
+          libraries.length > 0 &&
+          `
         The following components can also be used implementing them yourself, IF they are appropriate for the description requested:
 
         ${formatLibraryForPrompt(usableLibrary)}
 
-        ONLY use components from that list if they are appropriate for the description requested. You will be penalized for misusing them.  
+        ONLY use components from that list if they are appropriate for the description requested. You will be penalized for misusing them.`
+        } 
         Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
         All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)
         Respond only with an array of RFC-compliant JSON objects and no other content, comments, titles, explanations, or text.`;

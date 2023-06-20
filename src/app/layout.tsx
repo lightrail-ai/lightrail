@@ -1,6 +1,7 @@
 import Script from "next/script";
 import "./globals.css";
 import "hint.css/hint.css";
+import SessionDataProvider from "@/components/SessionDataProvider/SessionDataProvider";
 
 export const metadata = {
   title: {
@@ -15,7 +16,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <SessionDataProvider>{children}</SessionDataProvider>
+      </body>
     </html>
   );
 }

@@ -14,8 +14,6 @@ export interface AuthModalProps {
 }
 
 function AuthModal({ visible, onClose }: AuthModalProps) {
-  const [tab, setTab] = useState("login");
-
   return (
     <Modal
       title="Authenticate"

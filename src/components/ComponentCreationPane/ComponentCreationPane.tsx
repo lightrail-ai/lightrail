@@ -9,6 +9,7 @@ import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 import Button from "../Button/Button";
 import { sanitizeComponentName } from "@/util/util";
 import { toast } from "react-hot-toast";
+import { analytics } from "@/util/analytics";
 
 export interface ComponentCreationPaneProps {
   initialName: string | false;
@@ -34,13 +35,18 @@ function ComponentCreationPane({
 
   async function createProject() {
     setLoading(true);
+    const requestBody = {
+      name,
+      description,
+      props: desiredProps.map((p) => p.text),
+    };
+    analytics.track("Component Creation Requested", {
+      ...requestBody,
+      projectId: project.id,
+    });
     const res = await fetch(`${SERVER_URL}/api/projects/${project.id}/files`, {
       method: "POST",
-      body: JSON.stringify({
-        name,
-        description,
-        props: desiredProps.map((p) => p.text),
-      }),
+      body: JSON.stringify(requestBody),
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
