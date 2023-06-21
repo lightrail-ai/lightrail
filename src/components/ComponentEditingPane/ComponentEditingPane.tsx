@@ -135,7 +135,7 @@ function ComponentEditingPane({
     : "Ctrl";
 
   return (
-    <div className="catamaran w-full h-full min-h-0 max-h-full flex flex-col">
+    <div className="w-full h-full min-h-0 max-h-full flex flex-col">
       <h1
         className={classNames(
           "font-semibold text-lg flex flex-row items-center pb-4 gap-2"
