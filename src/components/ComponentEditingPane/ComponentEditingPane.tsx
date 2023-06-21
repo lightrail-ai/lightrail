@@ -16,6 +16,7 @@ import { toast } from "react-hot-toast";
 import RevisionSelect from "../RevisionSelect/RevisionSelect";
 import { formatComponentTree } from "@/util/util";
 import { analytics } from "@/util/analytics";
+import { useHotkeys } from "react-hotkeys-hook";
 // @ts-ignore
 
 export interface ComponentEditingPaneProps {
@@ -42,6 +43,26 @@ function ComponentEditingPane({
   const [modifiedCode, setModifiedCode] = useState<string>("");
   const [selectedRevision, setSelectedRevision] = useState<FileRevision | null>(
     null
+  );
+
+  useHotkeys(
+    "ctrl+s, meta+s, ctrl+enter, meta+enter",
+    (e) => {
+      if (
+        !loading &&
+        (selectedRevision || modification || modifiedCode !== oldCode)
+      ) {
+        updateComponent();
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    },
+    {
+      enableOnContentEditable: true,
+      enableOnFormTags: true,
+      preventDefault: true,
+    },
+    [loading, selectedRevision, modification, modifiedCode, oldCode]
   );
 
   useEffect(() => {
@@ -108,6 +129,10 @@ function ComponentEditingPane({
   if (!editingComponentValue) {
     return null;
   }
+
+  const commandOrControlSymbol = navigator.platform.includes("Mac")
+    ? "⌘"
+    : "Ctrl";
 
   return (
     <div className="w-full h-full min-h-0 max-h-full flex flex-col">
@@ -219,7 +244,10 @@ function ComponentEditingPane({
                     loading || (modifiedCode === oldCode && !modification)
                   }
                 >
-                  Update
+                  Update{" "}
+                  <span className="opacity-50 pl-2 font-mono font-normal">
+                    {commandOrControlSymbol}+⏎
+                  </span>
                 </Button>
                 <Button
                   className="flex-1 lg:w-full lg:mt-4 lg:flex-initial"
