@@ -54,6 +54,7 @@
     "react-dom": "18.2.0",
     "react-error-boundary": "^4.0.4",
     "react-hot-toast": "^2.4.1",
+    "react-hotkeys-hook": "^4.4.0",
     "react-reflex": "^4.1.0",
     "react-resize-detector": "^9.1.0",
     "react-tag-input": "^6.8.1",
