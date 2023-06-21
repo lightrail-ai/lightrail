@@ -40,6 +40,26 @@ export const CompleteLibrary: Library = {
     dependencies: [],
     example: "<ButtonB primary>Sign Up</ButtonB><ButtonB>Log In</ButtonB>",
   },
+  NavbarA: {
+    as: "Navbar",
+    categories: ["landing"],
+    description:
+      "A simple, professional, dark-themed navbar with a logo, links, and a CTA button (optional).",
+    src: "NavbarA.render.jsx",
+    dependencies: [],
+    example:
+      '<Navbar logo={"Nebula"} links={[ { url: "#features", text: "Features" }, { url: "#testimonials", text: "Testimonials" }, { url: "#contact", text: "Contact", }, ]} cta={{ text: "Sign Up", url: "/signup", }} />',
+  },
+  NavbarB: {
+    as: "Navbar",
+    categories: ["landing"],
+    description:
+      "A simple, professional, light-themed navbar with a logo, links, and a CTA button (optional).",
+    src: "NavbarA.render.jsx",
+    dependencies: [],
+    example:
+      '<Navbar logo={"Nebula"} links={[ { url: "#features", text: "Features" }, { url: "#testimonials", text: "Testimonials" }, { url: "#contact", text: "Contact", }, ]} cta={{ text: "Sign Up", url: "/signup", }} />',
+  },
 };
 
 export const LibraryCategories = [
