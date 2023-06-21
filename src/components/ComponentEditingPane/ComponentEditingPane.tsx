@@ -141,7 +141,11 @@ function ComponentEditingPane({
           "font-semibold text-lg flex flex-row items-center pb-4 gap-2"
         )}
       >
-        <div className="bg-sky-300 rounded-lg px-2 py-0.5 text-slate-900 inline-flex justify-center items-center transition-all">{`<${editingComponentValue.name} />`}</div>
+        <div className="bg-sky-300 rounded-lg px-2 py-0.5 text-slate-900 inline-flex justify-center items-center transition-all">
+          {editingComponentValue.name === "index"
+            ? "index (root)"
+            : `<${editingComponentValue.name} />`}
+        </div>
         {!loading && (
           <RevisionSelect
             project={project}
