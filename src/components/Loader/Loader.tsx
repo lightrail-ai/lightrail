@@ -11,7 +11,7 @@ function Loader({ className }: LoaderProps) {
       <svg
         aria-hidden="true"
         className={classNames(
-          "h-8 mr-2 animate-spin dark:text-gray-600 ",
+          "h-8 animate-spin  ",
           className ?? "text-gray-200 fill-blue-600"
         )}
         viewBox="0 0 100 101"

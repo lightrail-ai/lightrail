@@ -38,16 +38,16 @@ function Modal({
           "max-w-2xl": !wide,
         })}
       >
-        <div className="bg-white z-50 rounded-md p-2 shadow relative max-h-[90vh] dark:bg-gray-700  flex flex-col">
+        <div className="bg-white z-50 rounded-md p-2 shadow relative max-h-[90vh]   flex flex-col">
           <div className="flex items-start justify-between p-4 rounded-t">
-            <h3 className="text-gray-900 text-xl lg:text-2xl font-semibold dark:text-white">
+            <h3 className="text-gray-900 text-xl lg:text-2xl font-semibold ">
               {title}
             </h3>
             {onClose && (
               <button
                 type="button"
                 onClick={onClose}
-                className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center  "
               >
                 <svg
                   className="w-5 h-5"

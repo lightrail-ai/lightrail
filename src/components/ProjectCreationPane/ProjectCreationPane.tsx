@@ -129,7 +129,7 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
       </div>
       {type === "webpage" && (
         <>
-          <label className="block mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+          <label className="block mb-1 text-sm font-semibold text-gray-900 ">
             Component Library{" "}
             <Explanation
               text={
@@ -146,7 +146,7 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
       )}
       {type === "component" && (
         <>
-          <label className="block mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+          <label className="block mb-1 text-sm font-semibold text-gray-900 ">
             Desired Props
           </label>
           <ReactTags
@@ -170,7 +170,7 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
           />
         </>
       )}
-      <label className="block mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+      <label className="block mb-1 text-sm font-semibold text-gray-900 ">
         Description
       </label>
       <textarea
