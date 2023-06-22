@@ -1,7 +1,9 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faDiagramProject,
   faFileArrowDown,
   faFileExport,
+  faFolder,
 } from "@fortawesome/free-solid-svg-icons";
 import React, { useState } from "react";
 import { Project } from "@/util/storage";
@@ -9,6 +11,15 @@ import { SERVER_URL } from "@/util/constants";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { analytics } from "@/util/analytics";
+import {
+  FloatingPortal,
+  offset,
+  safePolygon,
+  useFloating,
+  useHover,
+  useInteractions,
+} from "@floating-ui/react";
+import Loader from "../Loader/Loader";
 
 export interface ProjectExporterProps {
   project: Project;
@@ -28,15 +39,28 @@ async function fillZip(zip: JSZip, contents: any[]) {
 }
 
 function ProjectExporter({ project }: ProjectExporterProps) {
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  /* Hover state management */
+  const [isOpen, setIsOpen] = useState(false);
+  const { refs, floatingStyles, context } = useFloating({
+    middleware: [offset(8)],
+    placement: "bottom-end",
+    open: isOpen,
+    onOpenChange: setIsOpen,
+  });
+  const hover = useHover(context, {
+    handleClose: safePolygon(),
+  });
+  const { getReferenceProps, getFloatingProps } = useInteractions([hover]);
 
   async function exportNextJs() {
     setLoading(true);
-    setOpen(false);
+    setIsOpen(false);
 
     analytics.track("Project Export Requested", {
       projectId: project.id,
+      format: "nextjs",
     });
 
     const r = await fetch(`${SERVER_URL}/api/projects/${project.id}/export`);
@@ -51,45 +75,99 @@ function ProjectExporter({ project }: ProjectExporterProps) {
     setLoading(false);
   }
 
+  async function exportComponentFile() {
+    setLoading(true);
+    setIsOpen(false);
+
+    analytics.track("Project Export Requested", {
+      projectId: project.id,
+      format: "component file",
+    });
+
+    const r = await fetch(
+      `${SERVER_URL}/api/projects/${project.id}/export/files/${project.name}`
+    );
+    const blob = await r.blob();
+    saveAs(blob, `${project.name}.jsx`);
+
+    setLoading(false);
+  }
+
+  async function exportComponentFolder() {
+    setLoading(true);
+    setIsOpen(false);
+
+    analytics.track("Project Export Requested", {
+      projectId: project.id,
+      format: "component folder",
+    });
+
+    const zip = new JSZip();
+    const folder = zip.folder(project.name);
+    const mainComponentFileContents = await fetch(
+      `${SERVER_URL}/api/projects/${project.id}/export/files/${project.name}`
+    );
+    folder?.file(`${project.name}.jsx`, await mainComponentFileContents.text());
+    folder?.file(
+      "index.js",
+      `export { default } from './${project.name}';\nexport * from './${project.name}'\n`
+    );
+    const blob = await zip.generateAsync({ type: "blob" });
+    saveAs(
+      blob,
+      `${project.name.toLowerCase().replaceAll(/[^a-z]+/g, "-")}-component.zip`
+    );
+
+    setLoading(false);
+  }
+
   return (
     <div className="text-slate-700 hover:text-slate-900 cursor-pointer relative">
       {loading ? (
-        <svg
-          className="animate-spin h-4 w-4 text-white"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            stroke-width="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
+        <Loader className="text-gray-200 fill-slate-900 h-4 w-4" />
       ) : (
         <FontAwesomeIcon
           icon={faFileArrowDown}
-          onClick={() => setOpen(!open)}
+          ref={refs.setReference}
+          {...getReferenceProps()}
         />
       )}
-      {open && (
-        <div className="absolute right-0 bg-slate-50 z-[60] p-2 rounded-md border border-slate-300">
-          <button
-            onClick={exportNextJs}
-            className="flex flex-row gap-2 items-center hover:bg-slate-400 rounded-md py-1 px-2 hover:bg-opacity-20 cursor-pointer whitespace-nowrap"
+      {isOpen && (
+        <FloatingPortal>
+          <div
+            className="bg-slate-50 z-[60] p-2 rounded-md border border-slate-300"
+            ref={refs.setFloating}
+            style={floatingStyles}
+            {...getFloatingProps()}
           >
-            <FontAwesomeIcon icon={faFileExport} />
-            Export as Next.js app...
-          </button>
-        </div>
+            <button
+              onClick={exportNextJs}
+              className="flex flex-row gap-2 items-center hover:bg-slate-400 rounded-md py-1 px-2 hover:bg-opacity-20 cursor-pointer whitespace-nowrap w-full"
+            >
+              <FontAwesomeIcon icon={faDiagramProject} />
+              Export Project (Next.js)...
+            </button>
+            {project.type === "component" && (
+              <>
+                {" "}
+                <button
+                  onClick={exportComponentFile}
+                  className="flex flex-row gap-2 items-center hover:bg-slate-400 rounded-md py-1 px-2 hover:bg-opacity-20 cursor-pointer whitespace-nowrap w-full "
+                >
+                  <FontAwesomeIcon icon={faFileExport} />
+                  Export Component as File...
+                </button>
+                <button
+                  onClick={exportComponentFolder}
+                  className="flex flex-row gap-2 items-center hover:bg-slate-400 rounded-md py-1 px-2 hover:bg-opacity-20 cursor-pointer whitespace-nowrap w-full"
+                >
+                  <FontAwesomeIcon icon={faFolder} />
+                  Export Component as Folder...
+                </button>
+              </>
+            )}
+          </div>
+        </FloatingPortal>
       )}
     </div>
   );
