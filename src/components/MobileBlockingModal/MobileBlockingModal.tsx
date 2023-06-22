@@ -14,7 +14,11 @@ function MobileBlockingModal({}: MobileBlockingModalProps) {
   const matches = useMediaQuery(
     "only screen and (min-width: 700px) and (min-height: 700px)"
   );
-  if (matches) return null;
+
+  const isMobile =
+    navigator?.maxTouchPoints && navigator?.maxTouchPoints > 0 && !matches;
+
+  if (!isMobile) return null;
   return (
     <>
       <Modal

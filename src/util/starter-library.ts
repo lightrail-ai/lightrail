@@ -22,6 +22,16 @@ export const CompleteLibrary: Library = {
     example:
       '<HeroA heading="Simplify Your Life Today" subheading="No more hassle, everything will be easy from now on." cta="Sign Up!" bgGradient="from-green-950 to-black" textGradient="from-green-300 to-white" />',
   },
+  HeroB: {
+    as: "Hero",
+    categories: ["landing"],
+    description:
+      "A minimal, clean, light-themed hero section for a landing page. Includes a heading, subheading, short tagline, and CTA button. Good for startup landing pages, especially devtools.",
+    src: "HeroB.render.jsx",
+    dependencies: [],
+    example:
+      '<HeroB heading="Quality resources shared by the community" subheading="Access 100+ resources of all kinds, for one low monthly price" tagline="By Artists, For Artists" cta="Get Access Now!" />',
+  },
   ButtonA: {
     as: "Button",
     categories: ["basic", "landing"],
