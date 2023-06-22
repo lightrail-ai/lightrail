@@ -63,7 +63,8 @@ function ComponentCreationPane({
     }
     onCreated(
       name,
-      desiredProps.map((p) => p.text)
+      desiredProps.map((p) => p.text),
+      json.file
     );
   }
 

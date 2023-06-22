@@ -224,7 +224,7 @@ export async function generateComponent(
   props: string[],
   description: string,
   streamingCallback?: (token: string) => void
-) {
+): Promise<File> {
   const system = `
   You are a helpful assistant for a React developer.
   You are given a name, list of props, and description for a component, and you generate a serialized React component in this JSON format:
@@ -235,6 +235,7 @@ export async function generateComponent(
     "props": ["...", "..."],   // The props that this component uses
     "state": ["...", "..."]   // The state that this component uses. 
     "render": "...",    // The JSX for the component, as a string. Use only Tailwind CSS for styling. Use only props requested in the description.
+    "example": "..."  // An example of the component being used, as a string. Use only props specified above, and make up sample values for those props.
   }
   \`\`\`
   
@@ -255,6 +256,7 @@ export async function generateComponent(
       "props": ["delta"],   // The props that this component uses
       "state": [{name: "count", initial: 0}] // The state that this component uses. Each state variable has a name and an initial value.
       "render": "<div className=\"flex items-center\">\n    <button className=\"bg-blue-400 hover:bg-blue-500 text-white font-bold py-1 px-2 rounded-l-md\" onClick={() => setCount(count - props.delta)}>-</button>\n        <div className=\"bg-white px-3 py-1 text-center border border-gray-300\">\n            {count}\n        </div>\n    <button className=\"bg-blue-400 hover:bg-blue-500 text-white font-bold py-1 px-2 rounded-r-md\" onClick={() => setCount(count + props.delta)}>+</button>\n</div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
+      "example": "<Counter delta={2} />"  // An example of the component being used, as a string, with literal sample values for all necessary props (assume no variables).
   }
   \`\`\`
 
@@ -309,7 +311,8 @@ export async function generateComponent(
     path: name,
     contents: cleanJSX(parsed.render),
     state: parsed.state,
-  };
+    example: parsed.example,
+  } as File;
 }
 
 export async function modifyComponent(
@@ -399,6 +402,7 @@ export async function modifyComponent(
                 },
               },
             },
+            required: ["explanation", "component"],
           },
         },
       ],

@@ -6,6 +6,7 @@ import { Database } from "../supabase";
 
 export type Project = Database["public"]["Tables"]["projects"]["Row"];
 export type File = Database["public"]["Tables"]["files"]["Row"];
+export type NewFile = Database["public"]["Tables"]["files"]["Insert"];
 export type FileRevision =
   Database["public"]["Tables"]["file_revisions"]["Row"];
 export type FileUpdate = Database["public"]["Tables"]["files"]["Update"];
@@ -125,29 +126,14 @@ export class Client {
     return result.data;
   }
 
-  async createFile(
-    projectId: number,
-    filePath: string,
-    contents: string,
-    state?: any
-  ) {
-    let result = await this.supabase.from("files").insert({
-      project_id: projectId,
-      path: filePath,
-      contents,
-      state,
-    });
+  async createFile(newFile: NewFile) {
+    let result = await this.supabase.from("files").insert(newFile);
 
     if (result.error) {
       throw new Error(result.error.message);
     }
 
-    result = await this.supabase.from("file_revisions").insert({
-      project_id: projectId,
-      path: filePath,
-      contents,
-      state,
-    });
+    result = await this.supabase.from("file_revisions").insert(newFile);
 
     if (result.error) {
       throw new Error(result.error.message);
