@@ -11,7 +11,9 @@ export interface MobileBlockingModalProps {}
 function MobileBlockingModal({}: MobileBlockingModalProps) {
   const [demoOpen, setDemoOpen] = useState(false);
 
-  const matches = useMediaQuery("only screen and (min-width: 700px)");
+  const matches = useMediaQuery(
+    "only screen and (min-width: 700px) and (min-height: 700px)"
+  );
   if (matches) return null;
   return (
     <>
