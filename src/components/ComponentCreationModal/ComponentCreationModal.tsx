@@ -25,9 +25,9 @@ function ComponentCreationModal({
       content={
         <ComponentCreationPane
           initialName={componentName}
-          onCreated={(name, props) => {
+          onCreated={(...args) => {
             setComponentName(false);
-            onComponentCreated?.(name, props);
+            onComponentCreated?.(...args);
           }}
           project={project}
         />

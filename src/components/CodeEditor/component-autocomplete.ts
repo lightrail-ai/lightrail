@@ -25,24 +25,28 @@ function projectCompletions(
     let word = context.matchBefore(/<\w*/);
     let isCapitalized = !!context.matchBefore(/<[A-Z]{1}\w*/);
     if (word && (word.from != word.to || context.explicit)) {
-      const components = project?.files?.map((file) => file.path) ?? [];
+      const components = project?.files ?? [];
       let completions: Completion[] =
         isCapitalized || word.text === "<"
           ? [
               {
                 label: word.text.substring(1),
+                boost: word.text === "<" ? 99 : undefined,
                 detail: "(Create New Component...)",
                 apply(view, completion, from, to) {
                   onCreateComponent(
                     word?.text.substring(1) ?? "",
-                    (name, props) => {
+                    (name, props, file) => {
+                      console.log(file);
                       view.dispatch({
                         changes: {
-                          from,
+                          from: from - 1,
                           to,
-                          insert: `${name} ${props
-                            .map((p) => `${p}={undefined}`)
-                            .join(" ")} />`,
+                          insert: file?.example
+                            ? file.example
+                            : `<${name} ${props
+                                .map((p) => `${p}={undefined}`)
+                                .join(" ")} />`,
                         },
                       });
                     }
@@ -53,8 +57,9 @@ function projectCompletions(
           : [];
 
       completions = completions.concat(
-        components.map((name) => ({
-          label: name,
+        components.map((file) => ({
+          label: file.path,
+          apply: file.example ? file.example.substring(1) : undefined,
           boost: 1,
         }))
       );

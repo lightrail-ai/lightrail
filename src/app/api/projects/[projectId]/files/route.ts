@@ -31,17 +31,16 @@ export async function POST(
           }
         );
 
-        await client.createFile(
-          parseInt(params.projectId),
-          file.path,
-          file.contents || "",
-          file.state
-        );
+        await client.createFile({
+          ...file,
+          project_id: parseInt(params.projectId),
+        });
 
         controller.enqueue(
           encoder.encode(
             JSON.stringify({
               status: "ok",
+              file: file,
               message: "Component created!",
             })
           )

@@ -13,6 +13,7 @@ export interface Database {
         Row: {
           contents: string | null
           created_at: string | null
+          example: string | null
           id: number
           owner: string | null
           path: string
@@ -22,6 +23,7 @@ export interface Database {
         Insert: {
           contents?: string | null
           created_at?: string | null
+          example?: string | null
           id?: number
           owner?: string | null
           path: string
@@ -31,6 +33,7 @@ export interface Database {
         Update: {
           contents?: string | null
           created_at?: string | null
+          example?: string | null
           id?: number
           owner?: string | null
           path?: string
@@ -56,6 +59,7 @@ export interface Database {
         Row: {
           contents: string | null
           created_at: string | null
+          example: string | null
           id: number
           owner: string | null
           path: string
@@ -65,6 +69,7 @@ export interface Database {
         Insert: {
           contents?: string | null
           created_at?: string | null
+          example?: string | null
           id?: number
           owner?: string | null
           path: string
@@ -74,6 +79,7 @@ export interface Database {
         Update: {
           contents?: string | null
           created_at?: string | null
+          example?: string | null
           id?: number
           owner?: string | null
           path?: string

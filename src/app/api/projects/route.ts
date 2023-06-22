@@ -32,15 +32,19 @@ export async function POST(request: Request) {
             }
           );
 
-          files = [
-            {
-              path: "index",
-              contents: `<div className="w-full h-full flex items-center justify-center"><${name} ${props
-                .map((p: string) => `${p}={undefined}`)
-                .join(" ")} /></div>`,
-            },
-            mainFile,
-          ] as File[];
+          const indexFile = mainFile.example
+            ? {
+                path: "index",
+                contents: `<div className="w-full h-full flex items-center justify-center">${mainFile.example}</div>`,
+              }
+            : {
+                path: "index",
+                contents: `<div className="w-full h-full flex items-center justify-center"><${name} ${props
+                  .map((p: string) => `${p}={undefined}`)
+                  .join(" ")} /></div>`,
+              };
+
+          files = [indexFile, mainFile] as File[];
         } else {
           files = await generateRoot(name, description, libraries, (_token) => {
             controller.enqueue(encoder.encode("\n"));
@@ -55,12 +59,10 @@ export async function POST(request: Request) {
         );
 
         for (const file of files) {
-          await client.createFile(
+          await client.createFile({
+            ...file,
             project_id,
-            file.path,
-            file.contents || "",
-            file.state
-          );
+          });
         }
 
         controller.enqueue(
