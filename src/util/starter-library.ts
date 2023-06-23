@@ -32,6 +32,16 @@ export const CompleteLibrary: Library = {
     example:
       '<HeroB heading="Quality resources shared by the community" subheading="Access 100+ resources of all kinds, for one low monthly price" tagline="By Artists, For Artists" cta="Get Access Now!" />',
   },
+  FeatureCardA: {
+    as: "FeatureCard",
+    categories: ["landing"],
+    description:
+      "A simple, light-themed feature card with an icon, heading, and description. Should be used in a flex layout (i.e. a container with classes 'flex flex-row flex-wrap justify-center') so that they behave responsively. Has no margin, so add a gap to the flex layout. Good for all product-centric landing pages.",
+    src: "FeatureCardA.render.jsx",
+    dependencies: [],
+    example:
+      '<FeatureCardA icon="fa-rocket" heading="Amazing Feature" description="This feature will make your experience incredibly smooth and efficient." />',
+  },
   ButtonA: {
     as: "Button",
     categories: ["basic", "landing"],
@@ -58,17 +68,27 @@ export const CompleteLibrary: Library = {
     src: "NavbarA.render.jsx",
     dependencies: [],
     example:
-      '<Navbar logo={"Nebula"} links={[ { url: "#features", text: "Features" }, { url: "#testimonials", text: "Testimonials" }, { url: "#contact", text: "Contact", }, ]} cta={{ text: "Sign Up", url: "/signup", }} />',
+      '<NavbarA logo={"Nebula"} links={[ { url: "#features", text: "Features" }, { url: "#testimonials", text: "Testimonials" }, { url: "#contact", text: "Contact", }, ]} cta={{ text: "Sign Up", url: "/signup", }} />',
   },
   NavbarB: {
     as: "Navbar",
     categories: ["landing"],
     description:
       "A simple, professional, light-themed navbar with a logo, links, and a CTA button (optional).",
-    src: "NavbarA.render.jsx",
+    src: "NavbarB.render.jsx",
     dependencies: [],
     example:
-      '<Navbar logo={"Nebula"} links={[ { url: "#features", text: "Features" }, { url: "#testimonials", text: "Testimonials" }, { url: "#contact", text: "Contact", }, ]} cta={{ text: "Sign Up", url: "/signup", }} />',
+      '<NavbarB logo={"Nebula"} links={[ { url: "#features", text: "Features" }, { url: "#testimonials", text: "Testimonials" }, { url: "#contact", text: "Contact", }, ]} cta={{ text: "Sign Up", url: "/signup", }} />',
+  },
+  CTASectionA: {
+    as: "CTASection",
+    categories: ["landing"],
+    description:
+      "A Call-to-Action section for a landing page, including a heading, subheading, and optionally 2-3 callouts of selling-points. Good for startup landing pages.",
+    src: "CTASectionA.render.jsx",
+    dependencies: [],
+    example:
+      '<CTASectionA cta="Install Now" heading="Ready to dive in?" subheading="Join our community today." callouts={["Open-Source", "Free Forever"]} />',
   },
 };
 

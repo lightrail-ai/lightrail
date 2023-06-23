@@ -7,7 +7,7 @@ export interface ComponentPreviewDressingProps {
 
 function ComponentPreviewDressing({ children }: ComponentPreviewDressingProps) {
   return (
-    <div className="resize border-4 m-auto overflow-auto max-w-[98%] max-h-[98%]">
+    <div className="resize border-4 m-auto overflow-auto w-[90%] h-[90%] max-w-[98%] max-h-[98%]">
       {children}
     </div>
   );

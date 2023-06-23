@@ -51,7 +51,7 @@ function formatLibraryForPrompt(lib: Library) {
   return Object.entries(lib)
     .map(
       ([name, details]) =>
-        `${name}: ${details.description} (example usage: ${details.example})`
+        `     - ${name}: ${details.description} (example usage: ${details.example})`
     )
     .join("\n");
 }
@@ -116,11 +116,13 @@ export async function generateRoot(
         ${
           libraries.length > 0 &&
           `
-        The following components can also be used implementing them yourself, IF they are appropriate for the description requested:
+        If appropriate, components from this COMPONENT LIBRARY can be used without implementing them yourself, because they are already implemented for you:
 
-        ${formatLibraryForPrompt(usableLibrary)}
+${formatLibraryForPrompt(usableLibrary)}
 
-        ONLY use components from that list if they are appropriate for the description requested. You will be penalized for misusing them.`
+        Only use components from the COMPONENT LIBRARY if they are appropriate for the description requested. 
+        If you'd like to use a component from COMPONENT LIBRARY, add an entry to the output array with the appropriate name, but leave the "render" key empty. 
+        COMPONENT LIBRARY components should go before all other components in your output.`
         } 
         Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
         All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)
