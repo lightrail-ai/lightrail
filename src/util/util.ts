@@ -1,5 +1,7 @@
 import prettier from "prettier/standalone";
 import prettierBabelParser from "prettier/parser-babel";
+import { Db } from "./storage";
+import { SERVER_URL } from "./constants";
 
 export function sanitizeComponentName(name: string) {
   let sanitized = name.replaceAll(/\s/g, "");
@@ -23,4 +25,19 @@ export function formatComponentTree(code: string) {
   }
 
   return formatted;
+}
+
+export async function queryProjectDb(db: Db, query: string) {
+  const result = await fetch(
+    `${SERVER_URL}/api/projects/${db.project_id}/databases/${db.id}/contents`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query }),
+    }
+  );
+  const json = await result.json();
+  return json;
 }

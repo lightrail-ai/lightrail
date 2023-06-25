@@ -9,6 +9,43 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      databases: {
+        Row: {
+          created_at: string | null
+          id: number
+          name: string
+          owner: string | null
+          project_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          name: string
+          owner?: string | null
+          project_id: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          name?: string
+          owner?: string | null
+          project_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "databases_owner_fkey"
+            columns: ["owner"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "databases_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       file_revisions: {
         Row: {
           contents: string | null

@@ -495,3 +495,35 @@ export async function modifyComponentWithCompletion(
 
   return parsed;
 }
+
+export async function generateTableCreationQuery(
+  name: string,
+  description: string,
+  streamingCallback?: (token: string) => void
+) {
+  let rawResponse = await chat.call(
+    [
+      new SystemChatMessage(
+        "You are a SQL statement builder. You follow the user's directions to write SQL code. You respond with only the SQL code the user requests."
+      ),
+      new HumanChatMessage(`
+      Create a postgresql SQL query for creating a table called "${name}" that fits the following description:
+      
+      "${description}"
+
+      Respond with only the query, with no explanation or other text around it`),
+    ],
+    undefined,
+    [
+      {
+        handleLLMNewToken: streamingCallback,
+      },
+    ]
+  );
+
+  const responseString = rawResponse.text;
+
+  //TODO: clean up response and validate
+
+  return responseString;
+}

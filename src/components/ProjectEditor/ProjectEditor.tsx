@@ -4,24 +4,19 @@ import { SERVER_URL } from "@/util/constants";
 import { ProjectWithFiles } from "@/util/storage";
 import React, { useEffect, useState } from "react";
 import EditorNavbar from "../EditorNavbar/EditorNavbar";
-import BrowserMockup from "../BrowserMockup/BrowserMockup";
 import toast, { Toaster } from "react-hot-toast";
 
 import "react-reflex/styles.css";
-import { ReflexContainer, ReflexElement, ReflexSplitter } from "react-reflex";
 import { useRecoilState } from "recoil";
-import ComponentEditorPanel from "../ComponentEditorPanel/ComponentEditorPanel";
-import classNames from "classnames";
 import { errorsQueue } from "../PreviewRenderer/preview-renderer-state";
-import ComponentsListPanel from "../ComponentsListPanel/ComponentsListPanel";
 import TourModal from "../TourModal/TourModal";
 import { getJSONFromStream } from "@/util/transfers";
 import PreviewFrame from "../PreviewFrame/PreviewFrame";
 import ComponentCreationModal from "../ComponentCreationModal/ComponentCreationModal";
 import { ComponentCreationCallback } from "./editor-types";
-import ComponentPreviewDressing from "../ComponentPreviewDressing/ComponentPreviewDressing";
 import LoadingSplashOverlay from "../LoadingSplashOverlay/LoadingSplashOverlay";
-import ComponentInfoPanel from "../ComponentInfoPanel/ComponentInfoPanel";
+import ProjectInterfaceEditor from "../ProjectInterfaceEditor/ProjectInterfaceEditor";
+import ProjectDataEditor from "../ProjectDataEditor/ProjectDataEditor";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -77,6 +72,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
   const [onComponentCreated, setOnComponentCreated] = useState<
     ComponentCreationCallback | undefined
   >(undefined);
+  const [editorType, setEditorType] = useState<string>("interface");
 
   function updateRenderCount() {
     setRenderCount(Date.now());
@@ -98,6 +94,47 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
     updateRenderCount();
     await refreshProject();
     setRendering(false);
+  }
+
+  function renderMainView() {
+    if (!project) {
+      return <></>;
+    }
+
+    if (isPreviewing) {
+      return (
+        <div className="flex-1">
+          <PreviewFrame
+            project={project}
+            renderCount={renderCount}
+            onRenderComplete={() => setPreparingFrame(false)}
+            noOverlay
+          />
+        </div>
+      );
+    }
+
+    if (editorType === "interface") {
+      return (
+        <ProjectInterfaceEditor
+          project={project}
+          rendering={rendering}
+          renderCount={0}
+          setIsShowingComponentList={setIsShowingComponentList}
+          isShowingComponentList={isShowingComponentList}
+          setPreparingFrame={setPreparingFrame}
+          setCreatingComponent={setCreatingComponent}
+          setOnComponentCreated={setOnComponentCreated}
+          onProjectRefresh={refreshProject}
+          onUpdate={onUpdate}
+          onMessage={toastMessage}
+        />
+      );
+    }
+
+    if (editorType === "data") {
+      return <ProjectDataEditor project={project} />;
+    }
   }
 
   useEffect(() => {
@@ -145,6 +182,8 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
       >
         <EditorNavbar
           project={project}
+          editorType={editorType}
+          onEditorTypeChange={(newType) => setEditorType(newType)}
           isPreviewing={isPreviewing}
           onTogglePreview={() => setIsPreviewing(!isPreviewing)}
           isShowingComponentList={isShowingComponentList}
@@ -152,84 +191,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
             setIsShowingComponentList(!isShowingComponentList)
           }
         />
-        {isPreviewing ? (
-          project && (
-            <div className="flex-1">
-              <PreviewFrame
-                project={project}
-                renderCount={renderCount}
-                onRenderComplete={() => setPreparingFrame(false)}
-                noOverlay
-              />
-            </div>
-          )
-        ) : (
-          <ReflexContainer orientation="horizontal">
-            <ReflexElement flex={3}>
-              <ReflexContainer orientation="vertical">
-                {project && <ComponentInfoPanel project={project} />}
-                <ReflexSplitter />
-                <ReflexElement
-                  className={classNames("flex flex-row min-h-0", {
-                    "opacity-50": rendering,
-                  })}
-                  flex={3}
-                >
-                  {project?.type === "component" ? (
-                    <ComponentPreviewDressing>
-                      <PreviewFrame
-                        transparent
-                        project={project}
-                        renderCount={renderCount}
-                        onOpenComponentList={() =>
-                          setIsShowingComponentList(true)
-                        }
-                        onRenderComplete={() => setPreparingFrame(false)}
-                      />
-                    </ComponentPreviewDressing>
-                  ) : (
-                    <BrowserMockup>
-                      {project && (
-                        <PreviewFrame
-                          project={project}
-                          renderCount={renderCount}
-                          onOpenComponentList={() =>
-                            setIsShowingComponentList(true)
-                          }
-                          onRenderComplete={() => setPreparingFrame(false)}
-                        />
-                      )}
-                    </BrowserMockup>
-                  )}
-                </ReflexElement>
-                <ReflexSplitter />
-                {project && (
-                  <ComponentsListPanel
-                    project={project}
-                    isOpen={isShowingComponentList}
-                    onToggleOpen={() =>
-                      setIsShowingComponentList(!isShowingComponentList)
-                    }
-                    onCreateComponent={() => {
-                      setCreatingComponent("");
-                      setOnComponentCreated(() => refreshProject);
-                    }}
-                  />
-                )}
-              </ReflexContainer>
-            </ReflexElement>
-            <ReflexSplitter />
-            <ComponentEditorPanel
-              project={project}
-              onUpdate={onUpdate}
-              onMessage={(message) => toastMessage(message)}
-              onCreateComponent={(name, callback) => {
-                setCreatingComponent(name);
-                setOnComponentCreated(() => callback);
-              }}
-            />
-          </ReflexContainer>
-        )}
+        {renderMainView()}
       </div>
       <Toaster />
       {project && (

@@ -25,7 +25,8 @@ export interface CodeEditorProps {
   className?: string;
   onValueChange: (value: string) => void;
   project?: ProjectWithFiles;
-  onCreateComponent: (
+  type: "jsx" | "sql";
+  onCreateComponent?: (
     name: string,
     callback: ComponentCreationCallback
   ) => void;
@@ -37,6 +38,7 @@ function CodeEditor({
   className,
   onValueChange,
   project,
+  type,
   onCreateComponent,
   readonly,
 }: CodeEditorProps) {
@@ -59,9 +61,11 @@ function CodeEditor({
         bracketMatching(),
         // highlightActiveLine(),
         keymap.of([...defaultKeymap, ...historyKeymap]),
-        langs.jsx(),
+        type === "jsx" ? langs.jsx() : type === "sql" ? langs.sql() : [],
         solarizedLight,
-        componentAutocompletion(project, onCreateComponent),
+        onCreateComponent
+          ? componentAutocompletion(project, onCreateComponent)
+          : autocompletion(),
         readonly ? [EditorState.readOnly.of(true)] : [],
       ],
     });

@@ -204,6 +204,7 @@ function ComponentEditingPane({
               )}
             </div>
             <CodeEditor
+              type="jsx"
               readonly={selectedRevision !== null}
               project={project}
               value={selectedRevision ? selectedRevision.contents! : oldCode}

@@ -12,6 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import IconToggle from "../IconToggle/IconToggle";
 import classNames from "classnames";
+import HorizontalSelect from "../HorizontalSelect/HorizontalSelect";
 
 export interface EditorNavbarProps {
   project: Project | undefined;
@@ -19,6 +20,8 @@ export interface EditorNavbarProps {
   onTogglePreview: () => void;
   onToggleComponentList: () => void;
   isShowingComponentList: boolean;
+  editorType: string;
+  onEditorTypeChange: (editorType: string) => void;
 }
 
 function EditorNavbar({
@@ -27,6 +30,8 @@ function EditorNavbar({
   onTogglePreview,
   onToggleComponentList,
   isShowingComponentList,
+  editorType,
+  onEditorTypeChange,
 }: EditorNavbarProps) {
   return (
     <div className="px-4 py-1 bg-slate-100 border-b border-b-slate-300 flex flex-row gap-6 items-center">
@@ -45,7 +50,24 @@ function EditorNavbar({
         )}
       </span>
 
-      <div className="flex-1" />
+      <div className="flex-1 flex justify-center items-center">
+        {!isPreviewing && (
+          <HorizontalSelect
+            value={editorType}
+            onChange={onEditorTypeChange}
+            options={[
+              {
+                label: "Interface",
+                value: "interface",
+              },
+              {
+                label: "Data",
+                value: "data",
+              },
+            ]}
+          />
+        )}
+      </div>
       <IconToggle
         trueIcon={faEye}
         falseIcon={faPenToSquare}

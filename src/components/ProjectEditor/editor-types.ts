@@ -5,3 +5,7 @@ export type ComponentCreationCallback = (
   props: string[],
   file?: File
 ) => void;
+
+export interface Table {
+  table_name: string;
+}

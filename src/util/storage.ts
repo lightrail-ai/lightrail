@@ -12,6 +12,8 @@ export type FileRevision =
 export type FileUpdate = Database["public"]["Tables"]["files"]["Update"];
 export type NewFileRevision =
   Database["public"]["Tables"]["file_revisions"]["Insert"];
+export type Db = Database["public"]["Tables"]["databases"]["Row"];
+export type NewDb = Database["public"]["Tables"]["databases"]["Insert"];
 export type ProjectWithFiles = Project & { files: File[] };
 export interface FileStateItem {
   name: string;
@@ -166,5 +168,42 @@ export class Client {
     }
 
     return updated.data;
+  }
+
+  async getDatabases(projectId: number): Promise<Db[]> {
+    const result = await await this.supabase
+      .from("databases")
+      .select("*")
+      .eq("project_id", projectId);
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    return result.data;
+  }
+
+  async createDatabase(newDb: NewDb) {
+    const result = await this.supabase.from("databases").insert(newDb);
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    return result.data;
+  }
+
+  async getDatabase(databaseId: number): Promise<Db> {
+    const result = await await this.supabase
+      .from("databases")
+      .select("*")
+      .eq("id", databaseId)
+      .single();
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    return result.data;
   }
 }
