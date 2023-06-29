@@ -3,7 +3,7 @@ export type Json =
   | number
   | boolean
   | null
-  | { [key: string]: Json }
+  | { [key: string]: Json | undefined }
   | Json[]
 
 export interface Database {
@@ -55,6 +55,7 @@ export interface Database {
           owner: string | null
           path: string
           project_id: number
+          queries: Json[] | null
           state: Json[] | null
         }
         Insert: {
@@ -65,6 +66,7 @@ export interface Database {
           owner?: string | null
           path: string
           project_id: number
+          queries?: Json[] | null
           state?: Json[] | null
         }
         Update: {
@@ -75,6 +77,7 @@ export interface Database {
           owner?: string | null
           path?: string
           project_id?: number
+          queries?: Json[] | null
           state?: Json[] | null
         }
         Relationships: [
@@ -101,6 +104,7 @@ export interface Database {
           owner: string | null
           path: string
           project_id: number
+          queries: Json[] | null
           state: Json[] | null
         }
         Insert: {
@@ -111,6 +115,7 @@ export interface Database {
           owner?: string | null
           path: string
           project_id: number
+          queries?: Json[] | null
           state?: Json[] | null
         }
         Update: {
@@ -121,6 +126,7 @@ export interface Database {
           owner?: string | null
           path?: string
           project_id?: number
+          queries?: Json[] | null
           state?: Json[] | null
         }
         Relationships: [

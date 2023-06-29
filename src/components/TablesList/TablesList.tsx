@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import TableCreationModal from "../TableCreationModal/TableCreationModal";
 import { Db } from "@/util/storage";
+import classNames from "classnames";
 
 export interface TablesListProps {
   tables: Table[];
@@ -14,7 +15,13 @@ export interface TablesListProps {
   database: Db;
 }
 
-function TablesList({ tables, onTablesUpdates, database }: TablesListProps) {
+function TablesList({
+  tables,
+  onTablesUpdates,
+  onSelectTable,
+  selectedTable,
+  database,
+}: TablesListProps) {
   const [creationModalVisible, setCreationModalVisible] = useState(false);
 
   return (
@@ -22,7 +29,16 @@ function TablesList({ tables, onTablesUpdates, database }: TablesListProps) {
       <div className="w-full h-full p-4 space-y-4">
         {tables.length > 0 ? (
           tables.map((table) => (
-            <div className="text-md px-2 py-1 bg-slate-100 rounded-md text-slate-800 cursor-pointer border-2 hover:opacity-70 hover:shadow-md active:shadow-inner hover:border-sky-300">
+            <div
+              onClick={() => onSelectTable(table)}
+              className={classNames(
+                "text-md px-2 py-1 bg-slate-100 rounded-md text-slate-800 cursor-pointer border-2 hover:opacity-70 hover:shadow-md active:shadow-inner hover:border-sky-300",
+                {
+                  "border-sky-300":
+                    table.table_name === selectedTable?.table_name,
+                }
+              )}
+            >
               {table.table_name}
             </div>
           ))

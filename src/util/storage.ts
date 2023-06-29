@@ -19,6 +19,10 @@ export interface FileStateItem {
   name: string;
   initial: any;
 }
+export interface FileQueryItem {
+  name: string;
+  query: string;
+}
 
 // export async function setProject(project: Project) {
 //   await supabase.from("projects").upsert(project);
@@ -198,6 +202,21 @@ export class Client {
       .from("databases")
       .select("*")
       .eq("id", databaseId)
+      .single();
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    return result.data;
+  }
+
+  async getDefaultDatabase(projectId: number): Promise<Db> {
+    const result = await await this.supabase
+      .from("databases")
+      .select("*")
+      .eq("project_id", projectId)
+      .eq("name", `project_${projectId}_db`)
       .single();
 
     if (result.error) {

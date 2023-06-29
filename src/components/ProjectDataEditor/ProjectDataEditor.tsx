@@ -6,6 +6,7 @@ import Loader from "../Loader/Loader";
 import { queryProjectDb } from "@/util/util";
 import TablesList from "../TablesList/TablesList";
 import { Table } from "../ProjectEditor/editor-types";
+import TableExplorer from "../TableExplorer/TableExplorer";
 
 export interface ProjectDataEditorProps {
   project: Project;
@@ -28,11 +29,10 @@ function ProjectDataEditor({ project }: ProjectDataEditorProps) {
   async function fetchTables() {
     setTablesLoading(true);
     if (currentDatabase) {
-      const { rows } = await queryProjectDb(
-        currentDatabase,
-        `SELECT table_name FROM information_schema.tables WHERE table_type='BASE TABLE' AND table_schema='public';`
-      );
-      setTables(rows.map((r: any) => r));
+      const { tables } = await fetch(
+        `${SERVER_URL}/api/projects/${project.id}/databases/${currentDatabase.id}/tables`
+      ).then((r) => r.json());
+      setTables(tables);
       setTablesLoading(false);
     }
   }
@@ -109,7 +109,17 @@ function ProjectDataEditor({ project }: ProjectDataEditorProps) {
           />
         )}
       </div>
-      <div className={"flex-1"}></div>
+      <div className={"flex-1 min-w-0"}>
+        {selectedTable ? (
+          <TableExplorer table={selectedTable} database={currentDatabase} />
+        ) : (
+          <div className="w-full h-full flex justify-center items-center">
+            <div className="italic text-slate-600">
+              Select a table to view data
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

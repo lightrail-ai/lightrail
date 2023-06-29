@@ -9,6 +9,7 @@ import {
 } from "langchain/schema";
 import { CompleteLibrary, type Library } from "./starter-library";
 import { SERVER_URL } from "./constants";
+import { Column, Table } from "@/components/ProjectEditor/editor-types";
 
 const chat = new ChatOpenAI({
   modelName: "gpt-3.5-turbo-0613",
@@ -125,6 +126,7 @@ ${formatLibraryForPrompt(usableLibrary)}
         COMPONENT LIBRARY components should go before all other components in your output.`
         } 
         Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
+        The final Index component should require no props, and should be able to be rendered without errors. Use plausible values for the props of any components used in Index.
         All JSX should be valid React JSX (i.e. use className for classes, every tag should be self-closing or have a closing tag, etc.)
         Respond only with an array of RFC-compliant JSON objects and no other content, comments, titles, explanations, or text.`;
 
@@ -235,7 +237,7 @@ export async function generateComponent(
   {
     "name": "...",   // The name of the component
     "props": ["...", "..."],   // The props that this component uses
-    "state": ["...", "..."]   // The state that this component uses. 
+    "state": [...]   // The state that this component uses. 
     "render": "...",    // The JSX for the component, as a string. Use only Tailwind CSS for styling. Use only props requested in the description.
     "example": "..."  // An example of the component being used, as a string. Use only props specified above, and make up sample values for those props.
   }
@@ -334,6 +336,8 @@ export async function modifyComponent(
         You modify the component to satisfy the modification and return it along with an explanation of your changes.
         You can add or remove state variables, or modify the JSX. For any state variables, you can use the state variable name (e.g. \`count\`) to access the state value,
         and the corresponding setter (e.g. \`setCount\`) to set the state value. Define all event-handlers inline. Props are accessed as \`props.propName\` in the JSX.
+        If the provided component has any queries in the \`queries\` key, the result of the query will be available as a variable with the name provided.
+        Do not change the queries themselves, or add any new queries. Your output should not include the queries key, but can use the query results in the JSX.
         My request will be JSON with the keys "component" (the serialized component) and "modification" (a string with a change description),
         and you should send back a response with the keys "explanation" (a string) and "component" (an updated serialized component).
         
@@ -347,6 +351,7 @@ export async function modifyComponent(
           "component": {
             "name": ${JSON.stringify(old.path)},
             "state": ${JSON.stringify(old.state || [])},
+            "queries": ${JSON.stringify(old.queries || [])},
             "render": ${JSON.stringify(old.contents)},
           },
           "modification": "${modification}"
@@ -377,6 +382,26 @@ export async function modifyComponent(
                     description:
                       'The name of the component (e.g. "ComponentName")',
                   },
+                  // queries: {
+                  //   type: "array",
+                  //   items: {
+                  //     type: "object",
+                  //     description:
+                  //       "SQL queries that provide data for this component.",
+                  //     properties: {
+                  //       name: {
+                  //         type: "string",
+                  //         description:
+                  //           "The variable name that the query's results are available as.",
+                  //       },
+                  //       query: {
+                  //         type: "string",
+                  //         description:
+                  //           "The SQL query that will be run against the app's database to get a value for this variable.",
+                  //       },
+                  //     },
+                  //   },
+                  // },
                   state: {
                     type: "array",
                     items: {
@@ -496,22 +521,16 @@ export async function modifyComponentWithCompletion(
   return parsed;
 }
 
-export async function generateTableCreationQuery(
-  name: string,
-  description: string,
+async function generateQuery(
+  prompt: string,
   streamingCallback?: (token: string) => void
 ) {
   let rawResponse = await chat.call(
     [
       new SystemChatMessage(
-        "You are a SQL statement builder. You follow the user's directions to write SQL code. You respond with only the SQL code the user requests."
+        "You are a SQL statement builder. You follow the user's directions to write SQL code for executing in a postgresql instance. You respond with only the SQL code the user requests."
       ),
-      new HumanChatMessage(`
-      Create a postgresql SQL query for creating a table called "${name}" that fits the following description:
-      
-      "${description}"
-
-      Respond with only the query, with no explanation or other text around it`),
+      new HumanChatMessage(prompt),
     ],
     undefined,
     [
@@ -526,4 +545,83 @@ export async function generateTableCreationQuery(
   //TODO: clean up response and validate
 
   return responseString;
+}
+
+export async function generateTableCreationQuery(
+  name: string,
+  description: string,
+  streamingCallback?: (token: string) => void
+) {
+  const query = await generateQuery(
+    `
+  Create a postgresql SQL query for creating a table called "${name}" that fits the following description:
+  
+  "${description}"
+
+  Respond with only the query, with no explanation or other text around it`,
+    streamingCallback
+  );
+
+  return query;
+}
+
+export async function generateDataGenerationQuery(
+  name: string,
+  schema: Column[],
+  description: string,
+  streamingCallback?: (token: string) => void
+) {
+  const query = await generateQuery(
+    `
+  The table "${name}" has the following columns (with their data types):
+
+  ${schema.map((c) => `${c.column_name} (${c.data_type})`).join(", ")}.
+
+  Create a postgresql SQL query for generating data for this table, following the description below:
+  
+  "${description}"
+
+  If specific values are not specified in that description, generate random values that are plausible/realistic while following the directions. 
+  Respond with only the query, with no explanation or other text around it`,
+    streamingCallback
+  );
+
+  return query;
+}
+
+export async function generateQueryForComponent(
+  component: File,
+  tables: Table[],
+  queryName?: string
+) {
+  const query = await generateQuery(
+    `
+  The React component '${
+    component.path
+  }' renders the following JSX component tree: 
+  
+  \`\`\`
+  "${component.contents}"
+  \`\`\`
+
+  Create a postgresql SQL query ${
+    `that would have its results stored in a variable called '${queryName}'` ||
+    "for fetching data"
+  } for use in this component.
+
+  The tables available for querying (along with their columns & data types) are:
+
+${tables
+  .map(
+    (t) =>
+      `  ${t.table_name} [${t.columns
+        .map((c) => `${c.column_name} (${c.data_type})`)
+        .join(", ")}]`
+  )
+  .join("\n")}
+
+  Avoid using '*' in SELECT statements (i.e. specify the columns to select). Respond with only the query, with no explanation or other text around it.`
+  );
+
+  return query;
 }

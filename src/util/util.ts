@@ -9,6 +9,12 @@ export function sanitizeComponentName(name: string) {
   return sanitized;
 }
 
+export function sanitizeVariableName(name: string) {
+  let sanitized = name.replaceAll(/\s/g, "");
+  sanitized = sanitized.charAt(0).toLowerCase() + sanitized.slice(1);
+  return sanitized;
+}
+
 export function formatComponentTree(code: string) {
   let formatted;
   try {
@@ -27,9 +33,14 @@ export function formatComponentTree(code: string) {
   return formatted;
 }
 
-export async function queryProjectDb(db: Db, query: string) {
+export async function queryProjectDb(
+  db: Db | { project_id: number },
+  query: string
+): Promise<{ rows: any[]; fields: any[] }> {
   const result = await fetch(
-    `${SERVER_URL}/api/projects/${db.project_id}/databases/${db.id}/contents`,
+    `${SERVER_URL}/api/projects/${db.project_id}/databases/${
+      "id" in db ? db.id : "default"
+    }/contents`,
     {
       method: "PUT",
       headers: {

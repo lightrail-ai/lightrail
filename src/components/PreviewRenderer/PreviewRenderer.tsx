@@ -10,12 +10,14 @@ import PreviewOverlayLayer from "../PreviewOverlayLayer/PreviewOverlayLayer";
 import { hoveringComponent } from "./preview-renderer-state";
 import { ProjectWithFiles } from "@/util/storage";
 import { ErrorBoundary } from "react-error-boundary";
+import { queryProjectDb } from "@/util/util";
 
 const importMapper = new ImportMapper({
   "@lightrail/react": ImportMapper.forceDefault(React),
   "@lightrail/ComponentPreviewWrapper": ImportMapper.forceDefault(
     ComponentPreviewWrapper
   ),
+  "@lightrail/queryProjectDb": ImportMapper.forceDefault(queryProjectDb),
 });
 
 importMapper.register();

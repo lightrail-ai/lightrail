@@ -1,7 +1,14 @@
-import { Client, File, FileStateItem } from "@/util/storage";
+import {
+  Client,
+  File,
+  FileQueryItem,
+  FileStateItem,
+  FileUpdate,
+} from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
 import { cookies } from "next/headers";
 import * as buble from "buble";
+import { NextResponse } from "next/server";
 
 function createPreviewComponent(projectId: string, file: File, r: string) {
   const componentImports = Array.from(
@@ -26,14 +33,53 @@ function createPreviewComponent(projectId: string, file: File, r: string) {
         .join("\n")
     : "";
 
+  const queries = file.queries
+    ? (file.queries as unknown as FileQueryItem[])
+    : null;
+
+  const queryStatements =
+    queries && queries.length > 0
+      ? `
+            const [lightrailQueriesFinished, setlightrailQueriesFinished] = React.useState(false);
+            ${queries
+              .map(
+                (q) =>
+                  `const [${q.name}, ${
+                    "set" + q.name.charAt(0).toUpperCase() + q.name.slice(1)
+                  }] = React.useState([]);`
+              )
+              .join("\n")}
+
+            React.useEffect(() => {
+              Promise.all([${queries
+                .map(
+                  (q) =>
+                    `queryProjectDb({project_id: ${projectId}}, \`${q.query}\`)`
+                )
+                .join(", ")}]).then((results) => {${queries
+          .map(
+            (q, i) =>
+              `set${
+                q.name.charAt(0).toUpperCase() + q.name.slice(1)
+              }(results[${i}].rows);`
+          )
+          .join("\n")}
+                setlightrailQueriesFinished(true);});
+            }, []);
+  `
+      : "";
+
   return `
     import React from "@lightrail/react";
     import ComponentPreviewWrapper from "@lightrail/ComponentPreviewWrapper"
+    import queryProjectDb from "@lightrail/queryProjectDb"
 
     ${componentImports}
 
     export default function Component(props) {
         ${stateDeclarations}
+
+        ${queryStatements}
 
         return ${
           buble.transform(`<ComponentPreviewWrapper name="${file.path}">
@@ -98,4 +144,19 @@ export async function GET(
       "Content-Type": "text/javascript",
     },
   });
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { projectId: string; filePath: string } }
+) {
+  const client = new Client({
+    cookies,
+  });
+
+  const update: FileUpdate = await request.json();
+
+  await client.updateFile(parseInt(params.projectId), params.filePath, update);
+
+  return NextResponse.json({ status: "ok" });
 }

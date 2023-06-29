@@ -119,7 +119,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
         <ProjectInterfaceEditor
           project={project}
           rendering={rendering}
-          renderCount={0}
+          renderCount={renderCount}
           setIsShowingComponentList={setIsShowingComponentList}
           isShowingComponentList={isShowingComponentList}
           setPreparingFrame={setPreparingFrame}

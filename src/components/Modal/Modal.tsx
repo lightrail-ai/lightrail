@@ -4,7 +4,7 @@ import React from "react";
 export interface ModalProps {
   visible: boolean;
   onClose?: () => void;
-  title?: string;
+  title?: React.ReactNode;
   content: React.ReactNode;
   actions?: React.ReactNode;
   wide?: boolean;

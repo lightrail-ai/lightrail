@@ -10,7 +10,14 @@ export async function PUT(
   const client = new Client({ cookies });
   const { query } = await request.json();
 
-  const database = await client.getDatabase(parseInt(params.databaseId));
+  let database;
+
+  if (params.databaseId === "default") {
+    database = await client.getDefaultDatabase(parseInt(params.projectId));
+  } else {
+    database = await client.getDatabase(parseInt(params.databaseId));
+  }
+
   const pgclient = new PGClient({
     ssl: true,
     connectionString: `postgres://${process.env.NEON_DEFAULT_ROLE}:${process.env.NEON_DEFAULT_ROLE_PASSWORD}@${process.env.NEON_ACCESS_ENDPOINT}/${database.name}`,

@@ -51,22 +51,24 @@ function EditorNavbar({
       </span>
 
       <div className="flex-1 flex justify-center items-center">
-        {!isPreviewing && (
-          <HorizontalSelect
-            value={editorType}
-            onChange={onEditorTypeChange}
-            options={[
-              {
-                label: "Interface",
-                value: "interface",
-              },
-              {
-                label: "Data",
-                value: "data",
-              },
-            ]}
-          />
-        )}
+        {process.env.NEXT_PUBLIC_PRERELEASE &&
+          !isPreviewing &&
+          project?.type !== "component" && (
+            <HorizontalSelect
+              value={editorType}
+              onChange={onEditorTypeChange}
+              options={[
+                {
+                  label: "Interface",
+                  value: "interface",
+                },
+                {
+                  label: "Data",
+                  value: "data",
+                },
+              ]}
+            />
+          )}
       </div>
       <IconToggle
         trueIcon={faEye}

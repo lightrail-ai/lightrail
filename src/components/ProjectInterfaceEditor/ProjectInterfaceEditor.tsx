@@ -46,7 +46,13 @@ function ProjectInterfaceEditor({
     <ReflexContainer orientation="horizontal">
       <ReflexElement flex={3}>
         <ReflexContainer orientation="vertical">
-          {project && <ComponentInfoPanel project={project} />}
+          {project && (
+            <ComponentInfoPanel
+              project={project}
+              onProjectRefresh={onProjectRefresh}
+              onUpdateComponentTree={onUpdate}
+            />
+          )}
           <ReflexSplitter />
           <ReflexElement
             className={classNames("flex flex-row min-h-0", {
