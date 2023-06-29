@@ -81,7 +81,7 @@ function ComponentInfoPanel({
     <ReflexElement flex={isOpen ? 0.5 : 0}>
       <div className="flex flex-col min-h-full bg-slate-50 text-slate-800 px-4 py-2">
         <div className="text-sm font-semibold">State</div>
-        <div className="space-y-2 space-x-2 my-4">
+        <div className="flex flex-row flex-wrap gap-2 my-2">
           {state?.map((s) => (
             <VariableToken
               name={s.name}
@@ -101,7 +101,7 @@ function ComponentInfoPanel({
         {props && props.length > 0 && (
           <>
             <div className="text-sm font-semibold">Props</div>
-            <div className="space-y-2 my-4">
+            <div className="flex flex-row flex-wrap gap-2 my-2">
               {props.map((s) => (
                 <VariableToken name={s} />
               ))}
@@ -111,7 +111,7 @@ function ComponentInfoPanel({
         {editingComponentValue && databases && databases.length > 0 && (
           <>
             <div className="text-sm font-semibold">Queries</div>
-            <div className="space-y-2 my-4">
+            <div className="flex flex-row flex-wrap gap-2 my-2">
               {queries?.map((s) => (
                 <VariableToken name={s.name} />
               ))}
