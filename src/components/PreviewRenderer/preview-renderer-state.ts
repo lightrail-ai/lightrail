@@ -29,13 +29,3 @@ export const previewIframeRef = atom<null | HTMLIFrameElement>({
   key: "previewIframeRef",
   default: null,
 });
-
-export const errorsQueue = atom<
-  {
-    component: string;
-    error: string;
-  }[]
->({
-  key: "errorsQueue",
-  default: [],
-});

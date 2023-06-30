@@ -9,6 +9,7 @@ import { SERVER_URL } from "@/util/constants";
 import { cookies } from "next/headers";
 import * as buble from "buble";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 function createPreviewComponent(projectId: string, file: File, r: string) {
   const componentImports = Array.from(
@@ -154,9 +155,26 @@ export async function PUT(
     cookies,
   });
 
-  const update: FileUpdate = await request.json();
+  const json = await request.json();
+
+  let update: FileUpdate;
+
+  if ("revision" in json) {
+    const revisionContent = await client.getRevision(parseInt(json.revision));
+
+    update = Object.assign({}, revisionContent);
+    delete update.id;
+    delete update.created_at;
+    delete update.project_id;
+    delete update.path;
+    delete update.owner;
+  } else {
+    update = json;
+  }
 
   await client.updateFile(parseInt(params.projectId), params.filePath, update);
+  revalidatePath(`/api/projects/${params.projectId}/files/${params.filePath}`);
+  revalidatePath(`/api/projects/${params.projectId}`);
 
   return NextResponse.json({ status: "ok" });
 }

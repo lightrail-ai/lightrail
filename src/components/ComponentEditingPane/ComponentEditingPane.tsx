@@ -17,12 +17,12 @@ import RevisionSelect from "../RevisionSelect/RevisionSelect";
 import { formatComponentTree } from "@/util/util";
 import { analytics } from "@/util/analytics";
 import { useHotkeys } from "react-hotkeys-hook";
-// @ts-ignore
+import { type UpdateProposal } from "../UpdateProposalModal";
 
 export interface ComponentEditingPaneProps {
   project: ProjectWithFiles;
-  onUpdate: (newContent: string) => void;
-  onMessage: (message: string) => void;
+  onUpdate: () => void;
+  onProposal: (proposal: UpdateProposal) => void;
   onCreateComponent: (
     name: string,
     callback: ComponentCreationCallback
@@ -32,7 +32,7 @@ export interface ComponentEditingPaneProps {
 function ComponentEditingPane({
   project,
   onUpdate,
-  onMessage,
+  onProposal,
   onCreateComponent,
 }: ComponentEditingPaneProps) {
   const [modification, setModification] = useState("");
@@ -79,51 +79,85 @@ function ComponentEditingPane({
   async function updateComponent() {
     setLoading(true);
 
-    const updateBody = selectedRevision
-      ? {
-          revision: selectedRevision.id,
-        }
-      : {
-          modification,
-          contents: oldCode === modifiedCode ? undefined : modifiedCode,
-        };
-
     analytics.track("Component Update Requested", {
-      ...updateBody,
       projectId: project.id,
       componentName: editingComponentValue?.name,
     });
 
-    const res = await fetch(
-      `${SERVER_URL}/api/projects/${project.id}/files/${editingComponentValue?.name}/contents`,
-      {
-        method: "PUT",
-        body: JSON.stringify(updateBody),
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+    try {
+      if (selectedRevision || modifiedCode !== oldCode) {
+        // Update directly, without prompting LLM
+        const updateBody = selectedRevision
+          ? { revision: selectedRevision.id }
+          : { contents: modifiedCode };
+        const res = await fetch(
+          `${SERVER_URL}/api/projects/${project.id}/files/${editingComponentValue?.name}`,
+          {
+            method: "PUT",
+            body: JSON.stringify(updateBody),
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          }
+        );
+        const json = await res.json();
+        if (json.status === "error") {
+          console.error(json);
+          throw new Error(json.error);
+        } else {
+          onUpdate();
+          toast.success("Component updated!", {
+            position: "bottom-center",
+          });
+        }
+      } else if (modification) {
+        // Update via LLM
+
+        const res = await fetch(
+          `${SERVER_URL}/api/projects/${project.id}/files/${editingComponentValue?.name}/revisions`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              modification,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          }
+        );
+
+        const json = await getJSONFromStream(res);
+        if (json.status === "error") {
+          console.error(json);
+          throw new Error(json.error);
+        }
+
+        const file = project.files.find(
+          (f) => f.path === editingComponentValue?.name
+        );
+
+        if (file && json.update) {
+          onProposal({
+            message: json.message,
+            file,
+            request: {
+              modification,
+            },
+            update: json.update,
+          });
+        }
+        setModification("");
       }
-    );
-
-    const json = await getJSONFromStream(res);
-
-    if (json.status === "error") {
-      console.log(json);
+    } catch (e) {
       toast.error("Failed to edit component -- please try again!", {
         position: "bottom-center",
       });
-
+    } finally {
       setSelectedRevision(null);
       setLoading(false);
-      return;
     }
-
-    onUpdate(json.file);
-    if (json.message) onMessage(json.message);
-    setModification("");
-    setSelectedRevision(null);
-    setLoading(false);
   }
 
   if (!editingComponentValue) {

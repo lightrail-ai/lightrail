@@ -7,16 +7,15 @@ import EditorNavbar from "../EditorNavbar/EditorNavbar";
 import toast, { Toaster } from "react-hot-toast";
 
 import "react-reflex/styles.css";
-import { useRecoilState } from "recoil";
-import { errorsQueue } from "../PreviewRenderer/preview-renderer-state";
 import TourModal from "../TourModal/TourModal";
-import { getJSONFromStream } from "@/util/transfers";
 import PreviewFrame from "../PreviewFrame/PreviewFrame";
 import ComponentCreationModal from "../ComponentCreationModal/ComponentCreationModal";
 import { ComponentCreationCallback } from "./editor-types";
 import LoadingSplashOverlay from "../LoadingSplashOverlay/LoadingSplashOverlay";
 import ProjectInterfaceEditor from "../ProjectInterfaceEditor/ProjectInterfaceEditor";
 import ProjectDataEditor from "../ProjectDataEditor/ProjectDataEditor";
+import { type UpdateProposal } from "../UpdateProposalModal";
+import UpdateProposalModal from "../UpdateProposalModal/UpdateProposalModal";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -27,43 +26,11 @@ async function getProject(projectId: string) {
   return res.json();
 }
 
-const toastMessage = (message: string) =>
-  toast.custom(
-    (t) => (
-      <div
-        className={`${
-          t.visible ? "animate-enter" : "animate-leave"
-        } max-w-md w-full bg-slate-900 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-slate-50 ring-opacity-50`}
-      >
-        <div className="flex-1 w-0 p-4">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 pt-0.5 bg-slate-200 rounded-md">
-              <img
-                className="h-10 w-10 rounded-full"
-                src="/assistant.png"
-                alt=""
-              />
-            </div>
-            <div className="ml-3 flex-1">
-              <p className="text-sm font-semibold text-slate-50">Assistant</p>
-              <p className="mt-1 text-sm text-slate-100">{message}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    ),
-    {
-      duration: 5000,
-      position: "bottom-right",
-    }
-  );
-
 function ProjectEditor({ projectId }: ProjectEditorProps) {
   const [project, setProject] = useState<ProjectWithFiles | undefined>();
   const [preparingFrame, setPreparingFrame] = useState(true);
   const [renderCount, setRenderCount] = useState(0);
   const [rendering, setRendering] = useState(false);
-  const [errorsQueueValue, setErrorsQueue] = useRecoilState(errorsQueue);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isShowingComponentList, setIsShowingComponentList] = useState(false);
   const [creatingComponent, setCreatingComponent] = useState<string | false>(
@@ -73,6 +40,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
     ComponentCreationCallback | undefined
   >(undefined);
   const [editorType, setEditorType] = useState<string>("interface");
+  const [proposal, setProposal] = useState<UpdateProposal | null>(null);
 
   function updateRenderCount() {
     setRenderCount(Date.now());
@@ -127,7 +95,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
           setOnComponentCreated={setOnComponentCreated}
           onProjectRefresh={refreshProject}
           onUpdate={onUpdate}
-          onMessage={toastMessage}
+          onProposal={(p) => setProposal(p)}
         />
       );
     }
@@ -136,34 +104,6 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
       return <ProjectDataEditor project={project} />;
     }
   }
-
-  useEffect(() => {
-    if (errorsQueueValue.length > 0) {
-      setErrorsQueue((errorsQueueValue) => {
-        const err = errorsQueueValue[0];
-        fetch(
-          `${SERVER_URL}/api/projects/${projectId}/files/${err.component}/contents`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              error: err.error,
-            }),
-          }
-        )
-          .then((r) => getJSONFromStream(r))
-          .then((r) => {
-            if (r.status === "ok") {
-              toastMessage(`Healed '${err.component}': ` + r.message);
-              onUpdate();
-            }
-          });
-        return errorsQueueValue.slice(1);
-      });
-    }
-  }, [errorsQueueValue]);
 
   return (
     <>
@@ -195,12 +135,20 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
       </div>
       <Toaster />
       {project && (
-        <ComponentCreationModal
-          componentName={creatingComponent}
-          setComponentName={setCreatingComponent}
-          project={project}
-          onComponentCreated={onComponentCreated}
-        />
+        <>
+          <ComponentCreationModal
+            componentName={creatingComponent}
+            setComponentName={setCreatingComponent}
+            project={project}
+            onComponentCreated={onComponentCreated}
+          />
+          <UpdateProposalModal
+            proposal={proposal}
+            onChangeProposal={setProposal}
+            onAccepted={onUpdate}
+            project={project}
+          />
+        </>
       )}
       <TourModal />
     </>

@@ -3,7 +3,6 @@ import { useSetRecoilState } from "recoil";
 import {
   editingComponent,
   editingPopoverTarget,
-  errorsQueue,
   hoveringComponent,
   namePopoverTarget,
 } from "../PreviewRenderer/preview-renderer-state";
@@ -20,7 +19,6 @@ function ComponentPreviewWrapper({
 }: ComponentPreviewWrapperProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const setHoveringComponent = useSetRecoilState(hoveringComponent);
-  const setErrorsQueue = useSetRecoilState(errorsQueue);
   const setNamePopoverTarget = useSetRecoilState(namePopoverTarget);
   const setEditingComponent = useSetRecoilState(editingComponent);
   const setEditingPopoverTarget = useSetRecoilState(editingPopoverTarget);

@@ -34,7 +34,7 @@ function Modal({
     >
       <div
         className={classNames("relative w-full px-4 h-auto", {
-          "max-w-5xl": wide,
+          "max-w-7xl": wide,
           "max-w-2xl": !wide,
         })}
       >
