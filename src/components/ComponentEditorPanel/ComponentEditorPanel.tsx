@@ -6,11 +6,12 @@ import { useRecoilValue } from "recoil";
 import { editingPopoverTarget } from "../PreviewRenderer/preview-renderer-state";
 import classNames from "classnames";
 import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
+import { type UpdateProposal } from "../UpdateProposalModal";
 
 export interface ComponentEditorPanelProps {
   project: ProjectWithFiles | undefined;
-  onUpdate: (newContent: string) => void;
-  onMessage: (message: string) => void;
+  onUpdate: () => void;
+  onProposal: (proposal: UpdateProposal) => void;
   onCreateComponent: (
     name: string,
     callback: ComponentCreationCallback
@@ -20,7 +21,7 @@ export interface ComponentEditorPanelProps {
 function ComponentEditorPanel({
   project,
   onUpdate,
-  onMessage,
+  onProposal,
   onCreateComponent,
 }: ComponentEditorPanelProps) {
   const target = useRecoilValue(editingPopoverTarget);
@@ -39,7 +40,7 @@ function ComponentEditorPanel({
         <ComponentEditingPane
           project={project}
           onUpdate={onUpdate}
-          onMessage={onMessage}
+          onProposal={onProposal}
           onCreateComponent={onCreateComponent}
         />
       )}

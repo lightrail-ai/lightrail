@@ -12,6 +12,7 @@ import ComponentInfoPanel from "../ComponentInfoPanel/ComponentInfoPanel";
 import { ProjectWithFiles } from "@/util/storage";
 import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 import PreviewFrame from "../PreviewFrame/PreviewFrame";
+import { type UpdateProposal } from "../UpdateProposalModal";
 
 export interface ProjectInterfaceEditorProps {
   project: ProjectWithFiles;
@@ -26,7 +27,7 @@ export interface ProjectInterfaceEditorProps {
   ) => void;
   onProjectRefresh: () => void;
   onUpdate: () => void;
-  onMessage: (message: string) => void;
+  onProposal: (proposal: UpdateProposal) => void;
 }
 
 function ProjectInterfaceEditor({
@@ -40,7 +41,7 @@ function ProjectInterfaceEditor({
   setOnComponentCreated,
   onProjectRefresh,
   onUpdate,
-  onMessage,
+  onProposal,
 }: ProjectInterfaceEditorProps) {
   return (
     <ReflexContainer orientation="horizontal">
@@ -49,6 +50,7 @@ function ProjectInterfaceEditor({
           {project && (
             <ComponentInfoPanel
               project={project}
+              onProposal={onProposal}
               onProjectRefresh={onProjectRefresh}
               onUpdateComponentTree={onUpdate}
             />
@@ -103,7 +105,7 @@ function ProjectInterfaceEditor({
       <ComponentEditorPanel
         project={project}
         onUpdate={onUpdate}
-        onMessage={onMessage}
+        onProposal={onProposal}
         onCreateComponent={(name, callback) => {
           setCreatingComponent(name);
           setOnComponentCreated(() => callback);

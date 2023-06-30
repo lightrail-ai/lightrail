@@ -46,6 +46,7 @@ function ComponentsListPanel({
           </Button>
           {orderedComponents.map((file) => (
             <div
+              key={file.path}
               className={classNames(
                 `text-md px-2 py-1 bg-slate-100 rounded-md text-slate-800 cursor-pointer border-2 hover:opacity-70 hover:shadow-md active:shadow-inner hover:border-sky-300`,
                 {

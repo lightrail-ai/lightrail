@@ -52,7 +52,7 @@ function TourModal({}: TourModalProps) {
         </div>
       }
       actions={[
-        <Button className="w-full mt-4" onClick={handleAck}>
+        <Button className="w-full mt-4" key={0} onClick={handleAck}>
           Got it!
         </Button>,
       ]}

@@ -10,6 +10,7 @@ import {
 import { CompleteLibrary, type Library } from "./starter-library";
 import { SERVER_URL } from "./constants";
 import { Column, Table } from "@/components/ProjectEditor/editor-types";
+import JSON5 from "json5";
 
 const chat = new ChatOpenAI({
   modelName: "gpt-3.5-turbo-0613",
@@ -123,7 +124,8 @@ ${formatLibraryForPrompt(usableLibrary)}
 
         Only use components from the COMPONENT LIBRARY if they are appropriate for the description requested. 
         If you'd like to use a component from COMPONENT LIBRARY, add an entry to the output array with the appropriate name, but leave the "render" key empty. 
-        COMPONENT LIBRARY components should go before all other components in your output.`
+        COMPONENT LIBRARY components should go before all other components in your output. When using a component from the COMPONENT LIBRARY,
+        use it directly where it is needed, rather than wrapping it in another component (i.e. if using ButtonA, do not wrap it in a component called 'Button', just use it directly where a button is required).`
         } 
         Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
         The final Index component should require no props, and should be able to be rendered without errors. Use plausible values for the props of any components used in Index.
@@ -155,7 +157,7 @@ ${formatLibraryForPrompt(usableLibrary)}
   let response;
 
   try {
-    response = JSON.parse(cleanedResponse);
+    response = JSON5.parse(cleanedResponse);
   } catch (e) {
     cleanedResponse = cleanedResponse.replaceAll(
       /"render":\s*`(.+?[^\\])`/gms,
@@ -163,14 +165,14 @@ ${formatLibraryForPrompt(usableLibrary)}
         `"render": ${JSON.stringify(jsxstr.replaceAll("\\`", "`"))}`
     );
     try {
-      response = JSON.parse(cleanedResponse);
+      response = JSON5.parse(cleanedResponse);
     } catch (e) {
       cleanedResponse = cleanedResponse.replaceAll("\n", " ");
       try {
-        response = JSON.parse(cleanedResponse);
+        response = JSON5.parse(cleanedResponse);
       } catch (e) {
         cleanedResponse = cleanedResponse.replace(/(.*}),\s*{.*$/gs, "$1]");
-        response = JSON.parse(cleanedResponse);
+        response = JSON5.parse(cleanedResponse);
       }
     }
   }
@@ -203,9 +205,13 @@ ${formatLibraryForPrompt(usableLibrary)}
           );
         }
       }
-
       return file;
     });
+
+  // Remove duplicates (first remove wrappers, then remove any other duplicates)
+  files = files
+    .filter((f) => !f.contents?.match(new RegExp(`<${f.path}\\W`)))
+    .filter((f, i, arr) => arr.findIndex((f2) => f2.path === f.path) === i);
 
   for (const libComp of Array.from(usedLibraryComponents)) {
     const contentsPath = usableLibrary[libComp].src;
@@ -297,7 +303,7 @@ export async function generateComponent(
 
   let parsed;
   try {
-    parsed = JSON.parse(jsonResponse);
+    parsed = JSON5.parse(jsonResponse);
     if (!parsed.name || !parsed.render) {
       throw new Error("Invalid JSON");
     }
@@ -451,7 +457,7 @@ export async function modifyComponent(
 
   console.log(responseArgString);
 
-  const response = JSON.parse(responseArgString);
+  const response = JSON5.parse(responseArgString);
 
   console.log(response);
 
@@ -496,12 +502,12 @@ export async function modifyComponentWithCompletion(
 
   try {
     const jsonResponse = `{ "explanation": "${responseString}`;
-    parsed = JSON.parse(jsonResponse);
+    parsed = JSON5.parse(jsonResponse);
     if (!parsed.explanation || !parsed.jsx) {
       throw new Error("Invalid response");
     }
   } catch (e) {
-    console.warn("JSON parse failed, constructing manually");
+    console.warn("JSON5.parse failed, constructing manually");
     const parts = responseString!.split(/\s*"jsx"\s*:\s*/);
     const explanation = parts[0].replace(/"\s*$/, "");
     const jsx = parts[1]

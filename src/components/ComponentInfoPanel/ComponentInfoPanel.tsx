@@ -16,17 +16,20 @@ import { SERVER_URL } from "@/util/constants";
 import { Table } from "../ProjectEditor/editor-types";
 import UpdateComponentTreeModal from "../UpdateComponentTreeModal/UpdateComponentTreeModal";
 import StateAddingModal from "../StateAddingModal/StateAddingModal";
+import { type UpdateProposal } from "../UpdateProposalModal";
 
 export interface ComponentInfoPanelProps {
   project: ProjectWithFiles;
   onProjectRefresh: () => void;
   onUpdateComponentTree: () => void;
+  onProposal: (proposal: UpdateProposal) => void;
 }
 
 function ComponentInfoPanel({
   project,
   onProjectRefresh,
   onUpdateComponentTree,
+  onProposal,
 }: ComponentInfoPanelProps) {
   const [databases, setDatabases] = useState<Db[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
@@ -81,10 +84,11 @@ function ComponentInfoPanel({
     <ReflexElement flex={isOpen ? 0.5 : 0}>
       <div className="flex flex-col min-h-full bg-slate-50 text-slate-800 px-4 py-2">
         <div className="text-sm font-semibold">State</div>
-        <div className="space-y-2 space-x-2 my-4">
+        <div className="flex flex-row flex-wrap gap-2 my-2">
           {state?.map((s) => (
             <VariableToken
               name={s.name}
+              key={s.name}
               subName={
                 "set" + s.name.charAt(0).toUpperCase() + s.name.substring(1)
               }
@@ -101,9 +105,9 @@ function ComponentInfoPanel({
         {props && props.length > 0 && (
           <>
             <div className="text-sm font-semibold">Props</div>
-            <div className="space-y-2 my-4">
+            <div className="flex flex-row flex-wrap gap-2 my-2">
               {props.map((s) => (
-                <VariableToken name={s} />
+                <VariableToken key={s} name={s} />
               ))}
             </div>
           </>
@@ -111,9 +115,9 @@ function ComponentInfoPanel({
         {editingComponentValue && databases && databases.length > 0 && (
           <>
             <div className="text-sm font-semibold">Queries</div>
-            <div className="space-y-2 my-4">
+            <div className="flex flex-row flex-wrap gap-2 my-2">
               {queries?.map((s) => (
-                <VariableToken name={s.name} />
+                <VariableToken key={s.name} name={s.name} />
               ))}
               <button
                 className="rounded-md py-1 px-2 text-sm bg-slate-100 text-slate-800 border-2"
@@ -137,8 +141,9 @@ function ComponentInfoPanel({
             />
 
             <UpdateComponentTreeModal
-              componentName={editingComponentValue.name}
+              component={editingComponentFile}
               project={project}
+              onProposal={onProposal}
               onClose={() => setUpdateComponentTreeModalOpen(false)}
               onUpdateComponentTree={onUpdateComponentTree}
               visible={updateComponentTreeModalOpen}

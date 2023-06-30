@@ -39,10 +39,13 @@
     "autoprefixer": "10.4.14",
     "buble": "^0.20.0",
     "classnames": "^2.3.2",
+    "diff": "^5.1.0",
+    "diff2html": "^3.4.35",
     "encoding": "^0.1.13",
     "file-saver": "^2.0.5",
     "hint.css": "^2.7.0",
     "import-mapper": "^0.0.4",
+    "json5": "^2.2.3",
     "jszip": "^3.10.1",
     "langchain": "^0.0.95",
     "next": "^13.4.7",
@@ -71,6 +74,8 @@
     "typescript": "5.0.4"
   },
   "devDependencies": {
+    "@types/diff": "^5.0.3",
+    "@types/diff2html": "^3.0.0",
     "@types/file-saver": "^2.0.5",
     "@types/prettier": "^2.7.3",
     "@types/react-tag-input": "^6.6.1",
