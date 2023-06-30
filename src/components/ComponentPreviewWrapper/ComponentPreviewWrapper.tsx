@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSetRecoilState } from "recoil";
 import {
   editingComponent,
@@ -7,6 +7,17 @@ import {
   namePopoverTarget,
 } from "../PreviewRenderer/preview-renderer-state";
 import { ErrorBoundary } from "react-error-boundary";
+import {
+  FloatingPortal,
+  autoPlacement,
+  offset,
+  safePolygon,
+  shift,
+  useFloating,
+  useHover,
+  useInteractions,
+} from "@floating-ui/react";
+import ErrorTooltip from "../ErrorTooltip/ErrorTooltip";
 
 export interface ComponentPreviewWrapperProps {
   children: React.ReactNode;
@@ -26,14 +37,39 @@ function ComponentPreviewWrapper({
   const ErrorFallbackComponent = useMemo(
     () =>
       ({ error }: { error: Error }) => {
-        useEffect(() => {}, [error]);
+        /* Hover state management */
+        const [isOpen, setIsOpen] = useState(false);
+        const { refs, floatingStyles, context } = useFloating({
+          middleware: [autoPlacement(), shift()],
+          placement: "bottom-start",
+          open: isOpen,
+          onOpenChange: setIsOpen,
+        });
+        const hover = useHover(context, {
+          handleClose: safePolygon(),
+        });
+        const { getReferenceProps, getFloatingProps } = useInteractions([
+          hover,
+        ]);
 
         return (
           <span
-            title={error.message}
-            className="inline-block text-red-500 bg-red-500 bg-opacity-10 border-red-500 border border-opacity-40 p-2 "
+            ref={refs.setReference}
+            {...getReferenceProps()}
+            className="inline-block text-red-500 bg-red-500 bg-opacity-10 border-red-500 border border-opacity-40 p-2 text-center hover:bg-opacity-100 hover:text-white transition-colors duration-200"
           >
-            <b>{name}</b> failed to render, please inspect manually.
+            <b>{name}</b> failed to render
+            <div className="text-xs text-center">Hover for more info</div>
+            {isOpen && (
+              <div
+                ref={refs.setFloating}
+                style={floatingStyles}
+                {...getFloatingProps()}
+                className="max-w-[90vw] box-border error-tooltip"
+              >
+                <ErrorTooltip error={error} componentName={name} />
+              </div>
+            )}
           </span>
         );
       },

@@ -16,6 +16,8 @@ import ProjectInterfaceEditor from "../ProjectInterfaceEditor/ProjectInterfaceEd
 import ProjectDataEditor from "../ProjectDataEditor/ProjectDataEditor";
 import { type UpdateProposal } from "../UpdateProposalModal";
 import UpdateProposalModal from "../UpdateProposalModal/UpdateProposalModal";
+import { useRecoilState } from "recoil";
+import { activeProject, activeProposal } from "./editor-state";
 
 export interface ProjectEditorProps {
   projectId: string;
@@ -27,7 +29,7 @@ async function getProject(projectId: string) {
 }
 
 function ProjectEditor({ projectId }: ProjectEditorProps) {
-  const [project, setProject] = useState<ProjectWithFiles | undefined>();
+  const [project, setProject] = useRecoilState(activeProject);
   const [preparingFrame, setPreparingFrame] = useState(true);
   const [renderCount, setRenderCount] = useState(0);
   const [rendering, setRendering] = useState(false);
@@ -40,7 +42,7 @@ function ProjectEditor({ projectId }: ProjectEditorProps) {
     ComponentCreationCallback | undefined
   >(undefined);
   const [editorType, setEditorType] = useState<string>("interface");
-  const [proposal, setProposal] = useState<UpdateProposal | null>(null);
+  const [proposal, setProposal] = useRecoilState(activeProposal);
 
   function updateRenderCount() {
     setRenderCount(Date.now());
