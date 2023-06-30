@@ -26,20 +26,7 @@ function ComponentPreviewWrapper({
   const ErrorFallbackComponent = useMemo(
     () =>
       ({ error }: { error: Error }) => {
-        useEffect(() => {
-          // TODO: Try to heal ONCE but then stop.
-          // setErrorsQueue((prev) =>
-          //   prev.find((e) => e.component === name)
-          //     ? prev
-          //     : [
-          //         ...prev,
-          //         {
-          //           component: name,
-          //           error: error.message,
-          //         },
-          //       ]
-          // );
-        }, [error]);
+        useEffect(() => {}, [error]);
 
         return (
           <span
