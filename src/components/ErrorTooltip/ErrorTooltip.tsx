@@ -10,9 +10,16 @@ import classNames from "classnames";
 export interface ErrorTooltipProps {
   error: Error;
   componentName: string;
+  title?: string;
+  onLoadingStateChange?: (loading: boolean) => void;
 }
 
-function ErrorTooltip({ error, componentName }: ErrorTooltipProps) {
+function ErrorTooltip({
+  error,
+  componentName,
+  title,
+  onLoadingStateChange,
+}: ErrorTooltipProps) {
   const project = useRecoilValue(activeProject);
   const setProposal = useSetRecoilState(activeProposal);
   const [loading, setLoading] = useState(false);
@@ -28,6 +35,7 @@ function ErrorTooltip({ error, componentName }: ErrorTooltipProps) {
   async function autoFix(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     if (!project) return;
     setLoading(true);
+    onLoadingStateChange?.(true);
     const component = project.files.find((f) => f.path === componentName);
     try {
       const request = {
@@ -64,13 +72,14 @@ function ErrorTooltip({ error, componentName }: ErrorTooltipProps) {
       e.preventDefault();
       e.stopPropagation();
       setLoading(false);
+      onLoadingStateChange?.(false);
     }
   }
 
   return (
-    <div className="bg-red-700 text-left m-2 p-2 text-xs rounded-lg shadow-md">
+    <div className="bg-red-700 text-left m-2 p-2 text-xs rounded-lg shadow-md text-white">
       <div className="font-semibold flex flex-row pb-2 items-center">
-        <div className="flex-1 text-base pl-2">Error Details</div>
+        <div className="flex-1 text-base pl-2">{title ?? "Error Details"}</div>
         <button
           className={classNames(
             "px-4 py-2 text-sm rounded-md bg-red-500 hover:bg-red-600 inline-flex flex-row gap-2 items-center disabled:opacity-50 cursor-pointer disabled:cursor-default disabled:hover:bg-red-500"

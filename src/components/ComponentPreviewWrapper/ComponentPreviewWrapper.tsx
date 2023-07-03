@@ -18,6 +18,7 @@ import {
   useInteractions,
 } from "@floating-ui/react";
 import ErrorTooltip from "../ErrorTooltip/ErrorTooltip";
+import { analytics } from "@/util/analytics";
 
 export interface ComponentPreviewWrapperProps {
   children: React.ReactNode;
@@ -37,12 +38,20 @@ function ComponentPreviewWrapper({
   const ErrorFallbackComponent = useMemo(
     () =>
       ({ error }: { error: Error }) => {
+        useEffect(() => {
+          analytics.track("Component Error", {
+            component: name,
+            error: error.message,
+          });
+        }, [error]);
+
         /* Hover state management */
         const [isOpen, setIsOpen] = useState(false);
+        const [isWorking, setIsWorking] = useState(false);
         const { refs, floatingStyles, context } = useFloating({
           middleware: [autoPlacement(), shift()],
           placement: "bottom-start",
-          open: isOpen,
+          open: isOpen || isWorking,
           onOpenChange: setIsOpen,
         });
         const hover = useHover(context, {
@@ -60,14 +69,18 @@ function ComponentPreviewWrapper({
           >
             <b>{name}</b> failed to render
             <div className="text-xs text-center">Hover for more info</div>
-            {isOpen && (
+            {(isOpen || isWorking) && (
               <div
                 ref={refs.setFloating}
                 style={floatingStyles}
                 {...getFloatingProps()}
                 className="max-w-[90vw] box-border error-tooltip"
               >
-                <ErrorTooltip error={error} componentName={name} />
+                <ErrorTooltip
+                  error={error}
+                  componentName={name}
+                  onLoadingStateChange={setIsWorking}
+                />
               </div>
             )}
           </span>

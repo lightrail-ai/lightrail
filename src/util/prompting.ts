@@ -470,63 +470,6 @@ export async function modifyComponent(
   };
 }
 
-export async function modifyComponentWithCompletion(
-  old: string,
-  modification: string,
-  streamingCallback?: (token: string) => void
-) {
-  const responseString = await completion.call(
-    `
-    Modify the following JSX component tree to match this description / request: "${modification}".
-
-    \`\`\`
-    ${old}
-    \`\`\`
-    
-    Present the modification as a JSON object with format {"explanation": "...", "jsx": "..."}, where the \`explanation\` explains the specific DOM/css-class changes made and why, and the \`jsx\` is the updated React component tree styled with Tailwind CSS classes, as a string.
-    
-    \`\`\`
-    {
-         "explanation": "`,
-    undefined,
-    [
-      {
-        handleLLMNewToken: streamingCallback,
-      },
-    ]
-  );
-
-  console.log(responseString);
-
-  let parsed;
-
-  try {
-    const jsonResponse = `{ "explanation": "${responseString}`;
-    parsed = JSON5.parse(jsonResponse);
-    if (!parsed.explanation || !parsed.jsx) {
-      throw new Error("Invalid response");
-    }
-  } catch (e) {
-    console.warn("JSON5.parse failed, constructing manually");
-    const parts = responseString!.split(/\s*"jsx"\s*:\s*/);
-    const explanation = parts[0].replace(/"\s*$/, "");
-    const jsx = parts[1]
-      .replace(/}\s*$/, "")
-      .replace(/^\s*"/, "")
-      .replace(/"\s*$/, "");
-    parsed = {
-      explanation,
-      jsx,
-    };
-  }
-
-  parsed["jsx"] = cleanJSX(parsed["jsx"]);
-
-  console.log(parsed);
-
-  return parsed;
-}
-
 async function generateQuery(
   prompt: string,
   streamingCallback?: (token: string) => void

@@ -11,6 +11,8 @@ import { hoveringComponent } from "./preview-renderer-state";
 import { ProjectWithFiles } from "@/util/storage";
 import { ErrorBoundary } from "react-error-boundary";
 import { queryProjectDb } from "@/util/util";
+import ErrorTooltip from "../ErrorTooltip/ErrorTooltip";
+import { analytics } from "@/util/analytics";
 
 const importMapper = new ImportMapper({
   "@lightrail/react": ImportMapper.forceDefault(React),
@@ -67,18 +69,18 @@ export default function PreviewRenderer({
       ({ error }: { error: Error }) => {
         useEffect(() => {
           onOpenComponentList?.();
+          analytics.track("Component Error", {
+            component: "index",
+            error: error.message,
+          });
         }, [error]);
 
         return (
-          <div
-            ref={setWrapper}
-            title={error.message}
-            className="h-full text-red-500 bg-red-500 bg-opacity-10 border-red-500 border-4 border-opacity-40 p-2 "
-          >
-            Your page failed to render with the following error:
-            <div className="font-mono font-semibold p-2">{error.message}</div>
-            Click components in the panel to the right to view code & debug.
-          </div>
+          <ErrorTooltip
+            componentName="index"
+            error={error}
+            title={"Top-level component failed to render (details below)"}
+          />
         );
       },
     []
