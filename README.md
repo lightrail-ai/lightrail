@@ -1,4 +1,6 @@
-# 🚈 Lightrail
+# 🚈 Lightrail 
+
+[![](https://dcbadge.vercel.app/api/server/57bNyxgb7g)](https://discord.gg/57bNyxgb7g)
 
 Lightrail is an open-source platform for building React/Tailwind front-end UIs with the help of LLMs. It aspires to create clean, well-organized codebases that can be easily exported and edited manually. Support for adding interactive functionality within the Lightrail platform is coming soon. It is currently most useful for scaffolding a UI / layout, then exporting it and adding functionality separately.
 
