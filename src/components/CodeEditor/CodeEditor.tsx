@@ -10,7 +10,14 @@ import {
 
 import { bracketMatching } from "@codemirror/language";
 
-import { defaultKeymap, historyKeymap, history } from "@codemirror/commands";
+import {
+  defaultKeymap,
+  historyKeymap,
+  history,
+  indentMore,
+  indentLess,
+  cursorLineDown,
+} from "@codemirror/commands";
 import { solarizedLight } from "thememirror";
 import "./custom-styles.css";
 import classNames from "classnames";
@@ -54,6 +61,23 @@ function CodeEditor({
             onValueChange(update.state.doc.toString());
           }
         }),
+        keymap.of([
+          {
+            key: "Tab",
+            preventDefault: true,
+            run: indentMore,
+          },
+          {
+            key: "Shift-Tab",
+            preventDefault: true,
+            run: indentLess,
+          },
+          {
+            key: "Ctrl-Enter",
+            preventDefault: true,
+            run: cursorLineDown,
+          },
+        ]),
         history(),
         highlightActiveLineGutter(),
         highlightSpecialChars(),

@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import TimerProgressBar from "../TimerProgressBar/TimerProgressBar";
 import { getJSONFromStream } from "@/util/transfers";
 import Select from "../Select/Select";
-import { LibraryCategories } from "@/util/starter-library";
+import { LIBRARY_CATEGORIES } from "@/util/starter-library";
 import Explanation from "../Explanation/Explanation";
 import { type Tag, WithContext as ReactTags } from "react-tag-input";
 import Button from "../Button/Button";
@@ -138,7 +138,7 @@ function ProjectCreationPane({}: ProjectCreationPaneProps) {
             />
           </label>
           <Select
-            options={LibraryCategories}
+            options={LIBRARY_CATEGORIES}
             value={category}
             onChange={setCategory}
           />

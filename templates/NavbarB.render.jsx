@@ -11,11 +11,10 @@
     ))}
   </nav>
   {props.cta && (
-    <button
-      className="bg-indigo-600 text-gray-200 py-2 px-4 rounded-md"
-      onClick={props.cta.onClick}
-    >
+    <Button
+    size="sm"
+    primary>
       {props.cta.text}
-    </button>
+    </Button>
   )}
 </div>

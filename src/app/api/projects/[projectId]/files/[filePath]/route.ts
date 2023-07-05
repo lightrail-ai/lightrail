@@ -10,16 +10,19 @@ import { cookies } from "next/headers";
 import * as buble from "buble";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { Theme, renderStarterComponentWithTheme } from "@/util/theming";
+import { COMPLETE_LIBRARY } from "@/util/starter-library";
+import { getUsedComponentNames } from "@/util/util";
 
-function createPreviewComponent(projectId: string, file: File, r: string) {
-  const componentImports = Array.from(
-    new Set(
-      Array.from(file.contents!.matchAll(/\<([A-Z]\w+)/g)).map((m) => m[1])
-    )
-  )
+function createPreviewComponent(
+  projectId: string,
+  file: File,
+  queryString: string
+) {
+  const componentImports = getUsedComponentNames(file.contents!)
     .map(
       (comp) =>
-        `const ${comp} = React.lazy(() => import("${SERVER_URL}/api/projects/${projectId}/files/${comp}?r=${r}").catch(e => console.log(e)));`
+        `const ${comp} = React.lazy(() => import("${SERVER_URL}/api/projects/${projectId}/files/${comp}?${queryString}").catch(e => console.log(e)));`
     )
     .join("\n");
 
@@ -114,7 +117,27 @@ export async function GET(
   { params }: { params: { projectId: string; filePath: string } }
 ) {
   const { searchParams } = new URL(request.url);
-  const r = searchParams.get("r") ?? "0"; // For cache busting
+
+  if (params.projectId == "themes") {
+    // special theme-testing project, viewable at '/themes'
+
+    const file = (
+      await renderStarterComponentWithTheme(
+        COMPLETE_LIBRARY.find((c) => c.name === params.filePath)!,
+        Object.fromEntries(searchParams.entries())
+      )
+    ).find((f) => f.path === params.filePath)!;
+    const contents = createPreviewComponent(
+      params.projectId,
+      file as File,
+      searchParams.toString()
+    );
+    return new Response(contents, {
+      headers: {
+        "Content-Type": "text/javascript",
+      },
+    });
+  }
 
   const client = new Client({
     cookies,
@@ -128,7 +151,7 @@ export async function GET(
     contents = createPreviewComponent(
       params.projectId,
       await client.getFile(parseInt(params.projectId), params.filePath),
-      r
+      searchParams.toString()
     );
   } catch (e: any) {
     console.error(e);

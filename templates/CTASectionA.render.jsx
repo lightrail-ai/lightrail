@@ -1,6 +1,6 @@
-<div className="bg-white py-12 text-center w-full">
-  <h2 className="text-5xl font-bold mb-4">{props.heading}</h2>
-  <p className="text-xl text-gray-700 mb-4">{props.subheading}</p>
+<div className="py-12 text-center w-full {{{theme.style === 'holly' ? 'bg-zinc-950 text-zinc-200' : 'bg-white text-zinc-900' }}}">
+  <h2 className="text-5xl font-bold">{props.heading}</h2>
+  <p className="text-xl text-gray-700 my-8">{props.subheading}</p>
   <div className="flex justify-center items-center mb-6 gap-4">
     {props.callouts &&
       props.callouts.map((callout) => (
@@ -10,8 +10,8 @@
         </div>
       ))}
   </div>
-  <button className="bg-blue-600 text-white hover:bg-blue-700 font-bold py-4 px-8 rounded-lg shadow-md inline-flex items-center transition duration-300 ease-in-out">
+  <Button primary>    
     <span className="text-lg mr-2">{props.cta}</span>
     <i className="fas fa-arrow-right ml-2 animate-pulse"></i>
-  </button>
+  </Button>
 </div>
