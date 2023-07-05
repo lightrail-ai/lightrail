@@ -1,16 +1,13 @@
-import { File, FileUpdate } from "./storage";
+import { File, FileDescription, FileUpdate } from "./storage";
 
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { OpenAI } from "langchain/llms/openai";
-import {
-  AIChatMessage,
-  HumanChatMessage,
-  SystemChatMessage,
-} from "langchain/schema";
-import { CompleteLibrary, type Library } from "./starter-library";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { COMPLETE_LIBRARY, type Library } from "./starter-library";
 import { SERVER_URL } from "./constants";
 import { Column, Table } from "@/components/ProjectEditor/editor-types";
 import JSON5 from "json5";
+import { Theme, renderStarterComponentWithTheme } from "./theming";
 
 const chat = new ChatOpenAI({
   modelName: "gpt-3.5-turbo-0613",
@@ -42,32 +39,27 @@ export function cleanJSX(jsx: string) {
 }
 
 function getProjectSpecificLibrary(libraries: string[]): Library {
-  return Object.fromEntries(
-    Object.entries(CompleteLibrary).filter(([_, details]) =>
-      details.categories.some((c) => libraries.includes(c))
-    )
+  return COMPLETE_LIBRARY.filter(({ categories }) =>
+    categories.some((c) => libraries.includes(c))
   );
 }
 
 function formatLibraryForPrompt(lib: Library) {
-  return Object.entries(lib)
+  return lib
     .map(
-      ([name, details]) =>
-        `     - ${name}: ${details.description} (example usage: ${details.example})`
+      ({ name, description, example }) =>
+        `     - ${name}: ${description} (example usage: ${example})`
     )
     .join("\n");
-}
-
-function getComponentsFromLibrary(lib: Library) {
-  return Object.keys(lib);
 }
 
 export async function generateRoot(
   name: string,
   description: string,
   libraries: string[],
+  theme: Theme,
   streamingCallback?: (token: string) => void
-): Promise<File[]> {
+): Promise<FileDescription[]> {
   const usableLibrary = getProjectSpecificLibrary(libraries);
 
   const system = `
@@ -124,8 +116,7 @@ ${formatLibraryForPrompt(usableLibrary)}
 
         Only use components from the COMPONENT LIBRARY if they are appropriate for the description requested. 
         If you'd like to use a component from COMPONENT LIBRARY, add an entry to the output array with the appropriate name, but leave the "render" key empty. 
-        COMPONENT LIBRARY components should go before all other components in your output. When using a component from the COMPONENT LIBRARY,
-        use it directly where it is needed, rather than wrapping it in another component (i.e. if using ButtonA, do not wrap it in a component called 'Button', just use it directly where a button is required).`
+        COMPONENT LIBRARY components should go before all other components in your output. Make sure you do not output components with duplicate names.`
         } 
         Make sure ALL data is provided to each component whenever it is used, making up whatever data necessary, so that the component can be rendered without errors.
         The final Index component should require no props, and should be able to be rendered without errors. Use plausible values for the props of any components used in Index.
@@ -177,56 +168,57 @@ ${formatLibraryForPrompt(usableLibrary)}
     }
   }
 
-  let files: File[] = response.map((comp: any) => ({
-    path: comp.name === "Index" ? "index" : comp.name,
+  let files: FileDescription[] = response.map((comp: any) => ({
+    path: ["Index", "App"].includes(comp.name) ? "index" : comp.name,
     contents: cleanJSX(comp.render),
   }));
 
   console.log(files);
 
-  let usedLibraryComponents = new Set<keyof typeof usableLibrary>();
-  let libraryComponents = getComponentsFromLibrary(usableLibrary);
+  let outputFileDescriptions: { [path: string]: FileDescription } = {};
+  const potentialLibraryImports = []; // Holds components that _might_ be library components (i.e. if they aren't implemented, import them)
+  const usableLibraryComponentNames = usableLibrary.map((c) => c.name);
 
-  files = files
-    .filter((file) => {
-      return !libraryComponents.includes(file.path);
-    })
-    .map((file) => {
-      for (const libComp of libraryComponents) {
-        if (file.contents?.match(new RegExp(`<${libComp}\\W`))) {
-          usedLibraryComponents.add(libComp);
-          file.contents = file.contents?.replaceAll(
-            new RegExp(`<${libComp}(\\W)`, "g"),
-            `<${usableLibrary[libComp].as}$1`
-          );
-          file.contents = file.contents?.replaceAll(
-            `</${libComp}>`,
-            `</${usableLibrary[libComp].as}>`
-          );
-        }
+  for (const file of files) {
+    // If the file is a library component import, pull in the component in all cases
+    if (
+      (file.contents.trim().length < 1 || !file.contents) &&
+      usableLibraryComponentNames.includes(file.path)
+    ) {
+      const newImports = await renderStarterComponentWithTheme(
+        usableLibrary.find((c) => c.name === file.path)!,
+        theme
+      );
+      for (const imp of newImports) {
+        outputFileDescriptions[imp.path] = imp;
       }
-      return file;
-    });
+      // Otherwise, keep only first implementation of each component
+    } else if (!(file.path in outputFileDescriptions)) {
+      outputFileDescriptions[file.path] = file;
+    }
 
-  // Remove duplicates (first remove wrappers, then remove any other duplicates)
-  files = files
-    .filter((f) => !f.contents?.match(new RegExp(`<${f.path}\\W`)))
-    .filter((f, i, arr) => arr.findIndex((f2) => f2.path === f.path) === i);
-
-  for (const libComp of Array.from(usedLibraryComponents)) {
-    const contentsPath = usableLibrary[libComp].src;
-    const resp = await fetch(
-      SERVER_URL + "/starter-components/" + contentsPath
-    );
-    const contents = await resp.text();
-
-    files.push({
-      path: usableLibrary[libComp].as,
-      contents,
-    } as File);
+    // Check for potential unimported library component usage
+    for (const name of usableLibraryComponentNames) {
+      if (file.contents?.match(new RegExp(`<${name}\\W`))) {
+        potentialLibraryImports.push(name);
+      }
+    }
   }
 
-  return files;
+  // Add any unimported library components
+  for (const name of potentialLibraryImports) {
+    if (!(name in outputFileDescriptions)) {
+      const newImports = await renderStarterComponentWithTheme(
+        usableLibrary.find((c) => c.name === name)!,
+        theme
+      );
+      for (const imp of newImports) {
+        outputFileDescriptions[imp.path] = imp;
+      }
+    }
+  }
+
+  return Object.values(outputFileDescriptions);
 }
 
 export async function generateComponent(

@@ -5,6 +5,10 @@ import {
 import { Database } from "../supabase";
 
 export type Project = Database["public"]["Tables"]["projects"]["Row"];
+export interface FileDescription {
+  path: string;
+  contents: string;
+}
 export type File = Database["public"]["Tables"]["files"]["Row"];
 export type NewFile = Database["public"]["Tables"]["files"]["Insert"];
 export type FileRevision =

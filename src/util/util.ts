@@ -15,6 +15,12 @@ export function sanitizeVariableName(name: string) {
   return sanitized;
 }
 
+export function getUsedComponentNames(jsx: string) {
+  return Array.from(
+    new Set(Array.from(jsx.matchAll(/\<([A-Z]\w+)/g)).map((m) => m[1]))
+  );
+}
+
 export function formatComponentTree(code: string) {
   let formatted;
   try {

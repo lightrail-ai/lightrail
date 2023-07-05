@@ -1,7 +1,8 @@
 import { generateComponent, generateRoot } from "@/util/prompting";
-import { Client, File } from "@/util/storage";
+import { Client, File, FileDescription, NewFile } from "@/util/storage";
 import { NextResponse } from "next/server";
 import { RequestCookies } from "@edge-runtime/cookies";
+import { STYLES } from "@/util/theming";
 
 export const runtime = "edge";
 
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
         const { description, name, type, libraries, props } =
           await request.json();
 
-        let files: File[];
+        let files: (FileDescription | NewFile)[];
 
         if (type === "component") {
           let mainFile = await generateComponent(
@@ -44,11 +45,24 @@ export async function POST(request: Request) {
                   .join(" ")} /></div>`,
               };
 
-          files = [indexFile, mainFile] as File[];
+          files = [indexFile, mainFile];
         } else {
-          files = await generateRoot(name, description, libraries, (_token) => {
-            controller.enqueue(encoder.encode("\n"));
-          });
+          const styleOptions = Object.keys(STYLES);
+          const style = styleOptions[
+            Math.floor(Math.random() * styleOptions.length)
+          ] as keyof typeof STYLES; // TODO make this better than random
+
+          files = await generateRoot(
+            name,
+            description,
+            libraries,
+            {
+              style,
+            },
+            (_token) => {
+              controller.enqueue(encoder.encode("\n"));
+            }
+          );
         }
 
         const project_id = await client.createProject(

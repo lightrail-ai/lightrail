@@ -11,6 +11,7 @@ import { hoveringComponent } from "./preview-renderer-state";
 import { ProjectWithFiles } from "@/util/storage";
 import { ErrorBoundary } from "react-error-boundary";
 import { queryProjectDb } from "@/util/util";
+import { Theme } from "@/util/theming";
 import ErrorTooltip from "../ErrorTooltip/ErrorTooltip";
 import { analytics } from "@/util/analytics";
 
@@ -25,7 +26,8 @@ const importMapper = new ImportMapper({
 importMapper.register();
 
 export interface PreviewRendererProps {
-  project: ProjectWithFiles;
+  project?: ProjectWithFiles;
+  theme?: Theme;
   renderCount: number;
   noOverlay?: boolean;
   onOpenComponentList?: () => void;
@@ -35,6 +37,7 @@ export interface PreviewRendererProps {
 
 export default function PreviewRenderer({
   project,
+  theme,
   renderCount,
   noOverlay,
   onOpenComponentList,
@@ -46,6 +49,16 @@ export default function PreviewRenderer({
     useState<React.ComponentType | null>(null);
   const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
 
+  let rootUrl: string | undefined;
+  if (project && project.id) {
+    rootUrl = `${SERVER_URL}/api/projects/${project.id}/files/index?r=${renderCount}`;
+  } else if (theme) {
+    const themeQueryString = new URLSearchParams(
+      theme as Record<string, string>
+    ).toString();
+    rootUrl = `${SERVER_URL}/api/projects/themes/files/index?r=${renderCount}&${themeQueryString}`;
+  }
+
   useEffect(() => {
     if (wrapper) {
       onRenderComplete?.();
@@ -53,16 +66,16 @@ export default function PreviewRenderer({
   }, [wrapper]);
 
   useEffect(() => {
-    if (!project || !project.id) return;
-
-    setRootComponent(
-      React.lazy(() =>
-        import(
-          /* webpackIgnore: true */ `${SERVER_URL}/api/projects/${project.id}/files/index?r=${renderCount}`
-        ).catch((e) => console.log(e))
-      )
-    );
-  }, [project, renderCount]);
+    if (rootUrl) {
+      setRootComponent(
+        React.lazy(() =>
+          import(/* webpackIgnore: true */ rootUrl!).catch((e) =>
+            console.log(e)
+          )
+        )
+      );
+    }
+  }, [rootUrl]);
 
   const ErrorFallbackComponent = useMemo(
     () =>
