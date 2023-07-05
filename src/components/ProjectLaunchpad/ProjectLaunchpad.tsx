@@ -4,16 +4,14 @@ import ProjectCreationModal from "../ProjectCreationModal/ProjectCreationModal";
 import FirstProjectFlow from "../FirstProjectFlow/FirstProjectFlow";
 import { Project } from "@/util/storage";
 import { SERVER_URL } from "@/util/constants";
-import { useRouter } from "next/navigation";
 import Loader from "../Loader/Loader";
 import MobileBlockingModal from "../MobileBlockingModal/MobileBlockingModal";
 import AccountNavbar from "../AccountNavbar/AccountNavbar";
-import Image from "next/image";
-import github from "@/assets/github-mark.svg";
 import Link from "next/link";
 import { Toaster } from "react-hot-toast";
 import { sessionState } from "../SessionDataProvider/session-data-state";
 import { useRecoilValue } from "recoil";
+import LinksFooter from "../LinksFooter/LinksFooter";
 
 export interface ProjectLaunchpadProps {}
 
@@ -29,7 +27,13 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
       fetch(`${SERVER_URL}/api/projects`)
         .then((res) => res.json())
         .then(({ projects }) => {
-          setProjects(projects ?? []);
+          setProjects(
+            projects.sort(
+              (a: Project, b: Project) =>
+                new Date(b.created_at!).getTime() -
+                new Date(a.created_at!).getTime()
+            ) ?? []
+          );
           setProjectsLoading(false);
         });
     }
@@ -41,11 +45,18 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
     return (
       <div className="flex flex-col h-full">
         <AccountNavbar />
-        <div className="px-24 flex-1">
+        <div className="px-24 flex-1 min-h-0 overflow-auto">
           {projectsLoading ? (
             <Loader className="text-gray-200 fill-black" />
           ) : (
             <div className="flex gap-4 flex-wrap">
+              <div
+                onClick={() => setProjectCreationModalVisible(true)}
+                className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-200 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-60"
+              >
+                <div className="text-2xl font-bold">+</div>
+                <div className="text-slate-400 italic">New Project</div>
+              </div>
               {projects.map((project) => (
                 <Link
                   key={project.id}
@@ -60,13 +71,6 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
                   </div>
                 </Link>
               ))}
-              <div
-                onClick={() => setProjectCreationModalVisible(true)}
-                className="inline-flex flex-col justify-center items-center px-6 py-4 bg-slate-200 rounded-md text-slate-500 cursor-pointer border-2 border-slate-300 hover:opacity-60"
-              >
-                <div className="text-2xl font-bold">+</div>
-                <div className="text-slate-400 italic">New Project</div>
-              </div>
             </div>
           )}
           <ProjectCreationModal
@@ -75,14 +79,7 @@ function ProjectLaunchpad({}: ProjectLaunchpadProps) {
           />
           <MobileBlockingModal />
         </div>
-        <div className="flex flex-row justify-center pb-12 text-lg text-black">
-          <a
-            href="https://github.com/vishnumenon/lightrail"
-            className="opacity-30 hover:opacity-60 cursor-pointer"
-          >
-            <Image src={github} alt={"Github Repo"} width={48} />
-          </a>
-        </div>
+        <LinksFooter />
         <Toaster />
       </div>
     );
