@@ -6,6 +6,8 @@ import { activeProject, activeProposal } from "../ProjectEditor/editor-state";
 import { toast } from "react-hot-toast";
 import Loader from "../Loader/Loader";
 import classNames from "classnames";
+import discord from "@/assets/discord-mark.svg";
+import Image from "next/image";
 
 export interface ErrorTooltipProps {
   error: Error;
@@ -94,6 +96,26 @@ function ErrorTooltip({
       <pre className="text-xs p-2 overflow-auto bg-red-800 rounded-lg ">
         {errorString}
       </pre>
+      <div className="py-2">
+        <span className="font-semibold">Stuck on an error?</span> Post in the
+        Lightrail Discord, we're happy to help!{" "}
+        <a
+          className={classNames(
+            "font-semibold ml-2 px-2 py-1 text-xs rounded-md bg-red-500 hover:bg-red-600 inline-flex flex-row gap-2 items-center cursor-pointer"
+          )}
+          onClick={() => window.open("https://discord.gg/57bNyxgb7g", "_blank")}
+          href="https://discord.gg/57bNyxgb7g"
+          target="_blank"
+        >
+          <Image
+            className="invert"
+            alt={"Discord Logo"}
+            src={discord}
+            height={8}
+          />{" "}
+          Join Discord
+        </a>
+      </div>
     </div>
   );
 }
