@@ -11,7 +11,7 @@ import { cookies } from "next/headers";
 import * as buble from "buble";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { renderStarterComponentWithTheme } from "@/util/theming";
+import { Theme, renderStarterComponentWithTheme } from "@/util/theming";
 import { COMPLETE_LIBRARY } from "@/util/starter-library";
 import { getUsedComponentNames } from "@/util/util";
 

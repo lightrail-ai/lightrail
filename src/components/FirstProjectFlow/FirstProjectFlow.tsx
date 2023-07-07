@@ -5,6 +5,7 @@ import AuthModal from "../AuthModal/AuthModal";
 import github from "@/assets/github-mark.svg";
 import logo from "@/assets/logo.svg";
 import Image from "next/image";
+import LinksFooter from "../LinksFooter/LinksFooter";
 
 export interface FirstProjectFlowProps {}
 
@@ -12,7 +13,7 @@ function FirstProjectFlow({}: FirstProjectFlowProps) {
   const [authModalVisible, setAuthModalVisible] = useState(false);
   return (
     <div className="w-screen min-h-screen bg-slate-200 flex flex-col">
-      <div className="flex flex-row p-8 ">
+      <div className="flex flex-row p-8 justify-center items-center">
         <Image
           src={logo}
           alt={"Lightrail Logo"}
@@ -20,8 +21,10 @@ function FirstProjectFlow({}: FirstProjectFlowProps) {
           width={48}
         />
         <div className="flex-1" />
+        <LinksFooter />
+
         <button
-          className="place-self-end text-slate-500 bg-slate-900 bg-opacity-10 p-4 rounded-md font-semibold hover:bg-opacity-20 cursor-pointer"
+          className=" text-slate-500 bg-slate-900 bg-opacity-10 p-4 rounded-md font-semibold hover:bg-opacity-20 cursor-pointer"
           onClick={() => setAuthModalVisible(true)}
         >
           Log In / Sign Up
@@ -41,14 +44,6 @@ function FirstProjectFlow({}: FirstProjectFlowProps) {
           <div className="font-semibold text-2xl pb-4">New Project</div>
           <ProjectCreationPane />
         </div>
-      </div>
-      <div className="flex flex-row justify-center py-12 text-lg text-black">
-        <a
-          href="https://github.com/vishnumenon/lightrail"
-          className="opacity-30 hover:opacity-60 cursor-pointer"
-        >
-          <Image src={github} alt={"Github Repo"} width={48} />
-        </a>
       </div>
       <AuthModal
         visible={authModalVisible}
