@@ -1,4 +1,5 @@
 <button
+  onClick={props.onClick}
   className={`transition duration-300 ease-in-out ${
     props.primary
       ? "bg-white text-black border hover:bg-opacity-80"

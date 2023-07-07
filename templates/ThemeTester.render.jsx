@@ -10,6 +10,15 @@
         <CTASection cta="Install Now" heading="Ready to dive in?" subheading="Join our community today." callouts={["Open-Source", "Free Forever"]} />
     </section>
     <section id="dashboard">
-        <Card heading="DAUs" subheading="Daily Active Users"><Chart type='bar' series={[{data: [{x: 'Jan', y: 100}, {x: 'Feb', y: 200}, {x: 'Mar', y: 300}]}]} options={{xaxis: {type: 'category'}}} width={350}/></Card>
+        <Grid>
+            <Card heading="DAUs" subheading="Daily Active Users"><Chart type='bar' series={[{data: [{x: 'Jan', y: 100}, {x: 'Feb', y: 200}, {x: 'Mar', y: 300}]}]} options={{xaxis: {type: 'category'}}} width={350}/></Card>
+            <Card heading="DAUs" subheading="Daily Active Users"><Chart type='bar' series={[{data: [{x: 'Jan', y: 100}, {x: 'Feb', y: 200}, {x: 'Mar', y: 300}]}]} options={{xaxis: {type: 'category'}}} width={350}/></Card>
+            <Card heading="DAUs" subheading="Daily Active Users"><Chart type='bar' series={[{data: [{x: 'Jan', y: 100}, {x: 'Feb', y: 200}, {x: 'Mar', y: 300}]}]} options={{xaxis: {type: 'category'}}} width={350}/></Card>
+            <Card heading="DAUs" subheading="Daily Active Users"><Chart type='bar' series={[{data: [{x: 'Jan', y: 100}, {x: 'Feb', y: 200}, {x: 'Mar', y: 300}]}]} options={{xaxis: {type: 'category'}}} width={350}/></Card>
+            <Card heading="DAUs" subheading="Daily Active Users"><Chart type='bar' series={[{data: [{x: 'Jan', y: 100}, {x: 'Feb', y: 200}, {x: 'Mar', y: 300}]}]} options={{xaxis: {type: 'category'}}} width={350}/></Card>
+            <Card heading="DAUs" subheading="Daily Active Users"><div className="text-4xl text-center">12</div></Card>
+            <Card heading="DAUs" subheading="Daily Active Users"><Chart type='bar' series={[{data: [{x: 'Jan', y: 100}, {x: 'Feb', y: 200}, {x: 'Mar', y: 300}]}]} options={{xaxis: {type: 'category'}}} width={350}/></Card>
+            <Card heading="DAUs" subheading="Daily Active Users"><Chart type='bar' series={[{data: [{x: 'Jan', y: 100}, {x: 'Feb', y: 200}, {x: 'Mar', y: 300}]}]} options={{xaxis: {type: 'category'}}} width={350}/></Card>
+        </Grid>
     </section>
 </div>

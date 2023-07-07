@@ -13,7 +13,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { Theme, renderStarterComponentWithTheme } from "@/util/theming";
 import { COMPLETE_LIBRARY } from "@/util/starter-library";
-import { getUsedComponentNames } from "@/util/util";
+import { getInitialStateValueString, getUsedComponentNames } from "@/util/util";
 
 function createPreviewComponent(
   projectId: string,
@@ -49,7 +49,7 @@ function createPreviewComponent(
           (s) =>
             `const [${s.name}, ${
               "set" + s.name.charAt(0).toUpperCase() + s.name.slice(1)
-            }] = React.useState(${JSON.stringify(s.initial)});`
+            }] = React.useState(${getInitialStateValueString(s.initial)});`
         )
         .join("\n")
     : "";

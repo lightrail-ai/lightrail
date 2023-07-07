@@ -19,7 +19,8 @@ export const COMPLETE_LIBRARY: Library = [
   {
     name: "Button",
     categories: ["basic", "landing", "dashboard"],
-    description: "A UI button with primary/not-primary variants.",
+    description:
+      "A UI button with primary/not-primary variants. Also optionally accepts onClick as a prop.",
     example: "<Button>Cancel</Button><Button primary>Continue</Button>",
     variants: [
       {
@@ -34,7 +35,8 @@ export const COMPLETE_LIBRARY: Library = [
   {
     name: "Input",
     categories: ["basic", "landing", "dashboard"],
-    description: "A text input field.",
+    description:
+      "A text input field. Props are placeholder, value, and onChange.",
     example: "<Input placeholder='Enter your email' />",
     variants: [
       {
@@ -164,6 +166,19 @@ export const COMPLETE_LIBRARY: Library = [
     ],
   },
   {
+    name: "Grid",
+    categories: ["dashboard"],
+    description:
+      "A responsive grid component that can hold cards of information in rows. Has 4 columns by default on desktop, 2 on tablet, and 1 on mobile. ",
+    example:
+      "<Grid><Card heading='Active Now' subheading='Currently active sessions'>35</Card><Card heading='Active Today' subheading='Daily active sessions'>135</Card><Card heading='Active Last Week' subheading='Weekly active sessions'>2135</Card></Grid>",
+    variants: [
+      {
+        src: "GridA.render.jsx",
+      },
+    ],
+  },
+  {
     name: "index",
     categories: [], // Never included in "usableLibrary" for rendering
     description: "A page for testing themes (internal use only).",
@@ -186,6 +201,6 @@ export const LIBRARY_CATEGORIES = [
   { value: "none", label: "None" },
   { value: "basic", label: "Basic (Buttons, Inputs, Cards, etc)" },
   { value: "landing", label: "Landing Page (Basic + Hero, Sections, etc)" },
-  { value: "dashboard", label: "Dashboard (Basic + Graphs, Charts" },
+  { value: "dashboard", label: "Dashboard (Basic + Graphs, Charts, etc)" },
   // { value: "all", label: "All" },
 ];

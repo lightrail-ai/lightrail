@@ -17,6 +17,7 @@ import { Table } from "../ProjectEditor/editor-types";
 import UpdateComponentTreeModal from "../UpdateComponentTreeModal/UpdateComponentTreeModal";
 import StateAddingModal from "../StateAddingModal/StateAddingModal";
 import { type UpdateProposal } from "../UpdateProposalModal";
+import { getInitialStateValueString } from "@/util/util";
 
 export interface ComponentInfoPanelProps {
   project: ProjectWithFiles;
@@ -92,7 +93,7 @@ function ComponentInfoPanel({
               subName={
                 "set" + s.name.charAt(0).toUpperCase() + s.name.substring(1)
               }
-              value={JSON.stringify(s.initial)}
+              value={getInitialStateValueString(s.initial)}
             />
           ))}
           <button

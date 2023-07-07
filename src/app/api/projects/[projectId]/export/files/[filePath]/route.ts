@@ -1,4 +1,5 @@
 import { Client, File, FileStateItem } from "@/util/storage";
+import { getInitialStateValueString } from "@/util/util";
 import { cookies } from "next/headers";
 
 function createExportComponent(file: File) {
@@ -14,7 +15,7 @@ function createExportComponent(file: File) {
           (s) =>
             `const [${s.name}, ${
               "set" + s.name.charAt(0).toUpperCase() + s.name.slice(1)
-            }] = React.useState(${JSON.stringify(s.initial)});`
+            }] = React.useState(${getInitialStateValueString(s.initial)});`
         )
         .join("\n")
     : "";

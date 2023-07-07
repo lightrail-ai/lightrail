@@ -15,6 +15,35 @@ export function sanitizeVariableName(name: string) {
   return sanitized;
 }
 
+export function getInitialStateValueString(value: any) {
+  if (value === null) {
+    return "null";
+  }
+  if (value === undefined) {
+    return "undefined";
+  }
+  if (!isNaN(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    if (["true", "false", "null", "undefined"].includes(value)) {
+      return value;
+    }
+    if (value.startsWith("{") || value.startsWith("[")) {
+      return value;
+    }
+    if (value.startsWith('"') || value.startsWith("'")) {
+      return value;
+    }
+    if (value.match(/^\d+$/)) {
+      return value;
+    }
+  }
+
+  return JSON.stringify(value);
+}
+
 export function getUsedComponentNames(
   jsx: string,
   externals?: FileExternalItem[]
