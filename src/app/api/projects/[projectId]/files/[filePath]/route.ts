@@ -125,7 +125,7 @@ function createErrorPreviewComponent(name: string, error: any) {
 
       const ErrorComponent = () => {
         React.useEffect(() => {
-          throw new Error("${error.message}", ${JSON.stringify({
+          throw new Error(${JSON.stringify(error.message)}, ${JSON.stringify({
     cause: error.snippet,
   })});
         }, [])
