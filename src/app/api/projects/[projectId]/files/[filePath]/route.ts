@@ -1,6 +1,7 @@
 import {
   Client,
   File,
+  FileExternalItem,
   FileQueryItem,
   FileStateItem,
   FileUpdate,
@@ -10,7 +11,7 @@ import { cookies } from "next/headers";
 import * as buble from "buble";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { Theme, renderStarterComponentWithTheme } from "@/util/theming";
+import { renderStarterComponentWithTheme } from "@/util/theming";
 import { COMPLETE_LIBRARY } from "@/util/starter-library";
 import { getUsedComponentNames } from "@/util/util";
 
@@ -19,10 +20,26 @@ function createPreviewComponent(
   file: File,
   queryString: string
 ) {
-  const componentImports = getUsedComponentNames(file.contents!)
+  const externalImports = file.externals
+    ? (file.externals as unknown as FileExternalItem[])
+        .map((e) => {
+          const nameParts = [];
+          if (e.default) nameParts.push(e.default);
+          if (e.names) nameParts.push(`{${e.names.join(", ")}}`);
+          return `import ${nameParts.join(", ")} from "${e.from}";`;
+        })
+        .join("\n")
+    : "";
+
+  const componentImports = getUsedComponentNames(
+    file.contents!,
+    file.externals
+      ? (file.externals as unknown as FileExternalItem[])
+      : undefined
+  )
     .map(
       (comp) =>
-        `const ${comp} = React.lazy(() => import("${SERVER_URL}/api/projects/${projectId}/files/${comp}?${queryString}").catch(e => console.log(e)));`
+        `const ${comp} = React.lazy(() => import("${SERVER_URL}/api/projects/${projectId}/files/${comp}?${queryString}"));`
     )
     .join("\n");
 
@@ -78,6 +95,8 @@ function createPreviewComponent(
     import ComponentPreviewWrapper from "@lightrail/ComponentPreviewWrapper"
     import queryProjectDb from "@lightrail/queryProjectDb"
 
+    ${externalImports}
+
     ${componentImports}
 
     export default function Component(props) {
@@ -86,21 +105,29 @@ function createPreviewComponent(
         ${queryStatements}
 
         return ${
-          buble.transform(`<ComponentPreviewWrapper name="${file.path}">
+          buble.transform(
+            `<ComponentPreviewWrapper name="${file.path}">
             ${file.contents!}
-        </ComponentPreviewWrapper>`).code
+        </ComponentPreviewWrapper>`,
+            {
+              objectAssign: "Object.assign",
+              target: { chrome: 71 },
+            }
+          ).code
         };
     } `;
 }
 
-function createErrorPreviewComponent(name: string, error: string) {
+function createErrorPreviewComponent(name: string, error: any) {
   return `
       import React from "@lightrail/react";
       import ComponentPreviewWrapper from "@lightrail/ComponentPreviewWrapper"
 
       const ErrorComponent = () => {
         React.useEffect(() => {
-          throw new Error("${error}");
+          throw new Error("${error.message}", ${JSON.stringify({
+    cause: error.snippet,
+  })});
         }, [])
         return React.createElement( React.Fragment, null );
       }
@@ -129,7 +156,7 @@ export async function GET(
     ).find((f) => f.path === params.filePath)!;
     const contents = createPreviewComponent(
       params.projectId,
-      file as File,
+      { ...file, externals: file.externals || null } as File,
       searchParams.toString()
     );
     return new Response(contents, {
@@ -155,8 +182,7 @@ export async function GET(
     );
   } catch (e: any) {
     console.error(e);
-    const shortError = e.message.split("\n")[0];
-    contents = createErrorPreviewComponent(params.filePath, shortError);
+    contents = createErrorPreviewComponent(params.filePath, e);
   }
 
   if (!contents) {

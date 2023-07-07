@@ -1,6 +1,6 @@
 import prettier from "prettier/standalone";
 import prettierBabelParser from "prettier/parser-babel";
-import { Db } from "./storage";
+import { Db, FileExternalItem } from "./storage";
 import { SERVER_URL } from "./constants";
 
 export function sanitizeComponentName(name: string) {
@@ -15,9 +15,24 @@ export function sanitizeVariableName(name: string) {
   return sanitized;
 }
 
-export function getUsedComponentNames(jsx: string) {
+export function getUsedComponentNames(
+  jsx: string,
+  externals?: FileExternalItem[]
+) {
+  const externalNames = new Set();
+  if (externals) {
+    for (const external of externals) {
+      if (external.default) externalNames.add(external.default);
+      if (external.names) external.names.forEach((n) => externalNames.add(n));
+    }
+  }
+
   return Array.from(
-    new Set(Array.from(jsx.matchAll(/\<([A-Z]\w+)/g)).map((m) => m[1]))
+    new Set(
+      Array.from(jsx.matchAll(/\<([A-Z]\w+)/g))
+        .map((m) => m[1])
+        .filter((n) => !externalNames.has(n))
+    )
   );
 }
 

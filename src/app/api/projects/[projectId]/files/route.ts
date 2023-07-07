@@ -48,6 +48,7 @@ export async function POST(
 
         controller.close();
       } catch (e: any) {
+        console.error(e);
         controller.enqueue(
           encoder.encode(
             JSON.stringify({

@@ -14,6 +14,7 @@ import { queryProjectDb } from "@/util/util";
 import { Theme } from "@/util/theming";
 import ErrorTooltip from "../ErrorTooltip/ErrorTooltip";
 import { analytics } from "@/util/analytics";
+import Chart from "react-apexcharts";
 
 const importMapper = new ImportMapper({
   "@lightrail/react": ImportMapper.forceDefault(React),
@@ -21,6 +22,7 @@ const importMapper = new ImportMapper({
     ComponentPreviewWrapper
   ),
   "@lightrail/queryProjectDb": ImportMapper.forceDefault(queryProjectDb),
+  "react-apexcharts": ImportMapper.forceDefault(Chart),
 });
 
 importMapper.register();

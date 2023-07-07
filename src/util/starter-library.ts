@@ -1,10 +1,14 @@
+import { FileExternalItem } from "./storage";
+
 export interface StarterComponentDescription {
   name: string;
   categories: string[];
   description: string;
+  externals?: FileExternalItem[]; // Externals that this component depends on.
   example: string;
   variants: {
-    src: string;
+    external?: FileExternalItem; // External that provides this component. A variant can specify EITHER external OR src, not both.
+    src?: string;
     for?: string[]; //An array of descriptors for which this variant is appropriate. Can be style names, or other descriptors (e.g. "style:nebula", "scheme:dark", "industry:tech"), etc.
   }[]; // When selecting an implementation of a component, the first one with a matching descriptor will be used. variants with 'for == undefined' match all descriptors.
 }
@@ -14,7 +18,7 @@ export type Library = StarterComponentDescription[];
 export const COMPLETE_LIBRARY: Library = [
   {
     name: "Button",
-    categories: ["basic", "landing"],
+    categories: ["basic", "landing", "dashboard"],
     description: "A UI button with primary/not-primary variants.",
     example: "<Button>Cancel</Button><Button primary>Continue</Button>",
     variants: [
@@ -29,7 +33,7 @@ export const COMPLETE_LIBRARY: Library = [
   },
   {
     name: "Input",
-    categories: ["basic", "landing"],
+    categories: ["basic", "landing", "dashboard"],
     description: "A text input field.",
     example: "<Input placeholder='Enter your email' />",
     variants: [
@@ -131,9 +135,44 @@ export const COMPLETE_LIBRARY: Library = [
     ],
   },
   {
+    name: "Chart",
+    categories: ["dashboard"],
+    description:
+      "A chart component for displaying data, from react-apexcharts. Props are 'type', 'series', 'width', 'height', and 'options'. Use your knowledge of React-ApexCharts docs when using this component. ",
+    example:
+      "<Chart type='bar' series={[{data: [{x: 'Jan', y: 100}, {x: 'Feb', y: 200}, {x: 'Mar', y: 300}]}]} options={{xaxis: {type: 'category'}}} width={350} />",
+    variants: [
+      {
+        external: {
+          default: "Chart",
+          from: "react-apexcharts",
+        },
+      },
+    ],
+  },
+  {
+    name: "Card",
+    categories: ["dashboard"],
+    description:
+      "A rounded card component with a mild shadow, with a heading/subheading (both optional), useful for displaying its children in a dashboard grid.",
+    example:
+      "<Card heading='Active Now' subheading='Currently active sessions'><span className='text-4xl'>35</span></Card>",
+    variants: [
+      {
+        src: "CardA.render.jsx",
+      },
+    ],
+  },
+  {
     name: "index",
     categories: [], // Never included in "usableLibrary" for rendering
     description: "A page for testing themes (internal use only).",
+    externals: [
+      {
+        default: "Chart",
+        from: "react-apexcharts",
+      },
+    ],
     example: "",
     variants: [
       {
@@ -147,6 +186,6 @@ export const LIBRARY_CATEGORIES = [
   { value: "none", label: "None" },
   { value: "basic", label: "Basic (Buttons, Inputs, Cards, etc)" },
   { value: "landing", label: "Landing Page (Basic + Hero, Sections, etc)" },
-  // { value: "dashboard", label: "Dashboard (Basic + Graphs, Charts" },
+  { value: "dashboard", label: "Dashboard (Basic + Graphs, Charts" },
   // { value: "all", label: "All" },
 ];

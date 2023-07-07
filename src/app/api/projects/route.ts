@@ -76,7 +76,7 @@ export async function POST(request: Request) {
           await client.createFile({
             ...file,
             project_id,
-          });
+          } as NewFile);
         }
 
         controller.enqueue(
@@ -90,6 +90,7 @@ export async function POST(request: Request) {
 
         controller.close();
       } catch (e: any) {
+        console.error(e);
         controller.enqueue(
           encoder.encode(
             JSON.stringify({

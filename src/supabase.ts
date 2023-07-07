@@ -51,6 +51,7 @@ export interface Database {
           contents: string | null
           created_at: string | null
           example: string | null
+          externals: Json[] | null
           id: number
           owner: string | null
           path: string
@@ -62,6 +63,7 @@ export interface Database {
           contents?: string | null
           created_at?: string | null
           example?: string | null
+          externals?: Json[] | null
           id?: number
           owner?: string | null
           path: string
@@ -73,6 +75,7 @@ export interface Database {
           contents?: string | null
           created_at?: string | null
           example?: string | null
+          externals?: Json[] | null
           id?: number
           owner?: string | null
           path?: string
@@ -100,6 +103,7 @@ export interface Database {
           contents: string | null
           created_at: string | null
           example: string | null
+          externals: Json[] | null
           id: number
           owner: string | null
           path: string
@@ -111,6 +115,7 @@ export interface Database {
           contents?: string | null
           created_at?: string | null
           example?: string | null
+          externals?: Json[] | null
           id?: number
           owner?: string | null
           path: string
@@ -122,6 +127,7 @@ export interface Database {
           contents?: string | null
           created_at?: string | null
           example?: string | null
+          externals?: Json[] | null
           id?: number
           owner?: string | null
           path?: string

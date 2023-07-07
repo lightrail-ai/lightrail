@@ -26,8 +26,11 @@ function ErrorTooltip({
 
   const errorString = useMemo(() => {
     let str = error.stack ?? error.message;
-    if (str.split("\n").length > 10) {
-      str = str.split("\n").slice(0, 10).join("\n") + "\n...";
+    if (str.split("\n").length > 3) {
+      str = str.split("\n").slice(0, 3).join("\n") + "\n...";
+    }
+    if (error.cause) {
+      str += "\n" + error.cause;
     }
     return str;
   }, [error]);
@@ -37,12 +40,21 @@ function ErrorTooltip({
     setLoading(true);
     onLoadingStateChange?.(true);
     const component = project.files.find((f) => f.path === componentName);
+    const stackTraceComponentName = error.stack
+      ?.split("\n")[1]
+      ?.match(/\/files\/([A-Za-z]+)\?/)?.[1];
+    const stackTraceComponent = stackTraceComponentName
+      ? project.files.find((f) => f.path === stackTraceComponentName)
+      : undefined;
+
     try {
       const request = {
         error: errorString,
       };
       const res = await fetch(
-        `${SERVER_URL}/api/projects/${project.id}/files/${componentName}/revisions`,
+        `${SERVER_URL}/api/projects/${project.id}/files/${
+          stackTraceComponent ? stackTraceComponentName : componentName
+        }/revisions`,
         {
           method: "POST",
           body: JSON.stringify(request),
@@ -61,7 +73,7 @@ function ErrorTooltip({
       if (component && json.update) {
         setProposal({
           message: json.message,
-          file: component,
+          file: stackTraceComponent ?? component,
           request,
           update: json.update,
         });
