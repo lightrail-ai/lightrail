@@ -8,6 +8,8 @@ export type Project = Database["public"]["Tables"]["projects"]["Row"];
 export interface FileDescription {
   path: string;
   contents: string;
+  externals?: FileExternalItem[] | null;
+  state?: FileStateItem[] | null;
 }
 export type File = Database["public"]["Tables"]["files"]["Row"];
 export type NewFile = Database["public"]["Tables"]["files"]["Insert"];
@@ -26,6 +28,12 @@ export interface FileStateItem {
 export interface FileQueryItem {
   name: string;
   query: string;
+}
+
+export interface FileExternalItem {
+  default?: string;
+  names?: string[];
+  from: string;
 }
 
 // export async function setProject(project: Project) {

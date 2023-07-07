@@ -7,7 +7,11 @@ import { COMPLETE_LIBRARY, type Library } from "./starter-library";
 import { SERVER_URL } from "./constants";
 import { Column, Table } from "@/components/ProjectEditor/editor-types";
 import JSON5 from "json5";
-import { Theme, renderStarterComponentWithTheme } from "./theming";
+import {
+  Theme,
+  getApplicableVariant,
+  renderStarterComponentWithTheme,
+} from "./theming";
 
 const chat = new ChatOpenAI({
   modelName: "gpt-3.5-turbo-0613",
@@ -35,6 +39,7 @@ const completion = new OpenAI({
 export function cleanJSX(jsx: string) {
   let cleaned = jsx.replaceAll(" class=", " className=");
   cleaned = cleaned.replaceAll(" for=", " htmlFor=");
+  cleaned = cleaned.replaceAll(/'([A-Za-z ]+)'([A-Za-z])/g, "'$1\\'$2"); // escape apostrophes when needed
   return cleaned;
 }
 
@@ -69,9 +74,10 @@ export async function generateRoot(
         \`\`\` 
         {
           "name": "...",   // The name of the component
-          "dependencies": ["...", "..."],    // Other compoents that this component uses. List only the names of custom components
+          "dependencies": ["...", "..."],    // Other components that this component uses. List only the names of custom components
           "props": ["...", "..."],   // The props that this component uses
-          "render": "...",    // The JSX for the component, as a string. Use only Tailwind CSS for styling. 
+          "state": [...]   // The state that this component uses. 
+          "render": "...",    // The JSX for the component, as a one-line string with no newlines or indents. Use only Tailwind CSS for styling. 
         }
         \`\`\`
 
@@ -85,11 +91,12 @@ export async function generateRoot(
 
         \`\`\`
         {
-            "name": "ComponentName",
-            "dependencies": ["Button", "PricingCard"],
-            "props": ["price", "cta"],
-            "render": "<div className=\"bg-slate-200 p-4\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\\n</div>",
-        }
+          "name": "Counter",
+          "dependencies": ["Button"]
+          "props": ["delta"], 
+          "state": [{name: "count", initial: 0}] // Each state variable has a name and an initial value.
+          "render": "<div className='flex items-center'><Button onClick={() => setCount(count - props.delta)}>-</Button><div className='bg-white px-3 py-1 text-center border border-gray-300'>{count}</div><Button onClick={() => setCount(count + props.delta)}>+</Button></div>",    // The JSX for the component, as a one-line string with no newlines or indents. Use only Tailwind CSS for styling. 
+      }
         \`\`\`
 
         generate an array of React components (use Tailwind CSS) for a project called "${name}" that fulfills this description: "${description}"
@@ -107,6 +114,9 @@ export async function generateRoot(
         Make sure no components are left unimplemented.
         If a component requires props, provide those props with sample values whenever that component is used.
         When accessing props in the JSX, use the format \`props.propName\` to access the prop value. A component's children are available as \`props.children\`.
+        When accessing state in the JSX, use the state variable name (e.g. \`count\`) to access the state value, and the corresponding setter (e.g. \`setCount\`) to set the state value.
+        Define all event-handlers inline.
+
         ${
           libraries.length > 0 &&
           `
@@ -171,6 +181,7 @@ ${formatLibraryForPrompt(usableLibrary)}
   let files: FileDescription[] = response.map((comp: any) => ({
     path: ["Index", "App"].includes(comp.name) ? "index" : comp.name,
     contents: cleanJSX(comp.render),
+    state: comp.state,
   }));
 
   console.log(files);
@@ -193,14 +204,27 @@ ${formatLibraryForPrompt(usableLibrary)}
         outputFileDescriptions[imp.path] = imp;
       }
       // Otherwise, keep only first implementation of each component
-    } else if (!(file.path in outputFileDescriptions)) {
-      outputFileDescriptions[file.path] = file;
-    }
+    } else {
+      const externals = [];
 
-    // Check for potential unimported library component usage
-    for (const name of usableLibraryComponentNames) {
-      if (file.contents?.match(new RegExp(`<${name}\\W`))) {
-        potentialLibraryImports.push(name);
+      // Check for potential unimported library component usage
+      for (const starter of usableLibrary) {
+        if (file.contents?.match(new RegExp(`<${starter.name}\\W`))) {
+          const variant = getApplicableVariant(starter, theme);
+          if (variant.src) {
+            potentialLibraryImports.push(starter.name);
+          } else if (variant.external) {
+            // add external if found
+            externals.push(variant.external);
+          }
+        }
+      }
+
+      if (!(file.path in outputFileDescriptions)) {
+        outputFileDescriptions[file.path] = {
+          ...file,
+          externals: file.externals || externals, // NB: keep an eye on this, change to concat later if needed
+        };
       }
     }
   }
@@ -257,7 +281,7 @@ export async function generateComponent(
       "name": "Counter",   // The name of the component, as a string
       "props": ["delta"],   // The props that this component uses
       "state": [{name: "count", initial: 0}] // The state that this component uses. Each state variable has a name and an initial value.
-      "render": "<div className=\"flex items-center\">\n    <button className=\"bg-blue-400 hover:bg-blue-500 text-white font-bold py-1 px-2 rounded-l-md\" onClick={() => setCount(count - props.delta)}>-</button>\n        <div className=\"bg-white px-3 py-1 text-center border border-gray-300\">\n            {count}\n        </div>\n    <button className=\"bg-blue-400 hover:bg-blue-500 text-white font-bold py-1 px-2 rounded-r-md\" onClick={() => setCount(count + props.delta)}>+</button>\n</div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
+      "render": "<div className='flex items-center'><button className='bg-blue-400 hover:bg-blue-500 text-white font-bold py-1 px-2 rounded-l-md' onClick={() => setCount(count - props.delta)}>-</button><div className='bg-white px-3 py-1 text-center border border-gray-300'>{count}</div><button className='bg-blue-400 hover:bg-blue-500 text-white font-bold py-1 px-2 rounded-r-md' onClick={() => setCount(count + props.delta)}>+</button></div>",    // The JSX for the component, as a one-line string. Use only Tailwind CSS for styling. 
       "example": "<Counter delta={2} />"  // An example of the component being used, as a string, with literal sample values for all necessary props (assume no variables).
   }
   \`\`\`
@@ -422,7 +446,7 @@ export async function modifyComponent(
                   render: {
                     type: "string",
                     description:
-                      'The JSX component tree for the component, as a string. Use Tailwind CSS for styling. (e.g. "<div className=\\"bg-slate-200 p-4\\">\\n  <PricingCard price={props.price} />\\n  <Button text={props.cta} />\\n</div>")',
+                      'The JSX component tree for the component, as a string. Use Tailwind CSS for styling. (e.g. "<div className=\\"bg-slate-200 p-4\\"><PricingCard price={props.price} /><Button text={props.cta} /></div>")',
                   },
                 },
               },

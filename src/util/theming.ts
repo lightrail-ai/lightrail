@@ -18,10 +18,10 @@ export interface Theme {
   font?: "sans-serif" | "serif";
 }
 
-export async function renderStarterComponentWithTheme(
+export function getApplicableVariant(
   starter: StarterComponentDescription,
   theme: Theme
-): Promise<FileDescription[]> {
+) {
   const variant = starter.variants.find((v) => {
     if (v.for === undefined) {
       return true;
@@ -34,6 +34,17 @@ export async function renderStarterComponentWithTheme(
   if (!variant) {
     throw new Error(`No variant found for theme ${JSON.stringify(theme)}`);
   }
+  return variant;
+}
+
+export async function renderStarterComponentWithTheme(
+  starter: StarterComponentDescription,
+  theme: Theme
+): Promise<FileDescription[]> {
+  const variant = getApplicableVariant(starter, theme);
+  if (!variant.src) {
+    return [];
+  }
 
   const resp = await fetch(
     SERVER_URL +
@@ -44,7 +55,7 @@ export async function renderStarterComponentWithTheme(
   );
   const contents = await resp.text();
 
-  const dependencyNames = getUsedComponentNames(contents);
+  const dependencyNames = getUsedComponentNames(contents, starter.externals);
 
   let dependencyFileDescriptions: FileDescription[] = [];
   for (const dep of dependencyNames) {
@@ -60,6 +71,7 @@ export async function renderStarterComponentWithTheme(
     {
       path: starter.name,
       contents: contents,
+      externals: starter.externals,
     },
     ...dependencyFileDescriptions,
   ];
