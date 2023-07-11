@@ -3,7 +3,7 @@ import React from "react";
 import { ReflexElement } from "react-reflex";
 import ComponentEditingPane from "../ComponentEditingPane/ComponentEditingPane";
 import { useRecoilValue } from "recoil";
-import { editingPopoverTarget } from "../PreviewRenderer/preview-renderer-state";
+import { editingComponent } from "../PreviewRenderer/preview-renderer-state";
 import classNames from "classnames";
 import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 import { type UpdateProposal } from "../UpdateProposalModal";
@@ -24,17 +24,17 @@ function ComponentEditorPanel({
   onProposal,
   onCreateComponent,
 }: ComponentEditorPanelProps) {
-  const target = useRecoilValue(editingPopoverTarget);
+  const editingComponentValue = useRecoilValue(editingComponent);
 
   return (
     <ReflexElement
       className={classNames(
         "bg-slate-100 text-slate-800 flex flex-col min-h-0",
         {
-          "p-4": target,
+          "p-4": editingComponentValue,
         }
       )}
-      flex={target ? 2 : 0}
+      flex={editingComponentValue ? 2 : 0}
     >
       {project && (
         <ComponentEditingPane

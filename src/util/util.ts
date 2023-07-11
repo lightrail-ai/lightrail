@@ -22,7 +22,7 @@ export function getInitialStateValueString(value: any) {
   if (value === undefined) {
     return "undefined";
   }
-  if (!isNaN(value)) {
+  if (typeof value === "number") {
     return value;
   }
 
@@ -37,7 +37,7 @@ export function getInitialStateValueString(value: any) {
       return value;
     }
     if (value.match(/^\d+$/)) {
-      return value;
+      return parseInt(value);
     }
   }
 
@@ -65,19 +65,33 @@ export function getUsedComponentNames(
   );
 }
 
-export function formatComponentTree(code: string) {
+export function formatComponentTree(code: string, wrapInFragment?: boolean) {
   let formatted;
   try {
+    if (wrapInFragment) {
+      code = `<>${code}</>`;
+    }
     formatted = prettier
-      .format(code, {
+      .format(`${code}`, {
         parser: "babel",
         semi: false,
         plugins: [prettierBabelParser],
+        useTabs: false,
+        tabWidth: 2,
       })
       .replace(/^;+|;+$/g, "");
-  } catch (e) {
-    console.error(e);
-    formatted = code;
+    if (wrapInFragment) {
+      // remove fragment
+      formatted = formatted.replace(/^\s*<>\n*/, "").replace(/\n*<\/>\s*$/, "");
+      // unindent
+      formatted = formatted.replaceAll(/^  /gm, "");
+    }
+  } catch (e: any) {
+    if (!wrapInFragment && e.message.includes("fragment")) {
+      return formatComponentTree(code, true);
+    } else {
+      formatted = code;
+    }
   }
 
   return formatted;

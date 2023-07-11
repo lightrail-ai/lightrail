@@ -27,15 +27,6 @@ const chat4 = new ChatOpenAI({
   streaming: true,
 });
 
-const completion = new OpenAI({
-  modelName: "text-davinci-003",
-  maxTokens: -1,
-  stop: ["```"],
-  openAIApiKey: process.env.OPENAI_API_KEY,
-  maxConcurrency: 5,
-  streaming: true,
-});
-
 export function cleanJSX(jsx: string) {
   let cleaned = jsx.replaceAll(" class=", " className=");
   cleaned = cleaned.replaceAll(" for=", " htmlFor=");

@@ -26,6 +26,7 @@ import { autocompletion } from "@codemirror/autocomplete";
 import { ProjectWithFiles } from "@/util/storage";
 import { componentAutocompletion } from "./component-autocomplete";
 import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
+import { componentLinks } from "./clickable-components";
 
 export interface CodeEditorProps {
   value: string;
@@ -37,6 +38,7 @@ export interface CodeEditorProps {
     name: string,
     callback: ComponentCreationCallback
   ) => void;
+  onComponentClick?: (name: string) => void;
   readonly?: boolean;
 }
 
@@ -47,6 +49,7 @@ function CodeEditor({
   project,
   type,
   onCreateComponent,
+  onComponentClick,
   readonly,
 }: CodeEditorProps) {
   const editorRef = useRef(null);
@@ -91,6 +94,7 @@ function CodeEditor({
           ? componentAutocompletion(project, onCreateComponent)
           : autocompletion(),
         readonly ? [EditorState.readOnly.of(true)] : [],
+        onComponentClick ? componentLinks(project, onComponentClick) : [],
       ],
     });
 

@@ -2,15 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSetRecoilState } from "recoil";
 import {
   editingComponent,
-  editingPopoverTarget,
   hoveringComponent,
-  namePopoverTarget,
 } from "../PreviewRenderer/preview-renderer-state";
 import { ErrorBoundary } from "react-error-boundary";
 import {
-  FloatingPortal,
   autoPlacement,
-  offset,
   safePolygon,
   shift,
   useFloating,
@@ -31,9 +27,7 @@ function ComponentPreviewWrapper({
 }: ComponentPreviewWrapperProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const setHoveringComponent = useSetRecoilState(hoveringComponent);
-  const setNamePopoverTarget = useSetRecoilState(namePopoverTarget);
   const setEditingComponent = useSetRecoilState(editingComponent);
-  const setEditingPopoverTarget = useSetRecoilState(editingPopoverTarget);
 
   const ErrorFallbackComponent = useMemo(
     () =>
@@ -104,20 +98,12 @@ function ComponentPreviewWrapper({
           name,
           rects,
         });
-        setNamePopoverTarget(
-          (children.length ? children[0] : e.target) as HTMLElement
-        );
         e.stopPropagation();
         e.preventDefault();
       }}
       onClick={(e) => {
         if (!elementRef.current) return;
-        setNamePopoverTarget(null);
         setEditingComponent({ name });
-        const children = Array.from(elementRef.current.children);
-        setEditingPopoverTarget(
-          (children.length ? children[0] : e.target) as HTMLElement
-        );
         e.stopPropagation();
         e.preventDefault();
       }}

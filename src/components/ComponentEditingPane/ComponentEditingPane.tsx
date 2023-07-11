@@ -1,11 +1,8 @@
 import { SERVER_URL } from "@/util/constants";
 import { FileRevision, ProjectWithFiles } from "@/util/storage";
 import React, { useEffect, useState } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
-import {
-  editingComponent,
-  editingPopoverTarget,
-} from "../PreviewRenderer/preview-renderer-state";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { editingComponent } from "../PreviewRenderer/preview-renderer-state";
 import classNames from "classnames";
 import TimerProgressBar from "../TimerProgressBar/TimerProgressBar";
 import CodeEditor from "../CodeEditor/CodeEditor";
@@ -36,8 +33,8 @@ function ComponentEditingPane({
   onCreateComponent,
 }: ComponentEditingPaneProps) {
   const [modification, setModification] = useState("");
-  const editingComponentValue = useRecoilValue(editingComponent);
-  const setEditingPopoverTarget = useSetRecoilState(editingPopoverTarget);
+  const [editingComponentValue, setEditingComponentValue] =
+    useRecoilState(editingComponent);
   const [loading, setLoading] = useState(false);
   const [oldCode, setOldCode] = useState<string>("");
   const [modifiedCode, setModifiedCode] = useState<string>("");
@@ -204,7 +201,7 @@ function ComponentEditingPane({
         </div>
         <button
           className="text-slate-500 hover:text-slate-600 text-2xl"
-          onClick={() => setEditingPopoverTarget(null)}
+          onClick={() => setEditingComponentValue(null)}
         >
           ×
         </button>
@@ -245,6 +242,9 @@ function ComponentEditingPane({
               className={classNames(
                 "w-full flex-1 min-h-0 bg-slate-200 shadow-inner rounded-lg"
               )}
+              onComponentClick={(name) => {
+                setEditingComponentValue({ name });
+              }}
               onValueChange={(newValue) => setModifiedCode(newValue)}
               onCreateComponent={onCreateComponent}
             />

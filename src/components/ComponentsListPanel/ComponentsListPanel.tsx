@@ -1,10 +1,7 @@
 import { ProjectWithFiles } from "@/util/storage";
 import React, { useMemo } from "react";
 import { ReflexElement } from "react-reflex";
-import {
-  editingComponent,
-  editingPopoverTarget,
-} from "../PreviewRenderer/preview-renderer-state";
+import { editingComponent } from "../PreviewRenderer/preview-renderer-state";
 import { useSetRecoilState } from "recoil";
 import Button from "../Button/Button";
 import classNames from "classnames";
@@ -22,7 +19,6 @@ function ComponentsListPanel({
   onCreateComponent,
 }: ComponentsListPanelProps) {
   const setEditingComponent = useSetRecoilState(editingComponent);
-  const setEditingPopoverTarget = useSetRecoilState(editingPopoverTarget);
 
   const orderedComponents = useMemo(() => {
     return project.files.slice().sort((a, b) => {
@@ -56,7 +52,6 @@ function ComponentsListPanel({
               )}
               onClick={(e) => {
                 setEditingComponent({ name: file.path });
-                setEditingPopoverTarget(e.target as HTMLElement);
               }}
             >
               {file.path === "index" ? "index (root)" : file.path}

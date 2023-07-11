@@ -85,6 +85,7 @@ function RevisionSelect({
                 : r.id === latestRevision.id;
               return (
                 <div
+                  key={r.id}
                   className={classNames(
                     "flex flex-row gap-2 items-center rounded-md py-1 my-1 px-2 border whitespace-nowrap text-sm group",
                     {
