@@ -65,7 +65,10 @@ export function getUsedComponentNames(
   );
 }
 
-export function formatComponentTree(code: string, wrapInFragment?: boolean) {
+export function formatComponentTree(
+  code: string,
+  wrapInFragment?: boolean
+): string {
   let formatted;
   try {
     if (wrapInFragment) {
