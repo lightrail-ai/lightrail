@@ -20,7 +20,9 @@ function createExportComponent(file: File) {
         .join("\n")
     : "";
 
-  return `import React from "react";
+  return `"use client";
+
+  import React from "react";
 
 ${componentImports
   .map((comp) => `import ${comp} from "@/components/${comp}";`)
