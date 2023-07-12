@@ -1,9 +1,10 @@
+import classNames from "classnames";
 import React from "react";
 
 export interface VariableTokenProps {
   name: string;
   subName?: string;
-  value?: string;
+  value?: string | number;
   onClick?: () => void;
 }
 
@@ -11,7 +12,12 @@ function VariableToken({ name, subName, value, onClick }: VariableTokenProps) {
   return (
     <div
       onClick={onClick}
-      className="inline-flex flex-row leading-none rounded-md px-2 py-1 text-sm bg-slate-100 text-slate-800 border-2"
+      className={classNames(
+        "inline-flex flex-row leading-none rounded-md px-2 py-1 text-sm bg-slate-100 text-slate-800 border-2",
+        {
+          "cursor-pointer": onClick,
+        }
+      )}
     >
       <div className="px-2 py-0.5">
         <div className="">{name}</div>

@@ -15,7 +15,7 @@ import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { SERVER_URL } from "@/util/constants";
 import { Table } from "../ProjectEditor/editor-types";
 import UpdateComponentTreeModal from "../UpdateComponentTreeModal/UpdateComponentTreeModal";
-import StateAddingModal from "../StateAddingModal/StateAddingModal";
+import StateModificationModal from "../StateModificationModal/StateModificationModal";
 import { type UpdateProposal } from "../UpdateProposalModal";
 import { getInitialStateValueString } from "@/util/util";
 
@@ -38,6 +38,7 @@ function ComponentInfoPanel({
   const [stateModalOpen, setStateModalOpen] = useState(false);
   const [updateComponentTreeModalOpen, setUpdateComponentTreeModalOpen] =
     useState(false);
+  const [editingState, setEditingState] = useState<FileStateItem | null>(null);
 
   async function fetchDatabases() {
     const result = await fetch(
@@ -94,6 +95,10 @@ function ComponentInfoPanel({
                 "set" + s.name.charAt(0).toUpperCase() + s.name.substring(1)
               }
               value={getInitialStateValueString(s.initial)}
+              onClick={() => {
+                setEditingState(s);
+                setStateModalOpen(true);
+              }}
             />
           ))}
           <button
@@ -152,11 +157,15 @@ function ComponentInfoPanel({
           </>
         )}
         {editingComponentValue && (
-          <StateAddingModal
+          <StateModificationModal
+            editingState={editingState}
             visible={stateModalOpen}
-            onClose={() => setStateModalOpen(false)}
-            onStateAdded={() => {
-              onProjectRefresh();
+            onClose={() => {
+              setEditingState(null);
+              setStateModalOpen(false);
+            }}
+            onStateModified={() => {
+              onUpdateComponentTree();
             }}
             project={project}
             componentName={editingComponentValue.name}

@@ -14,7 +14,6 @@ import { ComponentCreationCallback } from "./editor-types";
 import LoadingSplashOverlay from "../LoadingSplashOverlay/LoadingSplashOverlay";
 import ProjectInterfaceEditor from "../ProjectInterfaceEditor/ProjectInterfaceEditor";
 import ProjectDataEditor from "../ProjectDataEditor/ProjectDataEditor";
-import { type UpdateProposal } from "../UpdateProposalModal";
 import UpdateProposalModal from "../UpdateProposalModal/UpdateProposalModal";
 import { useRecoilState } from "recoil";
 import { activeProject, activeProposal } from "./editor-state";
