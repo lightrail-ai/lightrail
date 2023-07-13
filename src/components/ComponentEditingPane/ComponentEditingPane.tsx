@@ -11,10 +11,12 @@ import { ComponentCreationCallback } from "../ProjectEditor/editor-types";
 import Button from "../Button/Button";
 import { toast } from "react-hot-toast";
 import RevisionSelect from "../RevisionSelect/RevisionSelect";
-import { formatComponentTree } from "@/util/util";
+import { formatComponentTree, formatCreationDate } from "@/util/util";
 import { analytics } from "@/util/analytics";
 import { useHotkeys } from "react-hotkeys-hook";
 import { type UpdateProposal } from "../UpdateProposalModal";
+import ComponentNameEditor from "../ComponentNameEditor/ComponentNameEditor";
+import DiffView from "../DiffView/DiffView";
 
 export interface ComponentEditingPaneProps {
   project: ProjectWithFiles;
@@ -41,6 +43,11 @@ function ComponentEditingPane({
   const [selectedRevision, setSelectedRevision] = useState<FileRevision | null>(
     null
   );
+
+  useEffect(() => {
+    setSelectedRevision(null);
+    setModification("");
+  }, [editingComponentValue?.name]);
 
   useHotkeys(
     "ctrl+s, meta+s, ctrl+enter, meta+enter",
@@ -145,10 +152,53 @@ function ComponentEditingPane({
             update: json.update,
           });
         }
-        setModification("");
       }
     } catch (e) {
       toast.error("Failed to edit component -- please try again!", {
+        position: "bottom-center",
+      });
+    } finally {
+      setSelectedRevision(null);
+      setLoading(false);
+    }
+  }
+
+  async function updateComponentName(newName: string) {
+    setLoading(true);
+
+    analytics.track("Component Renamed", {
+      projectId: project.id,
+      componentName: editingComponentValue?.name,
+    });
+
+    try {
+      const updateBody = { path: newName };
+      const res = await fetch(
+        `${SERVER_URL}/api/projects/${project.id}/files/${editingComponentValue?.name}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(updateBody),
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+      const json = await res.json();
+      if (json.status === "error") {
+        console.error(json);
+        throw new Error(json.error);
+      } else {
+        onUpdate();
+        setEditingComponentValue({
+          name: newName,
+        });
+        toast.success("Component updated!", {
+          position: "bottom-center",
+        });
+      }
+    } catch (e) {
+      toast.error("Failed to update component -- please try again!", {
         position: "bottom-center",
       });
     } finally {
@@ -172,11 +222,10 @@ function ComponentEditingPane({
           "font-semibold text-lg flex flex-row items-center pb-4 gap-2"
         )}
       >
-        <div className="bg-sky-300 rounded-lg px-2 py-0.5 text-slate-900 inline-flex justify-center items-center transition-all">
-          {editingComponentValue.name === "index"
-            ? "index (root)"
-            : `<${editingComponentValue.name} />`}
-        </div>
+        <ComponentNameEditor
+          name={editingComponentValue.name}
+          onNameChange={updateComponentName}
+        />
         {!loading && (
           <RevisionSelect
             project={project}
@@ -227,27 +276,42 @@ function ComponentEditingPane({
         )}
         <div className="flex-[4] lg:flex-[5] flex flex-col lg:flex-row gap-4 min-w-0">
           <div className="flex-[4] overflow-auto rounded-lg min-h-0 flex flex-col">
-            <div className="italic font-semibold text-sm ">
-              {selectedRevision ? (
-                <span className="text-green-600">Preview</span>
-              ) : (
-                "Edit Directly"
-              )}
-            </div>
-            <CodeEditor
-              type="jsx"
-              readonly={selectedRevision !== null}
-              project={project}
-              value={selectedRevision ? selectedRevision.contents! : oldCode}
-              className={classNames(
-                "w-full flex-1 min-h-0 bg-slate-200 shadow-inner rounded-lg"
-              )}
-              onComponentClick={(name) => {
-                setEditingComponentValue({ name });
-              }}
-              onValueChange={(newValue) => setModifiedCode(newValue)}
-              onCreateComponent={onCreateComponent}
-            />
+            {selectedRevision ? (
+              <>
+                <DiffView
+                  oldFile={{
+                    name: `${editingComponentValue.name} (current)`,
+                    contents: oldCode,
+                  }}
+                  newFile={{
+                    name: `${editingComponentValue.name} (${formatCreationDate(
+                      selectedRevision.created_at!
+                    )})`,
+                    contents: selectedRevision.contents!,
+                  }}
+                />
+              </>
+            ) : (
+              <>
+                <div className="italic font-semibold text-sm ">
+                  Edit Directly
+                </div>
+
+                <CodeEditor
+                  type="jsx"
+                  project={project}
+                  value={oldCode}
+                  className={classNames(
+                    "w-full flex-1 min-h-0 bg-slate-200 shadow-inner rounded-lg"
+                  )}
+                  onComponentClick={(name) => {
+                    setEditingComponentValue({ name });
+                  }}
+                  onValueChange={(newValue) => setModifiedCode(newValue)}
+                  onCreateComponent={onCreateComponent}
+                />
+              </>
+            )}
           </div>
           <div className="flex flex-row-reverse lg:flex-1 lg:flex-col gap-4 lg:gap-0">
             <div className="italic font-semibold text-sm text-transparent hidden lg:block">
@@ -260,8 +324,20 @@ function ComponentEditingPane({
                   onClick={updateComponent}
                   custom
                 >
-                  Revert to{" "}
-                  {new Date(selectedRevision.created_at!).toLocaleString()}
+                  <span className="font-normal flex flex-row flex-wrap justify-center gap-1">
+                    <div>
+                      Revert{" "}
+                      <span className="font-mono font-semibold">
+                        {editingComponentValue.name}
+                      </span>{" "}
+                    </div>
+                    <div>
+                      to{" "}
+                      <span className="font-semibold">
+                        {formatCreationDate(selectedRevision.created_at!)}
+                      </span>
+                    </div>
+                  </span>
                 </Button>
                 <Button
                   className="flex-1 lg:w-full lg:mt-4 lg:flex-initial"

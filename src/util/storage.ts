@@ -186,6 +186,17 @@ export class Client {
     return updated.data;
   }
 
+  async deleteFile(projectId: number, filePath: string) {
+    const result = await this.supabase
+      .from("files")
+      .delete()
+      .eq("path", filePath)
+      .eq("project_id", projectId);
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+  }
+
   async getDatabases(projectId: number): Promise<Db[]> {
     const result = await await this.supabase
       .from("databases")

@@ -227,3 +227,18 @@ export async function PUT(
 
   return NextResponse.json({ status: "ok" });
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { projectId: string; filePath: string } }
+) {
+  const client = new Client({
+    cookies,
+  });
+
+  await client.deleteFile(parseInt(params.projectId), params.filePath);
+  revalidatePath(`/api/projects/${params.projectId}/files/${params.filePath}`);
+  revalidatePath(`/api/projects/${params.projectId}`);
+
+  return NextResponse.json({ status: "ok" });
+}

@@ -5,8 +5,6 @@ import {
 } from "@/util/storage";
 import React, { useMemo, useState } from "react";
 import Modal from "../Modal/Modal";
-import * as Diff from "diff";
-import * as Diff2Html from "diff2html";
 import "diff2html/bundles/css/diff2html.min.css";
 import { formatComponentTree } from "@/util/util";
 import Button from "../Button/Button";
@@ -17,6 +15,7 @@ import { SERVER_URL } from "@/util/constants";
 import { getJSONFromStream } from "@/util/transfers";
 import classNames from "classnames";
 import { toast } from "react-hot-toast";
+import DiffView from "../DiffView/DiffView";
 
 export interface UpdateProposal {
   message: string;
@@ -39,27 +38,6 @@ function UpdateProposalModal({
   project,
 }: UpdateProposalModalProps) {
   const [loading, setLoading] = useState(false);
-
-  const diff = useMemo(() => {
-    if (!proposal) return null;
-    return Diff.createTwoFilesPatch(
-      proposal.file.path,
-      proposal.file.path,
-      proposal.file.contents ? formatComponentTree(proposal.file.contents) : "",
-      proposal.update.contents
-        ? formatComponentTree(proposal.update.contents)
-        : ""
-    );
-  }, [proposal]);
-
-  const diffHtml = useMemo(() => {
-    if (!diff) return "";
-    return Diff2Html.html(diff, {
-      drawFileList: false,
-      matching: "lines",
-      outputFormat: "side-by-side",
-    });
-  }, [diff]);
 
   async function applyProposal() {
     if (!proposal) return;
@@ -145,7 +123,18 @@ function UpdateProposalModal({
           <pre className="border-l-4 border-l-sky-300 bg-sky-300 bg-opacity-10 pr-2 py-2 mb-4 pl-4 italic text-slate-700 text-sm whitespace-pre-wrap">
             {proposal?.message}
           </pre>
-          <div dangerouslySetInnerHTML={{ __html: diffHtml }}></div>
+          {proposal && (
+            <DiffView
+              oldFile={{
+                name: proposal.file.path,
+                contents: proposal.file.contents!,
+              }}
+              newFile={{
+                name: proposal.file.path,
+                contents: proposal.update.contents!,
+              }}
+            />
+          )}
         </div>
       }
       actions={[

@@ -97,6 +97,7 @@ function ProjectInterfaceEditor({
                 setCreatingComponent("");
                 setOnComponentCreated(() => onProjectRefresh);
               }}
+              onComponentDeleted={onUpdate}
             />
           )}
         </ReflexContainer>

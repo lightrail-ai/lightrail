@@ -100,6 +100,11 @@ export function formatComponentTree(
   return formatted;
 }
 
+export function formatCreationDate(dateString: string) {
+  const date = new Date(dateString);
+  return date.toLocaleString();
+}
+
 export async function queryProjectDb(
   db: Db | { project_id: number },
   query: string

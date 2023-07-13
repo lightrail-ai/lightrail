@@ -17,17 +17,13 @@ import {
   useInteractions,
 } from "@floating-ui/react";
 import classNames from "classnames";
+import { formatCreationDate } from "@/util/util";
 
 export interface RevisionSelectProps {
   project: Project;
   filePath: string;
   onRevisionSelect: (revision: FileRevision | null) => void;
   currentRevision: FileRevision | null;
-}
-
-function formatDate(dateString: string) {
-  const date = new Date(dateString);
-  return date.toLocaleString();
 }
 
 function RevisionSelect({
@@ -108,7 +104,7 @@ function RevisionSelect({
                       className="text-slate-300 group-hover:text-green-600"
                     />
                   )}
-                  {formatDate(r.created_at!)}
+                  {formatCreationDate(r.created_at!)}
                   {r.id === latestRevision.id && (
                     <div className="italic opacity-30">latest</div>
                   )}
@@ -141,7 +137,7 @@ function RevisionSelect({
         ) : (
           <FontAwesomeIcon icon={faSave} />
         )}
-        {formatDate(
+        {formatCreationDate(
           currentRevision
             ? currentRevision.created_at!
             : latestRevision.created_at!
