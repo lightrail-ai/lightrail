@@ -1,0 +1,38 @@
+{
+  "name": "lightrail-sdk",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/lightrail-sdk.umd.cjs",
+  "module": "./dist/lightrail-sdk.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/lightrail-sdk.js",
+      "require": "./dist/lightrail-sdk.umd.cjs"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.9",
+    "@types/react": "^18.2.19",
+    "@types/websocket": "^1.0.5",
+    "@types/ws": "^8.5.5",
+    "llm-api": "^0.9.5",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5",
+    "vite-plugin-dts": "^3.5.1",
+    "ws": "^8.13.0"
+  },
+  "dependencies": {
+    "socket.io-client": "4.7.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "engine.io": "6.5.1"
+    }
+  }
+}
