@@ -54,6 +54,13 @@ function OptionsListItem({
               "opacity-100": selected,
               "opacity-50": !selected,
             })}
+            style={
+              selected
+                ? {
+                    color: option.colors[0],
+                  }
+                : {}
+            }
           />
         );
       case "tokens":

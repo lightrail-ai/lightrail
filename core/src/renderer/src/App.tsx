@@ -17,6 +17,7 @@ library.add(far);
 function App(): JSX.Element {
   const [view, setView] = useRecoilState(viewAtom);
   const [ready, setReady] = useState(false);
+  const [maxHeight, setMaxHeight] = useState(0);
 
   const resizeObserverRef = useCallback((node: HTMLDivElement) => {
     if (!node) return;
@@ -29,7 +30,13 @@ function App(): JSX.Element {
     });
     resizeObserver.observe(node);
   }, []);
-  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([
+    // {
+    //   sender: "ai",
+    //   content:
+    //     "```\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nhi\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n```",
+    // },
+  ]);
   const [partialMessage, setPartialMessage] = useState<string | null>(null);
 
   async function loadTracks() {
@@ -49,10 +56,11 @@ function App(): JSX.Element {
           setView: setView,
         };
         window.electronIpc.onLightrailEvent((_event, data) => {
-          console.log("got event", data);
           rendererLightrail._processEvent(data);
         });
         await loadTracks();
+        const { height } = await trpcClient.screenSize.query();
+        setMaxHeight(height - 100);
         setReady(true);
       })();
     }
@@ -82,19 +90,23 @@ function App(): JSX.Element {
         return <PromptInput onAction={executePromptAction} />;
       case "chat":
         return (
-          <div className="flex flex-col">
+          <>
             <ChatHistory items={chatHistory} partialMessage={partialMessage} />
             <PromptInput onAction={executePromptAction} />
-          </div>
+          </>
         );
     }
   }
 
   return (
-    <div className="overflow-hidden">
-      <div ref={resizeObserverRef} className="w-fit h-fit">
-        {renderView()}
-      </div>
+    <div
+      ref={resizeObserverRef}
+      className="w-fit h-fit flex flex-col overflow-hidden"
+      style={{
+        maxHeight: `${maxHeight}px`,
+      }}
+    >
+      {renderView()}
     </div>
   );
 }

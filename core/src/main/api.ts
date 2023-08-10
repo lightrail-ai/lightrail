@@ -30,6 +30,11 @@ export const getRouter = (mainLightrail: MainLightrail) =>
       clipboard.writeText(input);
     }),
 
+    screenSize: t.procedure.query(() => {
+      const { screen } = require("electron");
+      return screen.getPrimaryDisplay().workAreaSize;
+    }),
+
     action: t.procedure
       .input(
         z.object({ name: z.string(), prompt: z.any(), args: z.array(z.any()) })

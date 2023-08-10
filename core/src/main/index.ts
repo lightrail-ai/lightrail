@@ -11,12 +11,10 @@ import { startWSServer } from "./server";
 let mainWindow: BrowserWindow;
 
 function createWindow(): void {
-  const { screen } = require("electron");
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 600,
     height: 100,
-    maxHeight: screen.getPrimaryDisplay().workAreaSize.height - 100,
     // resizable: false,
     frame: false,
     show: false,

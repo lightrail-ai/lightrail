@@ -58,16 +58,18 @@ function ChatHistory({ items, partialMessage }: ChatHistoryProps) {
   }
 
   return (
-    <div className="border-b border-b-neutral-800 flex-1 min-w-0 overflow-auto">
-      {items.map(renderChatHistoryItem)}
-      {partialMessage &&
-        renderChatHistoryItem(
-          {
-            sender: "ai",
-            content: partialMessage,
-          },
-          items.length
-        )}
+    <div className="border-b border-b-neutral-800 flex-grow flex-shrink min-h-0 overflow-auto flex flex-col-reverse">
+      <div>
+        {items.map(renderChatHistoryItem)}
+        {partialMessage &&
+          renderChatHistoryItem(
+            {
+              sender: "ai",
+              content: partialMessage,
+            },
+            items.length
+          )}
+      </div>
     </div>
   );
 }
