@@ -24,6 +24,7 @@ function createWindow(): void {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
     },
+    backgroundColor: "#0A0A0A",
   });
 
   mainWindow.on("ready-to-show", () => {

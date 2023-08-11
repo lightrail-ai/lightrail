@@ -101,6 +101,9 @@ function OptionsListItem({
     >
       {renderIcon()}
       <span>{option.name}</span>
+      {option.description && selected && (
+        <span className="opacity-30 pl-4">{option.description}</span>
+      )}
     </div>
   );
 }
@@ -118,7 +121,7 @@ function OptionsList({
   return (
     <div
       className={classNames(
-        "overflow-y-auto max-h-48 border-t border-t-neutral-800",
+        "overflow-y-auto overflow-x-hidden max-h-48 border-t border-t-neutral-800",
         {
           "bg-neutral-800": mode === "tokens" || mode === "token-args",
         }
