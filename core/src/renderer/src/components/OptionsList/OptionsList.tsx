@@ -7,8 +7,8 @@ import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 export interface OptionsListProps {
-  selectedIndex: number;
-  currentToken: Token | null;
+  highlightedOption: Option | undefined;
+  currentToken: Token | undefined;
   options: Option[];
   mode: OptionsMode;
 }
@@ -23,25 +23,25 @@ export type OptionsMode = Option["kind"];
 function OptionsListItem({
   option,
   currentToken,
-  selected,
+  highlighted,
   mode,
 }: {
   option: Option;
-  selected: boolean;
-  currentToken: Token | null;
+  highlighted: boolean;
+  currentToken: Token | undefined;
   mode: OptionsMode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (selected && ref.current) {
+    if (highlighted && ref.current) {
       ref.current.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
         inline: "start",
       });
     }
-  }, [selected]);
+  }, [highlighted]);
 
   function renderIcon() {
     switch (option.kind) {
@@ -51,11 +51,11 @@ function OptionsListItem({
             fixedWidth
             icon={["far", option.icon] as IconProp}
             className={classNames("pr-6", {
-              "opacity-100": selected,
-              "opacity-50": !selected,
+              "opacity-100": highlighted,
+              "opacity-50": !highlighted,
             })}
             style={
-              selected
+              highlighted
                 ? {
                     color: option.colors[0],
                   }
@@ -67,8 +67,8 @@ function OptionsListItem({
         return (
           <div
             className={classNames("pr-6 font-bold", {
-              "opacity-100": selected,
-              "opacity-10": !selected,
+              "opacity-100": highlighted,
+              "opacity-10": !highlighted,
             })}
           >
             /
@@ -78,8 +78,8 @@ function OptionsListItem({
         return (
           <div
             className={classNames("pr-6 font-bold", {
-              "opacity-100": selected,
-              "opacity-10": !selected,
+              "opacity-100": highlighted,
+              "opacity-10": !highlighted,
             })}
           >
             /{currentToken?.name}
@@ -94,16 +94,16 @@ function OptionsListItem({
       className={classNames(
         "transition-colors px-6 py-2 border-l-2 flex flex-row items-center",
         {
-          "text-neutral-50 border-l-neutral-50": selected,
-          "bg-neutral-900": selected && mode === "actions",
-          "bg-neutral-700": selected && mode === "tokens",
-          "border-l-transparent": !selected,
+          "text-neutral-50 border-l-neutral-50": highlighted,
+          "bg-neutral-900": highlighted && mode === "actions",
+          "bg-neutral-700": highlighted && mode !== "actions",
+          "border-l-transparent": !highlighted,
         }
       )}
     >
       {renderIcon()}
       <span>{option.name}</span>
-      {option.description && selected && (
+      {option.description && highlighted && (
         <span className="opacity-30 pl-4">{option.description}</span>
       )}
     </div>
@@ -111,7 +111,7 @@ function OptionsListItem({
 }
 
 function OptionsList({
-  selectedIndex,
+  highlightedOption,
   currentToken,
   options,
   mode,
@@ -136,7 +136,7 @@ function OptionsList({
           mode={mode}
           key={index}
           option={option}
-          selected={index === selectedIndex}
+          highlighted={option === highlightedOption}
         />
       ))}
     </div>
