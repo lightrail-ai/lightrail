@@ -10,6 +10,21 @@ import { rendererLightrail } from "@renderer/util/renderer-lightrail";
 
 export const promptSchema = new Schema({
   nodes: {
+    // action: {
+    //   inline: true,
+    //   attrs: {
+    //     name: {
+    //       default: "file",
+    //     },
+    //   },
+    //   isolating: true,
+    //   toDOM: (node) => {
+    //     let domNode = document.createElement("span");
+    //     domNode.className =
+    //       "text-sm px-2 py-0.5 my-0.5 rounded-full bg-red-500 text-white action-tag mr-2";
+    //     return domNode;
+    //   },
+    // },
     text: { group: "inline", inline: true },
     token: {
       attrs: {

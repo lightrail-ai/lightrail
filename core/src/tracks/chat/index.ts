@@ -20,7 +20,7 @@ export default class Track implements LightrailTrack {
     lightrail.registerAction({
       name: "Send to AI",
       description: "Send a message to LLM",
-      colors: ["#74a89b", "#ececf1"],
+      colors: ["#74a89b", "#1f1f1f"],
       args: [],
       icon: "circle-up",
       async rendererHandler(prompt, _args) {

@@ -15,7 +15,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSetRecoilState } from "recoil";
 import { viewAtom } from "@renderer/state";
 import { rendererLightrail } from "@renderer/util/renderer-lightrail";
-import type { Token } from "lightrail-sdk";
+import type { Token, Action } from "lightrail-sdk";
 import { trpcClient } from "@renderer/util/trpc-client";
 
 const PATH_SEPARATOR = "/";
@@ -37,6 +37,7 @@ function PromptInput({ onAction }: PromptInputProps) {
   const editorRangeRef = useRef<FromTo>();
   const filterValueRef = useRef<string | undefined>(undefined);
   const selectedActionName = useRef<string | undefined>(undefined);
+  const [selectedAction, setSelectedAction] = useState<Action | null>(null);
   const [currentFilter, setCurrentFilter] = useState<string | undefined>(
     undefined
   );
@@ -68,6 +69,11 @@ function PromptInput({ onAction }: PromptInputProps) {
   useEffect(() => {
     if (optionsMode !== "actions" && options[0]?.kind === "actions") {
       selectedActionName.current = options[selectedOptionIndex]?.name;
+    }
+
+    const currentSelection = options[selectedOptionIndex];
+    if (currentSelection?.kind === "actions") {
+      setSelectedAction(currentSelection);
     }
   }, [optionsMode, selectedOptionIndex, options]);
 
@@ -264,16 +270,31 @@ function PromptInput({ onAction }: PromptInputProps) {
   }, [currentArgIndex, currentToken, currentFilter]);
 
   return (
-    <div className="min-w-[600px] relative">
-      <button
-        className="absolute right-1 top-1 opacity-50 hover:opacity-100"
-        onClick={() => setView("settings")}
-      >
-        <FontAwesomeIcon icon={faGear} size={"xs"} />
-      </button>
-      <div className="p-4">
-        <PromptEditor onChange={setPromptState} state={promptState} />
+    <div className="min-w-[600px]">
+      <div className="relative">
+        <button
+          className="absolute right-1 top-1 opacity-50 hover:opacity-100"
+          onClick={() => setView("settings")}
+        >
+          <FontAwesomeIcon icon={faGear} size={"xs"} />
+        </button>
+        <div className="p-4">
+          <PromptEditor onChange={setPromptState} state={promptState} />
+        </div>
       </div>
+      {selectedAction && (
+        <div
+          className="text-xs px-1 py-0.5 font-light flex flex-row items-center transition-colors border-y"
+          style={{
+            backgroundColor: selectedAction.colors[0] + "20",
+            borderColor: selectedAction.colors[0] + "50",
+          }}
+        >
+          {selectedAction.name}
+          <div className="flex-1" />
+          <div className="opacity-50 italic">Press '@' to filter actions</div>
+        </div>
+      )}
       <OptionsList
         currentToken={currentToken}
         options={options}

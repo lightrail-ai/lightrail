@@ -94,7 +94,9 @@ function OptionsListItem({
       className={classNames(
         "transition-colors px-6 py-2 border-l-2 flex flex-row items-center",
         {
-          "bg-neutral-700 text-neutral-50 border-l-neutral-50": selected,
+          "text-neutral-50 border-l-neutral-50": selected,
+          "bg-neutral-900": selected && mode === "actions",
+          "bg-neutral-700": selected && mode === "tokens",
           "border-l-transparent": !selected,
         }
       )}
