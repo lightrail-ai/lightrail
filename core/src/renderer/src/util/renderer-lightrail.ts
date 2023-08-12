@@ -48,11 +48,22 @@ class RendererLightrail implements Lightrail {
     return new Promise((resolve) => resolve(true));
   }
 
-  getActionOptions(): Option[] {
-    return [...this.actions.values()].map((action) => ({
-      ...action,
-      kind: "actions",
-    }));
+  getActionOptions(queryInput?: string): Option[] {
+    if (!queryInput) {
+      return [...this.actions.values()].map((action) => ({
+        ...action,
+        kind: "actions",
+      }));
+    } else {
+      const query = queryInput.toLowerCase();
+      return [...this.actions.values()]
+        .filter(
+          (action) =>
+            action.name.toLowerCase().includes(query) ||
+            action.description.toLowerCase().includes(query)
+        )
+        .map((action) => ({ ...action, kind: "actions" }));
+    }
   }
 
   getTokenOptions(): Option[] {

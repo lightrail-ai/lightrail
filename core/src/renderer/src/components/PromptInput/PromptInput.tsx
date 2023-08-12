@@ -23,6 +23,7 @@ import type {
 } from "lightrail-sdk";
 import { trpcClient } from "@renderer/util/trpc-client";
 import { useStateWithRef } from "@renderer/util/custom-hooks";
+import { EditorView } from "prosemirror-view";
 
 const PATH_SEPARATOR = "/";
 
@@ -33,7 +34,8 @@ export interface PromptInputProps {
 function PromptInput({ onAction }: PromptInputProps) {
   const setView = useSetRecoilState(viewAtom);
 
-  const [optionsMode, setOptionsMode] = useState<OptionsMode>("actions"); // TODO: can possibly refactor this out
+  const [optionsMode, setOptionsMode, optionsModeRef] =
+    useStateWithRef<OptionsMode>("actions"); // TODO: can possibly refactor this out
   const [options, setOptions, optionsRef] = useStateWithRef<Option[]>([]);
   const [highlightedOption, setHighlightedOption, highlightedOptionRef] =
     useStateWithRef<Option | undefined>(undefined);
@@ -47,13 +49,20 @@ function PromptInput({ onAction }: PromptInputProps) {
     string | undefined
   >(undefined);
   const editorRangeRef = useRef<FromTo>();
+  const [isFilteringActions, setIsFilteringActions] = useState(false);
+  const [actionsFilter, setActionsFilter] = useState("");
 
   const [promptState, setPromptState, promptStateRef] =
     useStateWithRef<EditorState>(getEmptyPromptState());
+  const editorViewRef = useRef<EditorView>();
 
   useHotkeys("up", handleUpArrow);
   useHotkeys("down", handleDownArrow);
   useHotkeys("enter", selectOption);
+  useHotkeys("shift+2", () => {
+    setIsFilteringActions(true);
+    return true;
+  });
 
   function getEmptyPromptState() {
     return EditorState.create({
@@ -86,10 +95,18 @@ function PromptInput({ onAction }: PromptInputProps) {
         keymap({
           "Mod-z": undo,
           "Mod-y": redo,
+          "@": (_state, _dispatch, _view) => {
+            if (optionsModeRef.current === "actions") {
+              setIsFilteringActions(true);
+              return true;
+            }
+            return false;
+          },
           ArrowUp: handleUpArrow,
           ArrowDown: handleDownArrow,
           Enter: selectOption,
         }),
+
         keymap(baseKeymap),
         placeholderPlugin("Enter a prompt..."),
       ],
@@ -123,6 +140,13 @@ function PromptInput({ onAction }: PromptInputProps) {
   function selectOption() {
     const selectedOption = highlightedOptionRef.current;
     if (!selectedOption) return true;
+
+    // this is probably never gonna run, just a safeguard
+    if (isFilteringActions) {
+      setIsFilteringActions(false);
+      return true;
+    }
+
     if (selectedOption.kind === "actions") {
       onAction(selectedOption, promptStateRef.current.doc.toJSON());
       setPromptState(getEmptyPromptState());
@@ -213,7 +237,7 @@ function PromptInput({ onAction }: PromptInputProps) {
               return f.name.startsWith(fileFilter);
             })
             .map((file) => ({
-              name: ".../" + file.name,
+              name: file.path.length > 20 ? ".../" + file.name : file.path,
               value: file.isDirectory
                 ? file.path + PATH_SEPARATOR
                 : file.path + " ",
@@ -263,6 +287,26 @@ function PromptInput({ onAction }: PromptInputProps) {
     }
   }
 
+  // Handle action filtering when filtering actions
+  useEffect(() => {
+    if (optionsMode !== "actions") return;
+    if (isFilteringActions) {
+      const filteredActions = rendererLightrail.getActionOptions(actionsFilter);
+      setOptions(filteredActions);
+      setHighlightedOption(filteredActions[0]);
+    } else {
+      const actionOptions = rendererLightrail.getActionOptions();
+      setOptions(actionOptions);
+    }
+  }, [isFilteringActions, actionsFilter]);
+
+  // handle focus when done filtering actions
+  useEffect(() => {
+    if (!isFilteringActions) {
+      editorViewRef.current?.focus();
+    }
+  }, [isFilteringActions]);
+
   return (
     <div className="min-w-[600px]">
       <div className="relative">
@@ -273,7 +317,11 @@ function PromptInput({ onAction }: PromptInputProps) {
           <FontAwesomeIcon icon={faGear} size={"xs"} />
         </button>
         <div className="p-4">
-          <PromptEditor onChange={setPromptState} state={promptState} />
+          <PromptEditor
+            onChange={setPromptState}
+            state={promptState}
+            onViewReady={(view) => (editorViewRef.current = view)}
+          />
         </div>
       </div>
       {currentAction && (
@@ -284,9 +332,38 @@ function PromptInput({ onAction }: PromptInputProps) {
             borderColor: currentAction.colors[0] + "50",
           }}
         >
-          {currentAction.name}
-          <div className="flex-1" />
-          <div className="opacity-50 italic">Press '@' to filter actions</div>
+          {isFilteringActions ? (
+            <>
+              {">"}{" "}
+              <input
+                type="text"
+                className="bg-neutral-50 bg-opacity-10 px-1 active:outline-none focus:outline-none"
+                value={actionsFilter}
+                onBlur={() => setIsFilteringActions(false)}
+                onChange={(e) =>
+                  setActionsFilter(e.target.value === "@" ? "" : e.target.value)
+                }
+                onKeyUp={(e) => {
+                  if (e.key === "Escape" || e.key === "Enter") {
+                    setIsFilteringActions(false);
+                  }
+                }}
+                autoFocus
+              />
+              <div className="flex-1" />
+              <div className="opacity-50 italic">
+                Press 'Esc' to stop filtering
+              </div>
+            </>
+          ) : (
+            <>
+              {currentAction.name}
+              <div className="flex-1" />
+              <div className="opacity-50 italic">
+                Press '@' to filter actions
+              </div>
+            </>
+          )}
         </div>
       )}
       <OptionsList

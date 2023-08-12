@@ -136,7 +136,10 @@ function OptionsList({
           mode={mode}
           key={index}
           option={option}
-          highlighted={option === highlightedOption}
+          highlighted={
+            option.name === highlightedOption?.name &&
+            option.kind === highlightedOption?.kind
+          }
         />
       ))}
     </div>

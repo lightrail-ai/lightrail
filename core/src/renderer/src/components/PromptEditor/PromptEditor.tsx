@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { forwardRef, useEffect, useMemo, useRef } from "react";
 import { EditorState, Plugin } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { Schema } from "prosemirror-model";
@@ -72,6 +72,7 @@ export interface PromptEditorProps {
   onChange: (value: EditorState) => void;
   state: EditorState;
   readonly?: boolean;
+  onViewReady: (view: EditorView) => void;
 }
 
 function PromptEditor({
@@ -79,6 +80,7 @@ function PromptEditor({
   onChange,
   state,
   readonly,
+  onViewReady,
 }: PromptEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const editorView = useRef<EditorView | null>(null);
@@ -95,6 +97,7 @@ function PromptEditor({
     });
 
     editorView.current.focus();
+    onViewReady(editorView.current);
 
     return () => {
       editorView.current!.destroy();
