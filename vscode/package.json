@@ -14,13 +14,24 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "extension.sayHello",
-        "title": "Hello World",
-        "category": "Hello"
-      }
-    ]
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "lightrail",
+          "title": "Lightrail",
+          "icon": "$(file-code)"
+        }
+      ]
+    },
+    "views": {
+      "lightrail": [
+        {
+          "type": "webview",
+          "id": "lightrail.proposal-confirmation",
+          "name": "Proposal Confirmation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run compile",

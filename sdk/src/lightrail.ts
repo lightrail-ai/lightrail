@@ -46,7 +46,7 @@ export interface TrackEventChannel {
 export type Action = {
   name: string;
   icon: string; // icon name, from fontawesome-regular (eg. "fa-file")
-  colors: ColorPair; // hex color
+  color: string; // hex color
   description: string; // short description of the action
   args: ActionArgument[]; // a list of AUXILIARY arguments that the action expects (i.e. not including the initial prompt)
   rendererHandler?: (prompt: object, args: object[]) => Promise<void> | void; // Arguments are passed to the action handler as objects, and the handler is expected to parse them into the appropriate types.
@@ -59,7 +59,7 @@ export type Prompt = string;
 
 export type Token = {
   name: string;
-  colors: ColorPair;
+  color: string;
   description: string;
   args: TokenArgument[]; // Argument values are passed to the token handler/renderer as strings, and the handler is expected to parse them into the appropriate types as needed.
   renderer: (args: string[]) => string; // Returns a string for displaying the token in the prompt field.
@@ -117,6 +117,7 @@ export interface Lightrail {
   getLLMClient(): OpenAIChatApi | void;
   isRenderer: boolean;
   isMain: boolean;
+  writeTempFile: (data: string, originalPath?: string) => Promise<string>;
   ui: LightrailUI | undefined;
 }
 

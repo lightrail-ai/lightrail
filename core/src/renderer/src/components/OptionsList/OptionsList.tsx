@@ -57,7 +57,7 @@ function OptionsListItem({
             style={
               highlighted
                 ? {
-                    color: option.colors[0],
+                    color: option.color,
                   }
                 : {}
             }
@@ -70,6 +70,13 @@ function OptionsListItem({
               "opacity-100": highlighted,
               "opacity-10": !highlighted,
             })}
+            style={
+              highlighted
+                ? {
+                    color: option.color,
+                  }
+                : {}
+            }
           >
             /
           </div>
@@ -81,6 +88,13 @@ function OptionsListItem({
               "opacity-100": highlighted,
               "opacity-10": !highlighted,
             })}
+            style={
+              highlighted && currentToken?.color
+                ? {
+                    color: currentToken.color,
+                  }
+                : {}
+            }
           >
             /{currentToken?.name}
           </div>
@@ -123,7 +137,7 @@ function OptionsList({
   return (
     <div
       className={classNames(
-        "overflow-y-auto overflow-x-hidden max-h-48 border-t border-t-neutral-800",
+        "overflow-y-auto overflow-x-hidden max-h-52 border-t border-t-neutral-800",
         {
           "bg-neutral-800": mode === "tokens" || mode === "token-args",
         }

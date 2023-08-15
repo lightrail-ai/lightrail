@@ -13,12 +13,11 @@ export class LightrailClient {
     this.socket = socket;
     this.socket.on("connect", () => {
       console.log("Connected to socket.io server");
+      this.socket.emit("register-client", name);
     });
     this.socket.on("connect_error", (err) => {
       console.log("Connection error", err);
     });
-
-    this.socket.emit("register-client", name);
 
     this.socket.on(
       "lightrail-event",

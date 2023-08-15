@@ -30,18 +30,12 @@ function App(): JSX.Element {
     });
     resizeObserver.observe(node);
   }, []);
-  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([
-    // {
-    //   sender: "ai",
-    //   content:
-    //     "```\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nhi\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n```",
-    // },
-  ]);
+  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
   const [partialMessage, setPartialMessage] = useState<string | null>(null);
 
   async function loadTracks() {
     for (const TrackClass of TRACKS) {
-      new TrackClass(rendererLightrail).init();
+      await new TrackClass(rendererLightrail).init();
     }
   }
 
@@ -106,7 +100,7 @@ function App(): JSX.Element {
         maxHeight: `${maxHeight}px`,
       }}
     >
-      {renderView()}
+      {ready && renderView()}
     </div>
   );
 }

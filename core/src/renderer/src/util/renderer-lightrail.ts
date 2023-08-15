@@ -66,14 +66,29 @@ class RendererLightrail implements Lightrail {
     }
   }
 
-  getTokenOptions(): Option[] {
-    return [...this.tokens.values()].map((token) => ({
-      ...token,
-      kind: "tokens",
-    }));
+  getTokenOptions(queryInput?: string): Option[] {
+    if (!queryInput) {
+      return [...this.tokens.values()].map((token) => ({
+        ...token,
+        kind: "tokens",
+      }));
+    } else {
+      const query = queryInput.toLowerCase();
+      return [...this.tokens.values()]
+        .filter(
+          (token) =>
+            token.name.toLowerCase().includes(query) ||
+            token.description.toLowerCase().includes(query)
+        )
+        .map((token) => ({ ...token, kind: "tokens" }));
+    }
   }
 
   getLLMClient() {
+    throw new Error("Method not implemented.");
+  }
+
+  async writeTempFile(): Promise<string> {
     throw new Error("Method not implemented.");
   }
 }

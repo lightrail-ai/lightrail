@@ -216,6 +216,10 @@ function PromptInput({ onAction }: PromptInputProps) {
           tokenArgs[currentArgIndex]
         );
       }
+    } else if (currentFilter) {
+      // Haven't selected a token yet, just filter tokens
+      const filteredTokens = rendererLightrail.getTokenOptions(currentFilter);
+      setOptions(filteredTokens);
     }
   }, [currentFilter, currentToken]);
 
@@ -255,16 +259,24 @@ function PromptInput({ onAction }: PromptInputProps) {
       name: tokenName,
       args: tokenArgs,
     });
-    setPromptState((oldState) =>
-      oldState.apply(
-        oldState.tr.replaceRangeWith(
+    setPromptState((oldState) => {
+      const temp = oldState.apply(
+        oldState.tr.insertText(
+          " ",
+          editorRangeRef.current!.to,
+          editorRangeRef.current!.to
+        )
+      );
+      return temp.apply(
+        temp.tr.replaceRangeWith(
           editorRangeRef.current!.from,
           editorRangeRef.current!.to,
           node
         )
-      )
-    );
+      );
+    });
     setCurrentFilter(undefined);
+    setCurrentToken(undefined);
   }
 
   function getTokenAndArgsArray(filter: string) {
@@ -303,6 +315,7 @@ function PromptInput({ onAction }: PromptInputProps) {
   // handle focus when done filtering actions
   useEffect(() => {
     if (!isFilteringActions) {
+      setActionsFilter("");
       editorViewRef.current?.focus();
     }
   }, [isFilteringActions]);
@@ -328,8 +341,8 @@ function PromptInput({ onAction }: PromptInputProps) {
         <div
           className="text-xs px-1 py-0.5 font-light flex flex-row items-center transition-colors border-y"
           style={{
-            backgroundColor: currentAction.colors[0] + "20",
-            borderColor: currentAction.colors[0] + "50",
+            backgroundColor: currentAction.color + "20",
+            borderColor: currentAction.color + "50",
           }}
         >
           {isFilteringActions ? (
@@ -343,10 +356,17 @@ function PromptInput({ onAction }: PromptInputProps) {
                 onChange={(e) =>
                   setActionsFilter(e.target.value === "@" ? "" : e.target.value)
                 }
-                onKeyUp={(e) => {
-                  if (e.key === "Escape" || e.key === "Enter") {
+                onKeyUpCapture={(e) => {
+                  if (
+                    e.key === "Escape" ||
+                    e.key === "Enter" ||
+                    e.key === "Tab"
+                  ) {
                     setIsFilteringActions(false);
                   }
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return false;
                 }}
                 autoFocus
               />

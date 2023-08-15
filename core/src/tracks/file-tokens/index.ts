@@ -18,7 +18,7 @@ export default class Track implements LightrailTrack {
           type: "path",
         },
       ],
-      colors: ["#54aeff", "#eeeeee"],
+      color: "#54aeff",
       async handler(args, prompt) {
         const [filePath] = args;
         const fs = require("fs");

@@ -18,7 +18,7 @@ export default class Track implements LightrailTrack {
           type: "path",
         },
       ],
-      colors: ["#3584e4", "#111111"],
+      color: "#3584e4",
       async rendererHandler(prompt, args) {},
       async mainHandler(prompt, args) {},
       icon: "file",

@@ -24,20 +24,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deactivate = exports.activate = void 0;
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = __importStar(require("vscode"));
 const lightrail_sdk_1 = require("lightrail-sdk");
 const socket_io_client_1 = require("socket.io-client");
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+const fs_1 = require("fs");
 let lightrailClient = new lightrail_sdk_1.LightrailClient("vscode-client", (0, socket_io_client_1.io)("ws://localhost:1218"));
 function activate(context) {
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "lightrail-vscode" is now active!');
+    const provider = new ProposalConfirmationViewProvider(context.extensionUri);
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(ProposalConfirmationViewProvider.viewType, provider));
     lightrailClient.registerEventListener("vscode:get-selection", async () => {
-        console.log("get selection");
         return vscode.window.activeTextEditor?.document.getText(vscode.window.activeTextEditor.selection);
     });
     lightrailClient.registerEventListener("vscode:get-selected-files", async () => {
@@ -47,8 +42,86 @@ function activate(context) {
         await vscode.env.clipboard.writeText(originalClipboard);
         return folder.split("\n");
     });
+    lightrailClient.registerEventListener("vscode:get-editing-file", async () => {
+        return vscode.window.activeTextEditor?.document.fileName;
+    });
+    lightrailClient.registerEventListener("vscode:codegen-proposals", async ({ data }) => {
+        const proposals = data;
+        await provider.propose(proposals);
+        vscode.commands.executeCommand("lightrail.proposal-confirmation.focus");
+    });
 }
 exports.activate = activate;
+class ProposalConfirmationViewProvider {
+    constructor(_extensionUri) {
+        this._extensionUri = _extensionUri;
+    }
+    resolveWebviewView(webviewView, context, _token) {
+        this._view = webviewView;
+        webviewView.webview.options = {
+            // Allow scripts in the webview
+            enableScripts: true,
+            localResourceRoots: [this._extensionUri],
+        };
+        webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+        webviewView.webview.onDidReceiveMessage((data) => {
+            switch (data.type) {
+                case "proposal-accepted": {
+                    console.log("Accepted");
+                    const proposedContents = (0, fs_1.readFileSync)(data.proposal[1], "utf8");
+                    (0, fs_1.writeFileSync)(data.proposal[0], proposedContents);
+                    break;
+                }
+                case "proposal-rejected": {
+                    console.log(data.proposal);
+                    console.log("Rejected");
+                    break;
+                }
+                case "proposal-opened": {
+                    console.log("Opened");
+                    let origUri = vscode.Uri.file(data.proposal[0]);
+                    let newUri = vscode.Uri.file(data.proposal[1]);
+                    vscode.commands.executeCommand("vscode.diff", origUri, newUri, "Lightrail Proposal");
+                }
+            }
+        });
+    }
+    async propose(proposals) {
+        if (this._view) {
+            this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
+            this._view.webview.postMessage({ type: "propose", proposals });
+        }
+    }
+    _getHtmlForWebview(webview) {
+        // Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
+        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "main.js"));
+        const stylesUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "styles.css"));
+        return `<!DOCTYPE html>
+			<html lang="en">
+			<head>
+        <link href="${stylesUri}" rel="stylesheet">
+				<title>Lightrail Proposal</title>
+			</head>
+			<body>
+        <div id="proposals-container" style="display: none">
+          <h2 style="margin: 1rem">        
+            This change was proposed by Lightrail. Do you want to accept it?
+          </h2>
+          <button style="margin: 1rem" id="accept-button">Accept</button>
+          <button class="secondary" style="margin: 1rem" id="reject-button">Reject</button>
+          <div>
+            Proposal <span id="proposal-counter"></span>.
+          </div>
+        </div>
+        <div id="no-proposals-message" style="margin: 1rem; opacity: 0.5">
+          No proposal currently active
+        </div>
+        <script src="${scriptUri}"></script>
+			</body>
+			</html>`;
+    }
+}
+ProposalConfirmationViewProvider.viewType = "lightrail.proposal-confirmation";
 // This method is called when your extension is deactivated
 function deactivate() { }
 exports.deactivate = deactivate;

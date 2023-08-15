@@ -11,9 +11,9 @@ export default class Track implements LightrailTrack {
     this.lightrail.registerAction({
       name: "Run Shell Script",
       description: "Run a shell script",
-      colors: ["#deddda", "#111111"],
+      color: "#006400", // updated color
       args: [],
-      async handler(args) {},
+      async handler(prompt, args) {},
       icon: "window-maximize",
     });
   }

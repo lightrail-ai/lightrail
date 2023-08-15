@@ -20,7 +20,7 @@ export default class Track implements LightrailTrack {
     lightrail.registerAction({
       name: "Send to AI",
       description: "Send a message to LLM",
-      colors: ["#74a89b", "#1f1f1f"],
+      color: "#74a89b",
       args: [],
       icon: "circle-up",
       async rendererHandler(prompt, _args) {
@@ -67,7 +67,7 @@ export default class Track implements LightrailTrack {
     lightrail.registerAction({
       name: "Reset Chat",
       description: "Clear Chat History",
-      colors: ["#74a89b", "#ececf1"],
+      color: "#74a89b",
       args: [],
       icon: "message",
       async rendererHandler(_prompt, _args) {

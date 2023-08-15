@@ -10,21 +10,6 @@ import { rendererLightrail } from "@renderer/util/renderer-lightrail";
 
 export const promptSchema = new Schema({
   nodes: {
-    // action: {
-    //   inline: true,
-    //   attrs: {
-    //     name: {
-    //       default: "file",
-    //     },
-    //   },
-    //   isolating: true,
-    //   toDOM: (node) => {
-    //     let domNode = document.createElement("span");
-    //     domNode.className =
-    //       "text-sm px-2 py-0.5 my-0.5 rounded-full bg-red-500 text-white action-tag mr-2";
-    //     return domNode;
-    //   },
-    // },
     text: { group: "inline", inline: true },
     token: {
       attrs: {
@@ -36,10 +21,11 @@ export const promptSchema = new Schema({
       toDOM: (node) => {
         const token = rendererLightrail.tokens.get(node.attrs.name);
         let domNode = document.createElement("span");
-        domNode.className = "text-sm px-2 py-0.5 my-0.5 rounded-full";
+        domNode.className = "text-sm px-2 py-0.5 my-0.5 rounded-sm border-b";
         if (token) {
-          domNode.style.backgroundColor = token.colors[0];
-          domNode.style.color = token.colors[1];
+          domNode.style.backgroundColor = token.color + "30";
+          domNode.style.borderBottomColor = token.color;
+          domNode.style.color = token.color;
           console.log(node.attrs);
           domNode.innerText = token.renderer(node.attrs.args);
         }
@@ -72,7 +58,7 @@ export interface PromptEditorProps {
   onChange: (value: EditorState) => void;
   state: EditorState;
   readonly?: boolean;
-  onViewReady: (view: EditorView) => void;
+  onViewReady?: (view: EditorView) => void;
 }
 
 function PromptEditor({
@@ -97,7 +83,7 @@ function PromptEditor({
     });
 
     editorView.current.focus();
-    onViewReady(editorView.current);
+    onViewReady?.(editorView.current);
 
     return () => {
       editorView.current!.destroy();

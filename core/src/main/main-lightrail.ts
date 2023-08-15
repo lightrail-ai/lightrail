@@ -10,6 +10,9 @@ import {
 import { SettingsObject } from "./api";
 import jsonStorage from "electron-json-storage";
 import { Socket } from "socket.io";
+import { app } from "electron";
+import path from "path";
+import { writeFile } from "fs/promises";
 
 export class MainLightrail implements Lightrail {
   actions: Map<string, Action> = new Map();
@@ -93,5 +96,16 @@ export class MainLightrail implements Lightrail {
         stream: true,
       }
     );
+  }
+
+  async writeTempFile(data, originalPath?: string): Promise<string> {
+    let ext = "";
+    if (originalPath) {
+      ext = path.extname(originalPath);
+    }
+    const name = Math.random().toString(36).substring(7) + ext;
+    const filePath = path.join(app.getPath("temp"), name);
+    await writeFile(filePath, data);
+    return filePath;
   }
 }
