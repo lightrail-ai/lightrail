@@ -1,0 +1,23 @@
+{
+  "name": "lightrail-chrome",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "2.0.0-beta.18",
+    "@types/chrome": "^0.0.243",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5"
+  },
+  "dependencies": {
+    "@types/turndown": "^5.0.1",
+    "lightrail-sdk": "link:../sdk",
+    "socket.io-client": "^4.7.2",
+    "turndown": "^7.1.2"
+  }
+}

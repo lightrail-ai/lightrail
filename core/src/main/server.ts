@@ -4,7 +4,11 @@ import type { LightrailEvent } from "lightrail-sdk";
 
 export function startWSServer(mainLightrail: MainLightrail) {
   // Create a SocketIO server
-  const wss = new Server();
+  const wss = new Server({
+    cors: {
+      origin: "*",
+    },
+  });
 
   // Handle incoming WebSocket connections
   wss.on("connection", (ws) => {
