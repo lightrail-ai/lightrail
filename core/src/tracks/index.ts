@@ -6,10 +6,10 @@ import VSCode from "./vscode";
 import Chrome from "./chrome";
 
 export const TRACKS = [
-  Chat,
   FileGeneration,
   FileTokens,
   RunShellScript,
   VSCode,
   Chrome,
+  Chat,
 ];

@@ -6,3 +6,7 @@ chrome.runtime.onMessage.addListener(function (request, _sender, sendResponse) {
     });
   }
 });
+
+chrome.runtime.sendMessage({
+  type: "new-page",
+});

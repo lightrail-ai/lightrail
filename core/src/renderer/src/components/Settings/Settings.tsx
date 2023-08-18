@@ -7,8 +7,11 @@ import TextInput from "../ui-elements/TextInput/TextInput";
 import Button from "../ui-elements/Button/Button";
 import type { SettingsObject } from "../../../../main/api";
 import { trpcClient } from "@renderer/util/trpc-client";
+import SelectInput from "../ui-elements/SelectInput/SelectInput";
 
 export interface SettingsProps {}
+
+const models = ["gpt-3.5-turbo-16k-0613", "gpt-4-0613"];
 
 function Settings({}: SettingsProps) {
   const setView = useSetRecoilState(viewAtom);
@@ -42,6 +45,15 @@ function Settings({}: SettingsProps) {
               }
               label="OpenAI API Key"
               placeholder="Your API Key"
+            />
+          </div>
+          <div className="px-6 py-2">
+            <SelectInput
+              options={models}
+              value={settings.model || models[0]}
+              onChange={(newVal) => setSettings({ ...settings, model: newVal })}
+              label="Model"
+              placeholder="Model Name"
             />
           </div>
         </>

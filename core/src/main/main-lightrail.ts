@@ -32,13 +32,11 @@ export class MainLightrail implements Lightrail {
     this.window = window;
   }
 
-  registerAction(action: Action): boolean {
+  registerAction(action: Action) {
     this.actions.set(action.name, action);
-    return true;
   }
-  registerToken(token: Token): boolean {
+  registerToken(token: Token) {
     this.tokens.set(token.name, token);
-    return true;
   }
   registerEventListener(
     eventName: LightrailEventName,
@@ -64,6 +62,7 @@ export class MainLightrail implements Lightrail {
         );
       });
     } else {
+      console.log("SENDING EVENT", event);
       this.window.webContents.send("lightrail-event", event);
     }
     return new Promise((resolve) => resolve(true));
@@ -87,12 +86,13 @@ export class MainLightrail implements Lightrail {
 
   getLLMClient() {
     const settings = jsonStorage.getSync("settings") as SettingsObject;
+    console.log("Getting LLM Client for model: " + settings.model);
     return new OpenAIChatApi(
       {
         apiKey: settings.openAIApiKey,
       },
       {
-        model: "gpt-3.5-turbo-16k-0613",
+        model: settings.model ?? "gpt-3.5-turbo-16k-0613",
         stream: true,
       }
     );

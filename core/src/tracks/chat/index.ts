@@ -18,6 +18,21 @@ export default class Track implements LightrailTrack {
     };
 
     lightrail.registerAction({
+      name: "Reset Chat",
+      description: "Clear Chat History",
+      color: "#74a89b",
+      args: [],
+      icon: "message",
+      async rendererHandler(_prompt, _args) {
+        lightrail.ui?.setView("chat");
+        lightrail.ui?.chat.setHistory([]);
+      },
+      async mainHandler(_prompt, _args) {
+        chatState.lastResponse = null;
+      },
+    });
+
+    lightrail.registerAction({
       name: "Send to AI",
       description: "Send a message to LLM",
       color: "#74a89b",
@@ -62,19 +77,6 @@ export default class Track implements LightrailTrack {
           data: response.content,
         });
       },
-    });
-
-    lightrail.registerAction({
-      name: "Reset Chat",
-      description: "Clear Chat History",
-      color: "#74a89b",
-      args: [],
-      icon: "message",
-      async rendererHandler(_prompt, _args) {
-        lightrail.ui?.setView("chat");
-        lightrail.ui?.chat.setHistory([]);
-      },
-      async mainHandler(_prompt, _args) {},
     });
 
     if (lightrail.isRenderer) {

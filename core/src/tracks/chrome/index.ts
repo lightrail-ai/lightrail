@@ -10,7 +10,7 @@ export default class Track implements LightrailTrack {
   async init() {
     const lightrail = this.lightrail;
 
-    lightrail.registerToken({
+    const handle = lightrail.registerToken({
       name: "chrome-current-page",
       description: "Google Chrome Current Page",
       args: [],
@@ -32,18 +32,43 @@ export default class Track implements LightrailTrack {
         console.log(article);
 
         const markdown = turndownService.turndown(article.content);
-        return (
-          prompt +
-          "\n\n`" +
-          url +
-          "`\n================================\n" +
-          markdown +
-          "\n================================\n\n"
-        );
+
+        prompt.appendContextItem({
+          type: "text",
+          title: url,
+          content: markdown,
+        });
+
+        prompt.appendText(url);
+
+        return prompt;
       },
       renderer(_args) {
         return "chrome-current-page";
       },
     });
+
+    if (lightrail.isRenderer) {
+      lightrail.registerEventListener("chrome:new-page", async () => {
+        handle?.prioritize();
+      });
+
+      lightrail.registerEventListener(
+        "lightrail:client-disconnected",
+        async ({ data }) => {
+          if (data.name === "chrome-client") {
+            handle?.disable();
+          }
+        }
+      );
+      lightrail.registerEventListener(
+        "lightrail:client-connected",
+        async ({ data }) => {
+          if (data.name === "chrome-client") {
+            handle?.enable();
+          }
+        }
+      );
+    }
   }
 }

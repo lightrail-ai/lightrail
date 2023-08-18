@@ -6,6 +6,8 @@ import type {
   Token,
   Lightrail,
   LightrailUI,
+  ActionHandle,
+  TokenHandle,
 } from "lightrail-sdk";
 
 class RendererLightrail implements Lightrail {
@@ -18,13 +20,39 @@ class RendererLightrail implements Lightrail {
   isMain = false;
   ui: LightrailUI | undefined = undefined;
 
-  registerAction(action: Action): boolean {
+  registerAction(action: Action): ActionHandle {
     this.actions.set(action.name, action);
-    return true;
+    const ctx = this;
+    return {
+      disable() {
+        ctx.actions.get(action.name)!.disabled = true;
+      },
+      enable() {
+        ctx.actions.get(action.name)!.disabled = false;
+      },
+      prioritize() {
+        const temp = ctx.actions.get(action.name)!;
+        ctx.actions.delete(action.name);
+        ctx.actions.set(action.name, temp);
+      },
+    };
   }
-  registerToken(token: Token): boolean {
+  registerToken(token: Token): TokenHandle {
     this.tokens.set(token.name, token);
-    return true;
+    const ctx = this;
+    return {
+      disable() {
+        ctx.tokens.get(token.name)!.disabled = true;
+      },
+      enable() {
+        ctx.tokens.get(token.name)!.disabled = false;
+      },
+      prioritize() {
+        const temp = ctx.tokens.get(token.name)!;
+        ctx.tokens.delete(token.name);
+        ctx.tokens.set(token.name, temp);
+      },
+    };
   }
   registerEventListener(
     eventName: LightrailEventName,
@@ -39,6 +67,8 @@ class RendererLightrail implements Lightrail {
 
   _processEvent(e: LightrailEvent) {
     const listeners = this.eventListeners[e.name];
+    console.log("PROCESSING EVENT", e);
+    console.log("LISTENERS", listeners);
     if (listeners) {
       listeners.forEach((listener) => listener(e));
     }
@@ -49,14 +79,17 @@ class RendererLightrail implements Lightrail {
   }
 
   getActionOptions(queryInput?: string): Option[] {
+    const actionList = [...this.actions.values()]
+      .filter((a) => !a.disabled)
+      .reverse();
     if (!queryInput) {
-      return [...this.actions.values()].map((action) => ({
+      return actionList.map((action) => ({
         ...action,
         kind: "actions",
       }));
     } else {
       const query = queryInput.toLowerCase();
-      return [...this.actions.values()]
+      return actionList
         .filter(
           (action) =>
             action.name.toLowerCase().includes(query) ||
@@ -67,14 +100,17 @@ class RendererLightrail implements Lightrail {
   }
 
   getTokenOptions(queryInput?: string): Option[] {
+    const tokenList = [...this.tokens.values()]
+      .filter((t) => !t.disabled)
+      .reverse();
     if (!queryInput) {
-      return [...this.tokens.values()].map((token) => ({
+      return tokenList.map((token) => ({
         ...token,
         kind: "tokens",
       }));
     } else {
       const query = queryInput.toLowerCase();
-      return [...this.tokens.values()]
+      return tokenList
         .filter(
           (token) =>
             token.name.toLowerCase().includes(query) ||

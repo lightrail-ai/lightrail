@@ -22,10 +22,15 @@ export default class Track implements LightrailTrack {
       async handler(args, prompt) {
         const [filePath] = args;
         const fs = require("fs");
-        const path = require("path");
         // read file contents
         const data = fs.readFileSync(filePath, "utf8");
-        return prompt + "\n\n```\n" + data + "\n```\n\n";
+        prompt.appendContextItem({
+          type: "code",
+          title: filePath,
+          content: data,
+        });
+        prompt.appendText(filePath);
+        return prompt;
       },
       renderer(args) {
         return "file:" + args[0].split("/").pop();

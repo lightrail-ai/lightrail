@@ -51,11 +51,27 @@ export type Action = {
   args: ActionArgument[]; // a list of AUXILIARY arguments that the action expects (i.e. not including the initial prompt)
   rendererHandler?: (prompt: object, args: object[]) => Promise<void> | void; // Arguments are passed to the action handler as objects, and the handler is expected to parse them into the appropriate types.
   mainHandler?: (prompt: string, args: string[]) => Promise<void>; // Arguments are passed to the action handler as strings, and the handler is expected to parse them into the appropriate types.
+  disabled?: boolean;
 };
 
 export type TokenArgument = ActionArgument;
 
-export type Prompt = string;
+export type PromptContextItem = {
+  title: string;
+  type: "code" | "text";
+  content: string;
+};
+
+export class Prompt {
+  _body: string = "";
+  _context: PromptContextItem[] = [];
+  appendContextItem(item: PromptContextItem) {
+    this._context.push(item);
+  }
+  appendText(text: string) {
+    this._body += text;
+  }
+}
 
 export type Token = {
   name: string;
@@ -64,6 +80,7 @@ export type Token = {
   args: TokenArgument[]; // Argument values are passed to the token handler/renderer as strings, and the handler is expected to parse them into the appropriate types as needed.
   renderer: (args: string[]) => string; // Returns a string for displaying the token in the prompt field.
   handler: (args: string[], prompt: Prompt) => Promise<Prompt>;
+  disabled?: boolean;
 };
 
 export interface TokenArgumentOption {
@@ -73,10 +90,8 @@ export interface TokenArgumentOption {
 }
 
 export type LightrailEventName =
-  | "prompt"
-  | "response"
-  | "action"
-  | "token"
+  | "lightrail:client-connected"
+  | "lightrail:client-disconnected"
   | (string & Record<never, never>);
 
 export type LightrailView = "prompt" | "settings" | "chat";
@@ -106,9 +121,17 @@ export interface LightrailUI {
   };
 }
 
+export interface ActionHandle {
+  disable(): void;
+  enable(): void;
+  prioritize(): void; // Move to top of suggestions list
+}
+
+export type TokenHandle = ActionHandle;
+
 export interface Lightrail {
-  registerAction(action: Action): boolean;
-  registerToken(token: Token): boolean;
+  registerAction(action: Action): void | ActionHandle;
+  registerToken(token: Token): void | TokenHandle;
   registerEventListener(
     eventName: LightrailEventName,
     handler: (event: LightrailEvent) => Promise<any>

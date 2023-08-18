@@ -50,6 +50,7 @@ function App(): JSX.Element {
           setView: setView,
         };
         window.electronIpc.onLightrailEvent((_event, data) => {
+          console.log("RECEIVED EVENT", data);
           rendererLightrail._processEvent(data);
         });
         await loadTracks();

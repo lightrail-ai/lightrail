@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import { LightrailClient } from "lightrail-sdk";
 import { io } from "socket.io-client";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { dirname } from "path";
 let lightrailClient = new LightrailClient(
   "vscode-client",
   io("ws://localhost:1218") as any
@@ -18,9 +19,13 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   lightrailClient.registerEventListener("vscode:get-selection", async () => {
-    return vscode.window.activeTextEditor?.document.getText(
-      vscode.window.activeTextEditor.selection
-    );
+    return {
+      content: vscode.window.activeTextEditor?.document.getText(
+        vscode.window.activeTextEditor.selection
+      ),
+      file: vscode.window.activeTextEditor?.document.fileName,
+      range: vscode.window.activeTextEditor?.selection,
+    };
   });
 
   lightrailClient.registerEventListener(
@@ -48,6 +53,16 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.commands.executeCommand("lightrail.proposal-confirmation.focus");
     }
   );
+
+  vscode.window.onDidChangeTextEditorSelection((event) => {
+    const selection = event.selections[0];
+    if (!selection.isEmpty) {
+      lightrailClient.sendEvent({
+        name: "vscode:new-selection",
+        data: null,
+      });
+    }
+  });
 }
 
 class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
@@ -77,7 +92,10 @@ class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
       switch (data.type) {
         case "proposal-accepted": {
           console.log("Accepted");
+          const visibleEditors = vscode.window.visibleTextEditors;
+          console.log(visibleEditors);
           const proposedContents = readFileSync(data.proposal[1], "utf8");
+          mkdirSync(dirname(data.proposal[0]), { recursive: true });
           writeFileSync(data.proposal[0], proposedContents);
           break;
         }
@@ -90,9 +108,16 @@ class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
           console.log("Opened");
           let origUri = vscode.Uri.file(data.proposal[0]);
           let newUri = vscode.Uri.file(data.proposal[1]);
+
+          // Check if origUri points to an existing file
+          let leftFile = origUri;
+          if (!existsSync(leftFile.fsPath)) {
+            leftFile = vscode.Uri.parse(`untitled:${new Date().getTime()}`);
+          }
+
           vscode.commands.executeCommand(
             "vscode.diff",
-            origUri,
+            leftFile,
             newUri,
             "Lightrail Proposal"
           );
@@ -145,4 +170,10 @@ class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+  lightrailClient.sendEvent({
+    name: "vscode:inactive",
+    data: null,
+  });
+  console.log("VSCODE: inactive bc deactivating");
+}

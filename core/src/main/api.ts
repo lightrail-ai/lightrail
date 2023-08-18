@@ -3,7 +3,7 @@ import { initTRPC } from "@trpc/server";
 import { BrowserWindow, clipboard } from "electron";
 import jsonStorage from "electron-json-storage";
 import { promisify } from "util";
-import { stringifyPrompt } from "./prompting";
+import { constructPrompt, stringifyPrompt } from "./prompting";
 import { MainLightrail } from "./main-lightrail";
 import * as fs from "fs/promises";
 import path from "path";
@@ -12,6 +12,7 @@ const t = initTRPC.create({ isServer: true });
 
 const SettingsSchema = z.object({
   openAIApiKey: z.string(),
+  model: z.string(),
 });
 
 export type SettingsObject = z.infer<typeof SettingsSchema>;
@@ -48,20 +49,23 @@ export const getRouter = (mainLightrail: MainLightrail) =>
           throw new Error(`Unknown action: ${name}`);
         }
 
-        const stringifiedMainPrompt = await stringifyPrompt(
+        const contextualizedPrompt = await constructPrompt(
           prompt,
           mainLightrail
         );
-        const stringifiedArgs = await Promise.all(
-          args.map((a) => stringifyPrompt(a, mainLightrail))
-        );
 
-        console.log(stringifiedMainPrompt);
+        const stringifiedPrompt = stringifyPrompt(contextualizedPrompt);
+
+        const stringifiedArgs = (
+          await Promise.all(args.map((a) => constructPrompt(a, mainLightrail)))
+        ).map(stringifyPrompt);
+
+        console.log(stringifiedPrompt);
 
         const action = mainLightrail.actions.get(name)!;
 
         console.log(action);
-        await action.mainHandler?.(stringifiedMainPrompt, stringifiedArgs);
+        await action.mainHandler?.(stringifiedPrompt, stringifiedArgs);
       }),
     settings: t.router({
       get: t.procedure.query(() => {

@@ -220,6 +220,7 @@ function PromptInput({ onAction }: PromptInputProps) {
       // Haven't selected a token yet, just filter tokens
       const filteredTokens = rendererLightrail.getTokenOptions(currentFilter);
       setOptions(filteredTokens);
+      setHighlightedOption(filteredTokens[0]);
     }
   }, [currentFilter, currentToken]);
 
@@ -276,7 +277,6 @@ function PromptInput({ onAction }: PromptInputProps) {
       );
     });
     setCurrentFilter(undefined);
-    setCurrentToken(undefined);
   }
 
   function getTokenAndArgsArray(filter: string) {
@@ -319,6 +319,13 @@ function PromptInput({ onAction }: PromptInputProps) {
       editorViewRef.current?.focus();
     }
   }, [isFilteringActions]);
+
+  // Unset current token when in actions mode
+  useEffect(() => {
+    if (optionsMode === "actions") {
+      setCurrentToken(undefined);
+    }
+  }, [optionsMode]);
 
   return (
     <div className="min-w-[600px]">

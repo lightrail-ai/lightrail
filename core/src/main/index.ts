@@ -43,20 +43,25 @@ function createWindow(): void {
   });
 
   const mainLightrail = new MainLightrail(mainWindow);
-  for (const TrackClass of TRACKS) {
-    new TrackClass(mainLightrail).init();
-  }
+  const trackPromises = TRACKS.map((TrackClass) =>
+    new TrackClass(mainLightrail).init()
+  );
+  Promise.all(trackPromises).then(() => {
+    createIPCHandler({
+      router: getRouter(mainLightrail),
+      windows: [mainWindow],
+    });
+    startWSServer(mainLightrail);
 
-  createIPCHandler({ router: getRouter(mainLightrail), windows: [mainWindow] });
-  startWSServer(mainLightrail);
+    // HMR for renderer base on electron-vite cli.
+    // Load the remote URL for development or the local html file for production.
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
-  } else {
-    mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
-  }
+    if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+      mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+    } else {
+      mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
+    }
+  });
 }
 
 // This method will be called when Electron has finished

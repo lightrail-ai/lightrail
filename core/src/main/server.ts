@@ -12,13 +12,39 @@ export function startWSServer(mainLightrail: MainLightrail) {
 
   // Handle incoming WebSocket connections
   wss.on("connection", (ws) => {
+    let connectionDetails = {
+      name: null,
+    };
+
     // Handle messages received from clients
     ws.on("register-client", (from) => {
+      console.log("Client Registered: " + from);
+      connectionDetails.name = from;
       mainLightrail._registerClient(from, ws);
+      const connectEvent: LightrailEvent = {
+        name: "lightrail:client-connected",
+        data: {
+          name: connectionDetails.name,
+        },
+      };
+      mainLightrail._processEvent(connectEvent);
+      mainLightrail.sendEvent(connectEvent);
     });
 
     ws.on("lightrail-event", (event: LightrailEvent, callback?: Function) => {
       mainLightrail._processEvent(event, callback);
+      mainLightrail.sendEvent(event);
+    });
+
+    ws.on("disconnect", () => {
+      const diconnectEvent = {
+        name: "lightrail:client-disconnected",
+        data: {
+          name: connectionDetails.name,
+        },
+      };
+      mainLightrail._processEvent(diconnectEvent);
+      mainLightrail.sendEvent(diconnectEvent);
     });
   });
 

@@ -1,13 +1,14 @@
 import { Lightrail } from "lightrail-sdk";
 
 export async function registerTokens(lightrail: Lightrail) {
-  lightrail.registerToken({
+  const selectionHandle = lightrail.registerToken({
     name: "vscode-selection",
     description: "VSCode Current Selection",
     args: [],
     color: "#007ACC",
+    disabled: true,
     async handler(args, prompt) {
-      const selection = await lightrail.sendEvent(
+      const { file, range, content } = await lightrail.sendEvent(
         {
           name: "vscode:get-selection",
           data: null,
@@ -15,18 +16,27 @@ export async function registerTokens(lightrail: Lightrail) {
         "vscode-client"
       );
 
-      return prompt + "\n\n```\n" + selection + "\n```\n\n";
+      const contextTitle = file + ":" + range.start.line + "-" + range.end.line;
+      prompt.appendContextItem({
+        type: "code",
+        title: contextTitle,
+        content: content,
+      });
+      prompt.appendText(contextTitle);
+
+      return prompt;
     },
     renderer(args) {
       return "vscode-selection";
     },
   });
 
-  lightrail.registerToken({
+  const selectedFilesHandle = lightrail.registerToken({
     name: "vscode-selected-files",
     description: "VSCode Selected Files",
     args: [],
     color: "#007ACC",
+    disabled: true,
     async handler(args, prompt) {
       const selectedFiles = await lightrail.sendEvent(
         {
@@ -39,23 +49,29 @@ export async function registerTokens(lightrail: Lightrail) {
       const fs = require("fs");
 
       // read file contents
-      const fileContents = selectedFiles.map((path) => {
+      selectedFiles.forEach((path) => {
         const data = fs.readFileSync(path, "utf8");
-        return "\n\n" + path + "\n```\n" + data + "\n```\n\n";
+        prompt.appendContextItem({
+          type: "code",
+          title: path,
+          content: data,
+        });
       });
 
-      return prompt + fileContents;
+      prompt.appendText(`the following files: [ ${selectedFiles.join(", ")} ]`);
+      return prompt;
     },
     renderer(args) {
       return "vscode-selected-files";
     },
   });
 
-  lightrail.registerToken({
+  const fileHandle = lightrail.registerToken({
     name: "vscode-current-file",
     description: "VSCode Current File",
     args: [],
     color: "#007ACC",
+    disabled: true,
     async handler(args, prompt) {
       const fs = require("fs");
       const currentFile = await lightrail.sendEvent(
@@ -69,10 +85,24 @@ export async function registerTokens(lightrail: Lightrail) {
       // read file contents
       const data = fs.readFileSync(currentFile, "utf8");
 
-      return prompt + "\n\n`" + currentFile + "`\n```\n" + data + "\n```\n\n";
+      prompt.appendContextItem({
+        type: "code",
+        title: currentFile,
+        content: data,
+      });
+
+      prompt.appendText(currentFile);
+
+      return prompt;
     },
     renderer(args) {
       return "vscode-current-file";
     },
   });
+
+  return {
+    selectionHandle,
+    selectedFilesHandle,
+    fileHandle,
+  };
 }
