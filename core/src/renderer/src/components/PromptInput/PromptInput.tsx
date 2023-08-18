@@ -12,8 +12,8 @@ import OptionsList, { Option, OptionsMode } from "../OptionsList/OptionsList";
 import { useHotkeys } from "react-hotkeys-hook";
 import { faGear } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useSetRecoilState } from "recoil";
-import { viewAtom } from "@renderer/state";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { promptHistoryAtom, viewAtom } from "@renderer/state";
 import { rendererLightrail } from "@renderer/util/renderer-lightrail";
 import type {
   Token,
@@ -24,6 +24,7 @@ import type {
 import { trpcClient } from "@renderer/util/trpc-client";
 import { useStateWithRef } from "@renderer/util/custom-hooks";
 import { EditorView } from "prosemirror-view";
+import { Node } from "prosemirror-model";
 
 const PATH_SEPARATOR = "/";
 
@@ -33,6 +34,8 @@ export interface PromptInputProps {
 
 function PromptInput({ onAction }: PromptInputProps) {
   const setView = useSetRecoilState(viewAtom);
+  const promptHistory = useRecoilValue(promptHistoryAtom);
+  const [promptHistoryIndex, setPromptHistoryIndex] = useState(-1);
 
   const [optionsMode, setOptionsMode, optionsModeRef] =
     useStateWithRef<OptionsMode>("actions"); // TODO: can possibly refactor this out
@@ -53,7 +56,7 @@ function PromptInput({ onAction }: PromptInputProps) {
   const [actionsFilter, setActionsFilter] = useState("");
 
   const [promptState, setPromptState, promptStateRef] =
-    useStateWithRef<EditorState>(getEmptyPromptState());
+    useStateWithRef<EditorState>(getNewPromptState());
   const editorViewRef = useRef<EditorView>();
 
   useHotkeys("up", handleUpArrow);
@@ -63,9 +66,12 @@ function PromptInput({ onAction }: PromptInputProps) {
     setIsFilteringActions(true);
     return true;
   });
+  useHotkeys("ctrl+up", handleHistoryGoPrev);
+  useHotkeys("ctrl+down", handleHistoryGoNext);
 
-  function getEmptyPromptState() {
+  function getNewPromptState(docJson?: object) {
     return EditorState.create({
+      doc: docJson ? Node.fromJSON(promptSchema, docJson) : undefined,
       schema: promptSchema,
       plugins: [
         ...autocomplete({
@@ -105,6 +111,8 @@ function PromptInput({ onAction }: PromptInputProps) {
           ArrowUp: handleUpArrow,
           ArrowDown: handleDownArrow,
           Enter: selectOption,
+          "Ctrl-ArrowUp": handleHistoryGoPrev,
+          "Ctrl-ArrowDown": handleHistoryGoNext,
         }),
 
         keymap(baseKeymap),
@@ -137,6 +145,22 @@ function PromptInput({ onAction }: PromptInputProps) {
     return true;
   }
 
+  function handleHistoryGoPrev() {
+    setPromptHistoryIndex((prev) => {
+      if (prev === promptHistory.length - 1) return prev;
+      return prev + 1;
+    });
+    return true;
+  }
+
+  function handleHistoryGoNext() {
+    setPromptHistoryIndex((prev) => {
+      if (prev === -1) return prev;
+      return prev - 1;
+    });
+    return true;
+  }
+
   function selectOption() {
     const selectedOption = highlightedOptionRef.current;
     if (!selectedOption) return true;
@@ -149,7 +173,8 @@ function PromptInput({ onAction }: PromptInputProps) {
 
     if (selectedOption.kind === "actions") {
       onAction(selectedOption, promptStateRef.current.doc.toJSON());
-      setPromptState(getEmptyPromptState());
+      setPromptHistoryIndex(-1);
+      setPromptState(getNewPromptState());
     } else if (selectedOption.kind === "tokens") {
       setCurrentToken(selectedOption);
       startTokenEntry(selectedOption);
@@ -171,6 +196,15 @@ function PromptInput({ onAction }: PromptInputProps) {
       )
     );
   }
+
+  // Update prompt state when prompt history index changes
+  useEffect(() => {
+    if (promptHistoryIndex === -1) {
+      setPromptState(getNewPromptState());
+    } else if (promptHistory[promptHistoryIndex]) {
+      setPromptState(getNewPromptState(promptHistory[promptHistoryIndex]));
+    }
+  }, [promptHistoryIndex]);
 
   // Change Options list when options mode changes
   useEffect(() => {

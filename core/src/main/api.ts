@@ -16,6 +16,9 @@ const SettingsSchema = z.object({
 });
 
 export type SettingsObject = z.infer<typeof SettingsSchema>;
+interface HistoryObject {
+  prompts: any[];
+}
 
 export const getRouter = (mainLightrail: MainLightrail) =>
   t.router({
@@ -75,6 +78,27 @@ export const getRouter = (mainLightrail: MainLightrail) =>
       set: t.procedure.input(SettingsSchema).mutation((req) => {
         const { input } = req;
         return promisify(jsonStorage.set)("settings", input);
+      }),
+    }),
+
+    history: t.router({
+      get: t.procedure.query(() => {
+        const history = jsonStorage.getSync("history") as HistoryObject;
+        return history.prompts ?? [];
+      }),
+      set: t.procedure.input(z.array(z.any())).mutation((req) => {
+        const { input } = req;
+        return promisify(jsonStorage.set)("history", {
+          prompts: input,
+        });
+      }),
+      append: t.procedure.input(z.any()).mutation((req) => {
+        const { input } = req;
+        const history = jsonStorage.getSync("history") as HistoryObject;
+
+        return promisify(jsonStorage.set)("history", {
+          prompts: [input, ...(history.prompts ?? [])],
+        });
       }),
     }),
 

@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import PromptInput from "./components/PromptInput/PromptInput";
 import { trpcClient } from "./util/trpc-client";
 import Settings from "./components/Settings/Settings";
-import { RecoilRoot, useRecoilState } from "recoil";
-import { viewAtom } from "./state";
+import { RecoilRoot, useRecoilState, useSetRecoilState } from "recoil";
+import { promptHistoryAtom, viewAtom } from "./state";
 import ChatHistory from "./components/ChatHistory/ChatHistory";
 import { Option } from "./components/OptionsList";
 import { TRACKS } from "../../tracks";
@@ -16,6 +16,7 @@ library.add(far);
 
 function App(): JSX.Element {
   const [view, setView] = useRecoilState(viewAtom);
+  const setPromptHistory = useSetRecoilState(promptHistoryAtom);
   const [ready, setReady] = useState(false);
   const [maxHeight, setMaxHeight] = useState(0);
 
@@ -31,6 +32,7 @@ function App(): JSX.Element {
     resizeObserver.observe(node);
   }, []);
   const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
+
   const [partialMessage, setPartialMessage] = useState<string | null>(null);
 
   async function loadTracks() {
@@ -55,11 +57,17 @@ function App(): JSX.Element {
         });
         await loadTracks();
         const { height } = await trpcClient.screenSize.query();
+        setPromptHistory(await trpcClient.history.get.query());
         setMaxHeight(height - 100);
         setReady(true);
       })();
     }
   }, []);
+
+  function appendToHistory(prompt: any) {
+    trpcClient.history.append.mutate(prompt);
+    setPromptHistory((history) => [prompt, ...history]);
+  }
 
   async function executePromptAction(action: Option, prompt: object) {
     if (!action.name) {
@@ -68,6 +76,8 @@ function App(): JSX.Element {
     if (!rendererLightrail.actions.has(action.name)) {
       throw new Error(`Action ${action.name} does not exist`);
     }
+
+    appendToHistory(prompt);
 
     rendererLightrail.actions.get(action.name)?.rendererHandler?.(prompt, []); // TODO: add support for additional args)
     await trpcClient.action.mutate({
