@@ -69,9 +69,11 @@ export class MainLightrail implements Lightrail {
   }
 
   _processEvent(e: LightrailEvent, callback?: Function) {
+    console.log("RECEIVED EVENT", e);
     const listeners = this.eventListeners[e.name];
     if (listeners) {
       for (const listener of listeners) {
+        console.log(listener);
         listener(e).then((response) => {
           if (callback) {
             callback(response);

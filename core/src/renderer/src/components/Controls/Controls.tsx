@@ -1,0 +1,49 @@
+import React from "react";
+import { LightrailControl } from "lightrail-sdk";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import Button from "../ui-elements/Button/Button";
+
+interface ControlsProps {
+  controls: LightrailControl[];
+}
+
+function Controls({ controls }: ControlsProps) {
+  const [parent, _] = useAutoAnimate({
+    duration: 100,
+  });
+
+  return (
+    <div className="" ref={parent}>
+      {controls.map((control, index) => (
+        <div key={index} className="px-4 py-2">
+          {(control.type === "button-group" || control.type === "buttons") && (
+            <div className="flex flex-row gap-4">
+              {control.buttons.map((button, buttonIndex) => (
+                <Button
+                  primary={button.color === "primary"}
+                  key={buttonIndex}
+                  onClick={button.onClick}
+                  className="flex-1"
+                  style={
+                    ["primary", "secondary", undefined].includes(button.color)
+                      ? undefined
+                      : {
+                          backgroundColor: button.color,
+                        }
+                  }
+                >
+                  {button.label}
+                </Button>
+              ))}
+            </div>
+          )}
+
+          {control.type === "slider" && <input type="range" />}
+          {control.type === "custom" && <div>Custom Control</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default Controls;

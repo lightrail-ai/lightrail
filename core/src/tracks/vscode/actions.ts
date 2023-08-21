@@ -1,65 +1,6 @@
 import { Lightrail } from "lightrail-sdk";
 import { ChatRequestMessage } from "llm-api";
-
-function getChangeProposal(llmOutput: string): Array<[string, string]> {
-  const regex = /`([^`]+)`\s*```[a-z]*\n([^`]+)```/gm;
-  const pairs: Array<[string, string]> = [];
-  let match;
-
-  while ((match = regex.exec(llmOutput)) !== null) {
-    const filePathWithLineNumbers = match[1].trim();
-    let fileContent = match[2].trim();
-    const [filePath, lineNumberRange] = extractFilePathAndRange(
-      filePathWithLineNumbers
-    );
-    if (lineNumberRange) {
-      const fs = require("fs");
-      const original = fs.readFileSync(filePath, "utf8");
-      fileContent = replaceContentInRange(
-        original,
-        fileContent,
-        lineNumberRange[0],
-        lineNumberRange[1]
-      );
-    }
-    pairs.push([filePath, fileContent]);
-  }
-
-  return pairs;
-}
-
-function replaceContentInRange(
-  originalContent: string,
-  updatedContent: string,
-  startLineNumber: number,
-  endLineNumber: number
-): string {
-  const lines = originalContent.split("\n");
-  lines.splice(
-    startLineNumber,
-    endLineNumber - startLineNumber + 1,
-    updatedContent
-  );
-  return lines.join("\n");
-}
-
-function extractFilePathAndRange(
-  filePath: string
-): [string, [number, number] | undefined] {
-  const lastColonIndex = filePath.lastIndexOf(":");
-
-  if (lastColonIndex !== -1 && lastColonIndex < filePath.length - 1) {
-    const path = filePath.slice(0, lastColonIndex);
-    const rangeString = filePath.slice(lastColonIndex + 1);
-    const [start, end] = rangeString.split("-").map(Number);
-
-    if (!isNaN(start) && !isNaN(end)) {
-      return [path, [start, end]];
-    }
-  }
-
-  return [filePath, undefined];
-}
+import { getChangeProposal } from "./util";
 
 export function registerActions(lightrail: Lightrail) {
   const editHandle = lightrail.registerAction({
@@ -79,19 +20,28 @@ export function registerActions(lightrail: Lightrail) {
         "\n\n" +
         'Output your response as a series of file paths (in backticks, i.e. as inline code) followed by code blocks of the updated file contents you\'d like to propose, like this: \n\n`/path/to/file1.js`\n```js\nconst x = 1;\n```\n\n`/path/to/file2.py`\n```python\nprint("Hello World")\n```\n\n' +
         "Don't output any other content in your response. If editing a section of a file that was provided with line-numbers, please output the line-numbers in the file path, like this: `/path/to/file1.js:1-3`. " +
-        "To propose creation of a new file, just output the file path and contents as above.";
+        "Do not use line-numbers unless they were provided in the original context entry. " +
+        "To propose creation of a new file, just output the file path and contents as above. " +
+        "Make sure you do not skip any lines in your output" +
+        // "If a file is long and you'd like to edit only part of it (and the relevant part wasn't provided with line-numbers in your context), you can omit unchanged lines from the code block by replacing them with the string `...unchanged...`. " +
+        // "ONLY use '...unchanged...' to indicate skipped lines, do not use any other forms of ellipses or indicators. " +
+        // "This string will be replaced with the original content of the file when the proposal is applied. It should be on its own line, and should be a comment (as appropriate for the language). " +
+        // "Make sure to provide enough context around your edits that it is obvious where in the file they should be applied (i.e. output at least one unchanged line verbatim BEFORE AND AFTER any lines that you'd like to change). ";
 
-      ee.on("data", (data) => {
-        lightrail.sendEvent({
-          name: "vscode:codegen-token",
-          data: data,
+        ee.on("data", (data) => {
+          lightrail.sendEvent({
+            name: "vscode:codegen-token",
+            data: data,
+          });
         });
-      });
 
       const chatMessage: ChatRequestMessage = {
         role: "user",
         content: prompt,
       };
+
+      console.log(prompt);
+
       const response = await llmClient.chatCompletion([chatMessage], {
         events: ee,
       });
@@ -124,8 +74,7 @@ export function registerActions(lightrail: Lightrail) {
       );
     },
     async rendererHandler(prompt, args) {
-      lightrail.ui?.setView("chat");
-      lightrail.ui?.chat.setHistory([]);
+      lightrail.ui?.reset();
     },
   });
 

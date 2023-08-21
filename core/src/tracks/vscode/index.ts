@@ -14,18 +14,26 @@ export default class Track implements LightrailTrack {
       await registerTokens(this.lightrail);
     const { editHandle } = await registerActions(this.lightrail);
 
+    function enableAll() {
+      selectionHandle?.enable();
+      selectedFilesHandle?.enable();
+      editHandle?.enable();
+      fileHandle?.enable();
+    }
+
     if (this.lightrail.isRenderer) {
       this.lightrail.registerEventListener(
         "lightrail:client-connected",
         async ({ data }) => {
           if (data.name === "vscode-client") {
-            selectionHandle?.enable();
-            selectedFilesHandle?.enable();
-            editHandle?.enable();
-            fileHandle?.enable();
+            enableAll();
           }
         }
       );
+
+      this.lightrail.registerEventListener("vscode:heartbeat", async () => {
+        enableAll();
+      });
 
       this.lightrail.registerEventListener(
         "lightrail:client-disconnected",

@@ -9,6 +9,7 @@ import type {
   ActionHandle,
   TokenHandle,
 } from "lightrail-sdk";
+import { trpcClient } from "./trpc-client";
 
 class RendererLightrail implements Lightrail {
   actions: Map<string, Action> = new Map();
@@ -75,7 +76,8 @@ class RendererLightrail implements Lightrail {
   }
 
   sendEvent(event: LightrailEvent): Promise<any> {
-    return new Promise((resolve) => resolve(true));
+    console.log("SENDING EVENT", event);
+    return trpcClient.clientEvent.mutate(event);
   }
 
   getActionOptions(queryInput?: string): Option[] {

@@ -41,6 +41,9 @@ dependencies:
   '@types/electron-json-storage':
     specifier: ^4.5.0
     version: 4.5.0
+  '@types/marked':
+    specifier: ^5.0.1
+    version: 5.0.1
   classnames:
     specifier: ^2.3.2
     version: 2.3.2
@@ -53,6 +56,9 @@ dependencies:
   electron-updater:
     specifier: ^5.3.0
     version: 5.3.0
+  fastest-levenshtein:
+    specifier: ^1.0.16
+    version: 1.0.16
   json5:
     specifier: ^2.2.3
     version: 2.2.3
@@ -62,6 +68,12 @@ dependencies:
   llm-api:
     specifier: ^0.9.5
     version: 0.9.5
+  marked:
+    specifier: ^7.0.3
+    version: 7.0.3
+  myers-diff:
+    specifier: ^2.1.0
+    version: 2.1.0
   prosemirror-autocomplete:
     specifier: ^0.4.3
     version: 0.4.3
@@ -1075,6 +1087,10 @@ packages:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
       '@types/node': 18.16.19
+
+  /@types/marked@5.0.1:
+    resolution: {integrity: sha512-Y3pAUzHKh605fN6fvASsz5FDSWbZcs/65Q6xYRmnIP9ZIYz27T4IOmXfH9gWJV1dpi7f1e7z7nBGUTx/a0ptpA==}
+    dev: false
 
   /@types/mdast@3.0.12:
     resolution: {integrity: sha512-DT+iNIRNX884cx0/Q1ja7NyUPpZuv0KPyL5rGNxm1WC1OtHstl7n4Jb7nk+xacNShQMbczJjt8uFzznpp6kYBg==}
@@ -2749,6 +2765,11 @@ packages:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
     dev: true
 
+  /fastest-levenshtein@1.0.16:
+    resolution: {integrity: sha512-eRnCtTTtGZFpQCwhJiUOuxPQWRXVKYDn0b2PeHfXL6/Zi53SLAzAHfVhVWK2AryC/WH05kGfxhFIPvTF0SXQzg==}
+    engines: {node: '>= 4.9.1'}
+    dev: false
+
   /fastq@1.15.0:
     resolution: {integrity: sha512-wBrocU2LCXXa+lWBt8RoIRD89Fi8OdABODa/kEnyeyjS5aZO5/GNvI5sEINADqP/h8M29UHTHUb53sUu5Ihqdw==}
     dependencies:
@@ -3673,6 +3694,12 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
+  /marked@7.0.3:
+    resolution: {integrity: sha512-ev2uM40p0zQ/GbvqotfKcSWEa59fJwluGZj5dcaUOwDRrB1F3dncdXy8NWUApk4fi8atU3kTBOwjyjZ0ud0dxw==}
+    engines: {node: '>= 16'}
+    hasBin: true
+    dev: false
+
   /matcher@3.0.0:
     resolution: {integrity: sha512-OkeDaAZ/bQCxeFAozM55PKcKU0yJMPGifLwV4Qgjitu+5MoAfSQN4lsLJeXZ1b8w0x+/Emda6MZgXS1jvsapng==}
     engines: {node: '>=10'}
@@ -4012,6 +4039,11 @@ packages:
 
   /ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
+
+  /myers-diff@2.1.0:
+    resolution: {integrity: sha512-6s/caiGUb5vNH9kq5HPw9t9OzAq6hTJ5V5N5Damd/npcp+stLg2LxQIcgJa9o51qbfTVgfth6/yVCoJvZY85BQ==}
+    engines: {node: '>=10'}
+    dev: false
 
   /mz@2.7.0:
     resolution: {integrity: sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q==}

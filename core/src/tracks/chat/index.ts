@@ -24,8 +24,7 @@ export default class Track implements LightrailTrack {
       args: [],
       icon: "message",
       async rendererHandler(_prompt, _args) {
-        lightrail.ui?.setView("chat");
-        lightrail.ui?.chat.setHistory([]);
+        lightrail.ui?.reset();
       },
       async mainHandler(_prompt, _args) {
         chatState.lastResponse = null;
@@ -39,7 +38,6 @@ export default class Track implements LightrailTrack {
       args: [],
       icon: "circle-up",
       async rendererHandler(prompt, _args) {
-        lightrail.ui?.setView("chat");
         lightrail.ui?.chat.setHistory((prev) => [
           ...prev,
           {

@@ -37,6 +37,7 @@
   const noProposalsMessage = document.querySelector("#no-proposals-message");
   const proposalsContainer = document.querySelector("#proposals-container");
   const proposalCounter = document.querySelector("#proposal-counter");
+  const proposalFileName = document.querySelector("#proposal-file-name");
 
   function updateUI() {
     if (state.proposals.length === 0) {
@@ -52,6 +53,8 @@
       proposalCounter.innerText = `${state.currentProposalIndex + 1} / ${
         state.proposals.length
       }`;
+      proposalFileName.innerText =
+        state.proposals[state.currentProposalIndex][0];
     }
   }
 

@@ -28,16 +28,24 @@ export default class Track implements LightrailTrack {
           "chrome-client"
         );
 
-        const article = await ArticleExtractor.extractFromHtml(content);
-        console.log(article);
+        if (!content) {
+          prompt.appendContextItem({
+            type: "text",
+            title: url,
+            content: "No content extracted from page",
+          });
+        } else {
+          const article = await ArticleExtractor.extractFromHtml(content);
+          console.log(article);
 
-        const markdown = turndownService.turndown(article.content);
+          const markdown = turndownService.turndown(article.content);
 
-        prompt.appendContextItem({
-          type: "text",
-          title: url,
-          content: markdown,
-        });
+          prompt.appendContextItem({
+            type: "text",
+            title: url,
+            content: markdown,
+          });
+        }
 
         prompt.appendText(url);
 

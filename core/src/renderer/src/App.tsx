@@ -10,7 +10,9 @@ import { TRACKS } from "../../tracks";
 import { rendererLightrail } from "./util/renderer-lightrail";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { far } from "@fortawesome/free-regular-svg-icons";
-import type { ChatHistoryItem } from "lightrail-sdk";
+import { LightrailControl, type ChatHistoryItem } from "lightrail-sdk";
+import Loading from "./components/Loading"; // Import the Loading component
+import Controls from "./components/Controls/Controls";
 
 library.add(far);
 
@@ -32,6 +34,7 @@ function App(): JSX.Element {
     resizeObserver.observe(node);
   }, []);
   const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
+  const [controls, setControls] = useState<LightrailControl[]>([]);
 
   const [partialMessage, setPartialMessage] = useState<string | null>(null);
 
@@ -49,17 +52,26 @@ function App(): JSX.Element {
             setHistory: setChatHistory,
             setPartialMessage: setPartialMessage,
           },
-          setView: setView,
+          controls: {
+            setControls: setControls,
+          },
+          reset: () => {
+            setChatHistory([]);
+            setControls([]);
+          },
         };
         window.electronIpc.onLightrailEvent((_event, data) => {
           console.log("RECEIVED EVENT", data);
           rendererLightrail._processEvent(data);
         });
+
         await loadTracks();
+        await trpcClient.loadTracks.mutate();
+        await trpcClient.startSocketServer.mutate();
         const { height } = await trpcClient.screenSize.query();
         setPromptHistory(await trpcClient.history.get.query());
         setMaxHeight(height - 100);
-        setReady(true);
+        setTimeout(() => setReady(true), 2000);
       })();
     }
   }, []);
@@ -92,11 +104,11 @@ function App(): JSX.Element {
       case "settings":
         return <Settings />;
       case "prompt":
-        return <PromptInput onAction={executePromptAction} />;
       case "chat":
         return (
           <>
             <ChatHistory items={chatHistory} partialMessage={partialMessage} />
+            <Controls controls={controls} />
             <PromptInput onAction={executePromptAction} />
           </>
         );
@@ -111,7 +123,7 @@ function App(): JSX.Element {
         maxHeight: `${maxHeight}px`,
       }}
     >
-      {ready && renderView()}
+      {!ready ? <Loading /> : renderView()}
     </div>
   );
 }

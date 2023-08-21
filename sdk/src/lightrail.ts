@@ -113,11 +113,36 @@ interface AIChatHistoryItem {
 
 export type ChatHistoryItem = UserChatHistoryItem | AIChatHistoryItem;
 
+interface ButtonGroupControl {
+  type: "button-group" | "buttons";
+  buttons: {
+    label: string;
+    color?: "primary" | "secondary" | (string & Record<never, never>);
+    onClick: () => void;
+  }[];
+}
+
+interface SliderControl {
+  type: "slider";
+}
+
+interface CustomControl {
+  type: "custom";
+}
+
+export type LightrailControl =
+  | ButtonGroupControl
+  | SliderControl
+  | CustomControl;
+
 export interface LightrailUI {
-  setView(view: LightrailView): void;
+  reset(): void;
   chat: {
     setHistory: Dispatch<SetStateAction<ChatHistoryItem[]>>;
     setPartialMessage: Dispatch<SetStateAction<string | null>>;
+  };
+  controls: {
+    setControls: Dispatch<SetStateAction<LightrailControl[]>>;
   };
 }
 

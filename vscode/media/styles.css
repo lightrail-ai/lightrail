@@ -91,3 +91,8 @@ input::placeholder,
 textarea::placeholder {
   color: var(--vscode-input-placeholderForeground);
 }
+
+#proposal-file-name {
+  font-size: 1.2rem;
+  font-family: monospace;
+}

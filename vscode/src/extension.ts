@@ -63,6 +63,14 @@ export function activate(context: vscode.ExtensionContext) {
       });
     }
   });
+
+  // Send heartbeat event every 2 seconds
+  setInterval(() => {
+    lightrailClient.sendEvent({
+      name: "vscode:heartbeat",
+      data: null,
+    });
+  }, 2000);
 }
 
 class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
@@ -92,9 +100,8 @@ class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
       switch (data.type) {
         case "proposal-accepted": {
           console.log("Accepted");
-          const visibleEditors = vscode.window.visibleTextEditors;
-          console.log(visibleEditors);
           const proposedContents = readFileSync(data.proposal[1], "utf8");
+          vscode.commands.executeCommand("workbench.action.closeActiveEditor");
           mkdirSync(dirname(data.proposal[0]), { recursive: true });
           writeFileSync(data.proposal[0], proposedContents);
           break;
@@ -102,6 +109,7 @@ class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
         case "proposal-rejected": {
           console.log(data.proposal);
           console.log("Rejected");
+          vscode.commands.executeCommand("workbench.action.closeActiveEditor");
           break;
         }
         case "proposal-opened": {
@@ -152,8 +160,9 @@ class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
 			<body>
         <div id="proposals-container" style="display: none">
           <h2 style="margin: 1rem">        
-            This change was proposed by Lightrail. Do you want to accept it?
+            Lightrail proposed this change for:
           </h2>
+          <div style="margin: 1rem" id="proposal-file-name"></div>
           <button style="margin: 1rem" id="accept-button">Accept</button>
           <button class="secondary" style="margin: 1rem" id="reject-button">Reject</button>
           <div>
@@ -170,10 +179,4 @@ class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {
-  lightrailClient.sendEvent({
-    name: "vscode:inactive",
-    data: null,
-  });
-  console.log("VSCODE: inactive bc deactivating");
-}
+export function deactivate() {}
