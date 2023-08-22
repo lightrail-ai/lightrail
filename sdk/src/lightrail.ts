@@ -130,10 +130,16 @@ interface CustomControl {
   type: "custom";
 }
 
+interface OutputControl {
+  type: "output";
+  content: string;
+}
+
 export type LightrailControl =
   | ButtonGroupControl
   | SliderControl
-  | CustomControl;
+  | CustomControl
+  | OutputControl;
 
 export interface LightrailUI {
   reset(): void;

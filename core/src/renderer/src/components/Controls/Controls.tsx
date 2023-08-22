@@ -37,7 +37,17 @@ function Controls({ controls }: ControlsProps) {
               ))}
             </div>
           )}
-
+          {control.type === "output" && (
+            <div className="border border-neutral-600 rounded-sm p-2 max-h-48 overflow-auto">
+              <pre>
+                {control.content ? (
+                  control.content
+                ) : (
+                  <span className="opacity-30 italic">No Output</span>
+                )}
+              </pre>
+            </div>
+          )}
           {control.type === "slider" && <input type="range" />}
           {control.type === "custom" && <div>Custom Control</div>}
         </div>

@@ -13,8 +13,8 @@ export default class Track implements LightrailTrack {
     const lightrail = this.lightrail;
 
     lightrail.registerAction({
-      name: "Run Shell Script",
-      description: "Run a shell script",
+      name: "Write a Shell Script",
+      description: "Write (& optionally run) a shell script",
       color: "#006400", // updated color
       icon: "file-lines",
       args: [],
@@ -108,6 +108,18 @@ export default class Track implements LightrailTrack {
           );
         }
       );
+      lightrail.registerEventListener(
+        "shellscript:run-output",
+        async (event) => {
+          const output = event.data;
+          lightrail.ui?.controls.setControls([
+            {
+              type: "output",
+              content: output,
+            },
+          ]);
+        }
+      );
     }
 
     if (lightrail.isMain) {
@@ -123,6 +135,10 @@ export default class Track implements LightrailTrack {
           }
 
           console.log(`stdout: ${stdout}`);
+          lightrail.sendEvent({
+            name: "shellscript:run-output",
+            data: stdout,
+          });
           console.log(`stderr: ${stderr}`);
         });
       });
