@@ -1,6 +1,5 @@
 appId: com.lightrail.app
 productName: lightrail
-name: lightrail
 directories:
   buildResources: build
 files:

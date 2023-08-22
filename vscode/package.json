@@ -34,10 +34,10 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "pnpm run compile",
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "pnpm run compile && pnpm run lint",
+    "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"
   },
@@ -56,13 +56,8 @@
     "typescript": "^5.1.3"
   },
   "dependencies": {
-    "lightrail-sdk": "link:../sdk",
-    "ws": "^8.13.0",
-    "socket.io-client": "4.7.1"
-  },
-  "pnpm": {
-    "overrides": {
-      "engine.io": "6.5.1"
-    }
+    "lightrail-sdk": "^0.0.3",
+    "socket.io-client": "^4.7.2",
+    "ws": "^8.13.0"
   }
 }
