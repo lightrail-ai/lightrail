@@ -28,7 +28,7 @@ jobs:
           version: 8
 
       - name: Install Dependencies
-        run: pnpm --prefix ./core install --shamefully-hoist --prod
+        run: pnpm --prefix ./core install --shamefully-hoist
 
       - name: build-linux
         if: matrix.os == 'ubuntu-latest'
