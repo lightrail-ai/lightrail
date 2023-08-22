@@ -47,13 +47,13 @@ jobs:
         with:
           draft: true
           files: |
-            dist/*.exe
-            dist/*.zip
-            dist/*.dmg
-            dist/*.AppImage
-            dist/*.snap
-            dist/*.deb
-            dist/*.rpm
-            dist/*.tar.gz
-            dist/*.yml
-            dist/*.blockmap
+            core/dist/*.exe
+            core/dist/*.zip
+            core/dist/*.dmg
+            core/dist/*.AppImage
+            core/dist/*.snap
+            core/dist/*.deb
+            core/dist/*.rpm
+            core/dist/*.tar.gz
+            core/dist/*.yml
+            core/dist/*.blockmap
