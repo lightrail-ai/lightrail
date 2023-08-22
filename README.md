@@ -1,6 +1,8 @@
 # Lightrail - The Universal AI Command Bar
 
-![Screenshot](./assets/screenshot1.png)
+<div style="text-align: center; padding: 24px 0">
+    <img src="./assets/screenshot1.png" height="280" />
+</div>
 
 ## Description
 

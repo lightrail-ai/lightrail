@@ -48,18 +48,24 @@ export default function Home() {
           className="flex-shrink shadow-lg rounded-md max-h-72 min-h-0 my-6"
         />
         <div className="inline-flex flex-col sm:flex-row gap-4">
-          <button className="rounded-full border px-4 py-2 inline-flex flex-row justify-center items-center gap-2 text-lg hover:bg-neutral-100 hover:text-neutral-950 active:bg-neutral-300 active:text-neutral-950  transition-colors">
+          <a
+            href="https://github.com/lightrail-ai/lightrail#installation"
+            className="rounded-full border px-4 py-2 inline-flex flex-row justify-center items-center gap-2 text-lg hover:bg-neutral-100 hover:text-neutral-950 active:bg-neutral-300 active:text-neutral-950  transition-colors"
+          >
             <FontAwesomeIcon icon={faLinux} />
             <div>
               Download <span className="opacity-50">for Linux</span>
             </div>
-          </button>
-          <button className="rounded-full border px-4 py-2 inline-flex flex-row justify-center items-center gap-2 text-lg hover:bg-neutral-100 hover:text-neutral-950 active:bg-neutral-300 active:text-neutral-950 transition-colors">
+          </a>
+          <a
+            href="https://github.com/lightrail-ai/lightrail#installation"
+            className="rounded-full border px-4 py-2 inline-flex flex-row justify-center items-center gap-2 text-lg hover:bg-neutral-100 hover:text-neutral-950 active:bg-neutral-300 active:text-neutral-950 transition-colors"
+          >
             <FontAwesomeIcon icon={faApple} />
             <div>
               Download <span className="opacity-50">for OS&nbsp;X</span>
             </div>
-          </button>
+          </a>
         </div>
         <div className="flex-1" />
         <div>
@@ -131,19 +137,25 @@ export default function Home() {
               100% Free & Open Source
             </div>
             <div className="inline-flex flex-col md:flex-row gap-4">
-              <button className="rounded-full border px-4 py-2 inline-flex flex-row justify-center items-center gap-2 text-lg hover:bg-neutral-100 hover:text-neutral-950 active:bg-neutral-300 active:text-neutral-950  transition-colors">
+              <a
+                href="https://github.com/lightrail-ai/lightrail#installation"
+                className="rounded-full border px-4 py-2 inline-flex flex-row justify-center items-center gap-2 text-lg hover:bg-neutral-100 hover:text-neutral-950 active:bg-neutral-300 active:text-neutral-950  transition-colors"
+              >
                 <FontAwesomeIcon icon={faLinux} />
                 <div>
                   Download <span className="opacity-50">for Linux</span>
                 </div>
-              </button>
+              </a>
 
-              <button className=" rounded-full border px-4 py-2 inline-flex flex-row justify-center items-center gap-2 text-lg hover:bg-neutral-100 hover:text-neutral-950 active:bg-neutral-300 active:text-neutral-950 transition-colors">
+              <a
+                href="https://github.com/lightrail-ai/lightrail#installation"
+                className=" rounded-full border px-4 py-2 inline-flex flex-row justify-center items-center gap-2 text-lg hover:bg-neutral-100 hover:text-neutral-950 active:bg-neutral-300 active:text-neutral-950 transition-colors"
+              >
                 <FontAwesomeIcon icon={faApple} />
                 <div>
                   Download <span className="opacity-50">for OS&nbsp;X</span>
                 </div>
-              </button>
+              </a>
             </div>
           </div>
         </div>
