@@ -1,7 +1,6 @@
 appId: com.lightrail.app
 productName: lightrail
 name: lightrail
-description: A universal AI command bar for developers
 directories:
   buildResources: build
 files:

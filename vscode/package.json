@@ -57,7 +57,12 @@
   },
   "dependencies": {
     "lightrail-sdk": "link:../sdk",
-    "socket.io-client": "^4.7.2",
-    "ws": "^8.13.0"
+    "ws": "^8.13.0",
+    "socket.io-client": "4.7.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "engine.io": "6.5.1"
+    }
   }
 }
