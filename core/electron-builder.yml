@@ -1,5 +1,7 @@
 appId: com.lightrail.app
-productName: lightrail-core
+productName: lightrail
+name: lightrail
+description: A universal AI command bar for developers
 directories:
   buildResources: build
 files:
@@ -12,8 +14,8 @@ files:
 asarUnpack:
   - resources/**
 afterSign: build/notarize.js
-win:
-  executableName: lightrail-core
+# win:
+#   executableName: lightrail-core
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

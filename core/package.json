@@ -1,10 +1,10 @@
 {
   "name": "lightrail-core",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "A universal AI command bar for developers",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://www.electronjs.org",
+  "author": "lightrail.ai",
+  "homepage": "https://lightrail.ai",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
