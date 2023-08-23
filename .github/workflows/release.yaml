@@ -30,6 +30,11 @@ jobs:
         run: npm --prefix ./core run build:linux
 
       - name: build-mac
+        env:
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          APPLEID: ${{ secrets.APPLEID }}
+          APPLEIDPASS: ${{ secrets.APPLEIDPASS }}
         if: matrix.os == 'macos-latest'
         run: npm --prefix ./core run build:mac
 
