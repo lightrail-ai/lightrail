@@ -14,15 +14,24 @@ Lightrail is an open-source AI command bar that seeks to simplifies software dev
 
 Lightrail is currently pre-release, so installation requires a few steps. For VSCode and Chrome integration to function, the VSCode and Chrome extensions must be installed separately.
 
-1. First, install the appropriate Lightrail Core package for your operating system:
-   - OS X:
-   - Ubuntu:
-   - Fedora:
+1. Download & install the appropriate Lightrail Core package for your operating system:
+   - OS X: [lightrail-core.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.dmg)
+   - Ubuntu: [lightrail-core.deb](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.deb)
+   - Fedora: [lightrail-core.rpm](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.rpm)
 2. Install the VSCode Extension:
-   1. hi
+   1. Download this file: [lightrail-vscode.vsix](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-vscode.vsix)
+   2. In VSCode, open the Extensions pane and click the More Actions button in the upper-right (`…`) and select `Install from VSIX...`
+   3. Select the file you just downloaded to install the Lightrail integration
+   4. Done! For more details / an alternative way to install from a VSIX file, see: [https://code.visualstudio.com/docs/editor/extension-marketplace#\_install-from-a-vsix](https://code.visualstudio.com/docs/editor/extension-marketplace#_install-from-a-vsix)
 3. Install the Chrome Extension:
-   1. hi
-   2. hi
+   1. Download this file: [lightrail-chrome.zip](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-chrome.zip)
+   2. Unzip `lightrail-chrome.zip`. It should contain a folder called `dist`.
+   3. In Chrome, go to `chrome://extensions`. There should be a toggle in the upper-right labelled `Developer Mode`. Toggle it so that `Developer Mode` is enabled.
+   4. Click the `Load unpacked` button, and select the `dist` folder (from step 2).
+   5. Done! For more details / pictures, see: [https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked)
+4. Set up Lightrail
+   1. Launch the lightrail program, click the gear icon in the upper-right corner, and enter a valid OpenAI API key. If you'd like, you can also select the model you'd like to default to.
+   2. Done! See 'Usage' below for more on using Lightrail.
 
 ## Usage
 
