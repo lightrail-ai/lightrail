@@ -14,11 +14,11 @@ asarUnpack:
 afterSign: build/notarize.js
 # win:
 #   executableName: lightrail-core
-nsis:
-  artifactName: ${name}-${version}-setup.${ext}
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
-  createDesktopShortcut: always
+# nsis:
+#   artifactName: ${name}-${version}-setup.${ext}
+#   shortcutName: ${productName}
+#   uninstallDisplayName: ${productName}
+#   createDesktopShortcut: always
 mac:
   category: "public.app-category.developer-tools"
   hardenedRuntime: true
@@ -26,8 +26,9 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
 dmg:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${name}.${ext}
 linux:
+  artifactName: ${name}.${ext}
   target:
     # - AppImage
     # - snap
