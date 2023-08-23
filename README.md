@@ -20,7 +20,6 @@ Lightrail is currently pre-release, so installation requires a few steps. For VS
    - Fedora:
 2. Install the VSCode Extension:
    1. hi
-   2. hi
 3. Install the Chrome Extension:
    1. hi
    2. hi
