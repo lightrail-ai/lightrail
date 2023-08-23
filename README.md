@@ -1,5 +1,7 @@
 # Lightrail - The Universal AI Command Bar
 
+[![](https://dcbadge.vercel.app/api/server/57bNyxgb7g)](https://discord.gg/57bNyxgb7g)
+
 <div style="text-align: center; padding: 24px 0">
     <img src="./assets/screenshot1.png" height="280" />
 </div>

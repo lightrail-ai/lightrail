@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, globalShortcut } from "electron";
+import { app, shell, BrowserWindow, globalShortcut, Event } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png";
@@ -7,6 +7,20 @@ import { getRouter } from "./api";
 import { MainLightrail } from "./main-lightrail";
 
 let mainWindow: BrowserWindow;
+
+function postConfigure(window: BrowserWindow) {
+  window.webContents.on(
+    "will-navigate",
+    function (event: Event, reqUrl: string) {
+      let requestedHost = new URL(reqUrl).host;
+      let currentHost = new URL(window.webContents.getURL()).host;
+      if (requestedHost && requestedHost != currentHost) {
+        event.preventDefault();
+        shell.openExternal(reqUrl);
+      }
+    }
+  );
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -41,13 +55,8 @@ function createWindow(): void {
     });
   }
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url);
-    return { action: "deny" };
-  });
-
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
+  // Apply postConfigure to mainWindow
+  postConfigure(mainWindow);
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);

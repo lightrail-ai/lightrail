@@ -91,6 +91,7 @@ function naiveChangeMerge(original: string, proposed: string): string {
 export function getChangeProposal(llmOutput: string): Array<[string, string]> {
   // Tokenize the llmOutput using the marked package
   const tokens = marked.lexer(llmOutput);
+  console.log(tokens);
   // Initialize an empty array to store the filePath and fileContent pairs
   const pairs: Array<[string, string]> = [];
 
