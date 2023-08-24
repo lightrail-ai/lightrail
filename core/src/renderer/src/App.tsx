@@ -30,12 +30,15 @@ function App(): JSX.Element {
 
   const resizeObserverRef = useCallback((node: HTMLDivElement) => {
     if (!node) return;
-    const resizeObserver = new ResizeObserver(() => {
+    const resizeObserver = new  ResizeObserver(() => {
       const newDimensions = {
         height: Math.ceil(node.getBoundingClientRect().height),
         width: Math.ceil(node.getBoundingClientRect().width),
       };
-      trpcClient.size.mutate(newDimensions);
+      log.silly("Main Div Resized: ", newDimensions)
+      if(newDimensions.height > 0 && newDimensions.width > 0) {
+        trpcClient.size.mutate(newDimensions);
+      }
     });
     resizeObserver.observe(node);
   }, []);
