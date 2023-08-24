@@ -10,6 +10,7 @@ import type {
   TokenHandle,
 } from "lightrail-sdk";
 import { trpcClient } from "./trpc-client";
+import log from "./logger";
 
 class RendererLightrail implements Lightrail {
   actions: Map<string, Action> = new Map();
@@ -68,15 +69,14 @@ class RendererLightrail implements Lightrail {
 
   _processEvent(e: LightrailEvent) {
     const listeners = this.eventListeners[e.name];
-    console.log("PROCESSING EVENT", e);
-    console.log("LISTENERS", listeners);
+    log.silly("Pocessing event: ", e);
     if (listeners) {
       listeners.forEach((listener) => listener(e));
     }
   }
 
   sendEvent(event: LightrailEvent): Promise<any> {
-    console.log("SENDING EVENT", event);
+    log.silly("Sending event: ", event);
     return trpcClient.clientEvent.mutate(event);
   }
 

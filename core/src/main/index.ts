@@ -5,6 +5,7 @@ import icon from "../../resources/icon.png";
 import { createIPCHandler } from "electron-trpc/main";
 import { getRouter } from "./api";
 import { MainLightrail } from "./main-lightrail";
+import log from "./logger";
 
 let mainWindow: BrowserWindow;
 
@@ -23,6 +24,7 @@ function postConfigure(window: BrowserWindow) {
 }
 
 function createWindow(): void {
+  log.silly("Creating window");
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 600,
@@ -40,18 +42,23 @@ function createWindow(): void {
   });
 
   const mainLightrail = new MainLightrail(mainWindow);
+
+  log.silly("Creating IPC handler");
   createIPCHandler({
     router: getRouter(mainLightrail),
     windows: [mainWindow],
   });
 
   mainWindow.on("ready-to-show", () => {
+    log.silly("Window ready to show");
     mainWindow.show();
+    log.silly("Window shown");
   });
 
   if (!is.dev) {
     mainWindow.on("blur", () => {
       mainWindow.hide();
+      log.silly("Window hidden");
     });
   }
 
@@ -59,8 +66,12 @@ function createWindow(): void {
   postConfigure(mainWindow);
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+    log.silly("Loading renderer from " + process.env["ELECTRON_RENDERER_URL"]);
     mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
   } else {
+    log.silly(
+      "Loading renderer from " + join(__dirname, "../renderer/index.html")
+    );
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 }
@@ -69,16 +80,21 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  log.silly("App ready");
+  log.silly("Registering global shortcut");
   globalShortcut.register("CommandOrControl+Shift+Space", () => {
     if (!mainWindow) {
       createWindow();
     } else if (mainWindow.isVisible()) {
       mainWindow.hide();
+      log.silly("Window hidden");
     } else {
       mainWindow.show();
+      log.silly("Window shown");
     }
   });
   // Set app user model id for windows
+  log.silly("Setting app user model id");
   electronApp.setAppUserModelId("com.lightrail");
 
   // Default open or close DevTools by F12 in development
@@ -97,13 +113,7 @@ app.whenReady().then(() => {
   createWindow();
 });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on("window-all-closed", (e) => {
   e.preventDefault();
   e.returnValue = false;
 });
-
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.

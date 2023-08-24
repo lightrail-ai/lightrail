@@ -2,7 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import PromptInput from "./components/PromptInput/PromptInput";
 import { trpcClient } from "./util/trpc-client";
 import Settings from "./components/Settings/Settings";
-import { RecoilRoot, useRecoilState, useSetRecoilState } from "recoil";
+import {
+  RecoilRoot,
+  useRecoilState,
+  useRecoilValue,
+  useSetRecoilState,
+} from "recoil";
 import { promptHistoryAtom, viewAtom } from "./state";
 import ChatHistory from "./components/ChatHistory/ChatHistory";
 import { Option } from "./components/OptionsList";
@@ -13,11 +18,12 @@ import { far } from "@fortawesome/free-regular-svg-icons";
 import { LightrailControl, type ChatHistoryItem } from "lightrail-sdk";
 import Loading from "./components/Loading"; // Import the Loading component
 import Controls from "./components/Controls/Controls";
+import log from "./util/logger";
 
 library.add(far);
 
 function App(): JSX.Element {
-  const [view, setView] = useRecoilState(viewAtom);
+  const view = useRecoilValue(viewAtom);
   const setPromptHistory = useSetRecoilState(promptHistoryAtom);
   const [ready, setReady] = useState(false);
   const [maxHeight, setMaxHeight] = useState(0);
@@ -39,6 +45,7 @@ function App(): JSX.Element {
   const [partialMessage, setPartialMessage] = useState<string | null>(null);
 
   async function loadTracks() {
+    log.silly("Loading tracks...");
     for (const TrackClass of TRACKS) {
       await new TrackClass(rendererLightrail).init();
     }
@@ -61,14 +68,17 @@ function App(): JSX.Element {
           },
         };
         window.electronIpc.onLightrailEvent((_event, data) => {
-          console.log("RECEIVED EVENT", data);
+          log.silly("Received event: ", data);
           rendererLightrail._processEvent(data);
         });
 
         await loadTracks();
+        log.silly("Sending event to load tracks on main process...");
         await trpcClient.loadTracks.mutate();
+        log.silly("Sending event to start socket server on main process...");
         await trpcClient.startSocketServer.mutate();
         const { height } = await trpcClient.screenSize.query();
+        log.silly("Restoring history...");
         setPromptHistory(await trpcClient.history.get.query());
         setMaxHeight(height - 100);
         setTimeout(() => setReady(true), 2000);
@@ -82,6 +92,7 @@ function App(): JSX.Element {
   }
 
   async function executePromptAction(action: Option, prompt: object) {
+    log.silly("Executing action: ", action.name);
     if (!action.name) {
       throw new Error("Cannot execute action without a name");
     }

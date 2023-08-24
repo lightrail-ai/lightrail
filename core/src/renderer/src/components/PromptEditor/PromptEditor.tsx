@@ -26,7 +26,6 @@ export const promptSchema = new Schema({
           domNode.style.backgroundColor = token.color + "30";
           domNode.style.borderBottomColor = token.color;
           domNode.style.color = token.color;
-          console.log(node.attrs);
           domNode.innerText = token.renderer(node.attrs.args);
         }
         return domNode;

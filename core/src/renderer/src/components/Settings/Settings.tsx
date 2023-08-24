@@ -19,7 +19,6 @@ function Settings({}: SettingsProps) {
   const [settings, setSettings] = useState<SettingsObject | undefined>();
   useEffect(() => {
     trpcClient.settings.get.query().then((res) => {
-      console.log(res);
       setSettings(res);
     });
   }, []);

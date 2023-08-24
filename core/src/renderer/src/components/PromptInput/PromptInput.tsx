@@ -272,7 +272,6 @@ function PromptInput({ onAction }: PromptInputProps) {
         setOptions(
           files
             .filter((f) => {
-              console.log(f);
               return f.name.startsWith(fileFilter);
             })
             .map((file) => ({
