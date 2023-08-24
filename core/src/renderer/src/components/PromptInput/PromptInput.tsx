@@ -66,8 +66,8 @@ function PromptInput({ onAction }: PromptInputProps) {
     setIsFilteringActions(true);
     return true;
   });
-  useHotkeys("ctrl+up", handleHistoryGoPrev);
-  useHotkeys("ctrl+down", handleHistoryGoNext);
+  useHotkeys("mod+up", handleHistoryGoPrev);
+  useHotkeys("mod+down", handleHistoryGoNext);
 
   function getNewPromptState(docJson?: object) {
     return EditorState.create({
@@ -111,8 +111,8 @@ function PromptInput({ onAction }: PromptInputProps) {
           ArrowUp: handleUpArrow,
           ArrowDown: handleDownArrow,
           Enter: selectOption,
-          "Ctrl-ArrowUp": handleHistoryGoPrev,
-          "Ctrl-ArrowDown": handleHistoryGoNext,
+          "Mod-ArrowUp": handleHistoryGoPrev,
+          "Mod-ArrowDown": handleHistoryGoNext,
         }),
 
         keymap(baseKeymap),

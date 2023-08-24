@@ -15,8 +15,8 @@ import log from "./logger";
 const t = initTRPC.create({ isServer: true });
 
 const SettingsSchema = z.object({
-  openAIApiKey: z.string(),
-  model: z.string(),
+  openAIApiKey: z.string().optional(),
+  model: z.string().optional(),
 });
 
 export type SettingsObject = z.infer<typeof SettingsSchema>;
