@@ -34,7 +34,7 @@ export const getRouter = (mainLightrail: MainLightrail) =>
     size: t.procedure
       .input(z.object({ height: z.number(), width: z.number() }))
       .mutation((req) => {
-        log.silly("tRPC Call: size");
+        log.silly("tRPC Call: size: " + JSON.stringify(req.input));
         const { input } = req;
         mainLightrail.window.setSize(input.width, input.height);
         mainLightrail.window.center();
@@ -48,7 +48,9 @@ export const getRouter = (mainLightrail: MainLightrail) =>
     screenSize: t.procedure.query(() => {
       log.silly("tRPC Call: screenSize");
       const { screen } = require("electron");
-      return screen.getPrimaryDisplay().workAreaSize;
+      const screenSize = screen.getPrimaryDisplay().workAreaSize;
+      log.silly("Screen size: " + JSON.stringify(screenSize));
+      return screenSize;
     }),
 
     loadTracks: t.procedure.mutation(() => {
@@ -137,6 +139,7 @@ export const getRouter = (mainLightrail: MainLightrail) =>
       get: t.procedure.query(() => {
         log.silly("tRPC Call: history.get");
         const history = jsonStorage.getSync("history") as HistoryObject;
+        log.silly("History: " + JSON.stringify(history));
         return history.prompts ?? [];
       }),
       set: t.procedure.input(z.array(z.any())).mutation((req) => {

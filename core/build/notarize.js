@@ -17,7 +17,7 @@ module.exports = async (context) => {
     return;
   }
 
-  const appId = "com.electron.app";
+  const appId = "com.lightrail.app";
 
   const { appOutDir } = context;
 
