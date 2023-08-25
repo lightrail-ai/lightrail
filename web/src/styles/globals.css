@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  font-size: 1em;
+}
+
 .hero-bg {
   background: linear-gradient(
     -45deg,

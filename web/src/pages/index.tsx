@@ -36,7 +36,7 @@ export default function Home() {
       </nav>
       <div className="w-full h-screen absolute top-0 left-0 hero-bg"></div>
       <div className="w-full h-screen absolute top-0 left-0 bg-gradient-to-b from-transparent to-neutral-950"></div>
-      <div className="container m-auto max-w-6xl h-screen mb-8 flex flex-col items-center px-4 py-24 relative gap-8">
+      <div className="container m-auto max-w-6xl min-h-screen mb-8 flex flex-col items-center px-4 py-24 relative gap-8">
         <div className="text-center text-4xl sm:text-5xl lg:text-7xl font-extrabold ">
           The <span className="">Universal</span> <br /> AI Command Bar
         </div>
@@ -45,7 +45,7 @@ export default function Home() {
         </div>
         <img
           src={"/screenshot1.png"}
-          className="flex-shrink shadow-lg rounded-md max-h-72 min-h-0 my-6"
+          className="flex-shrink shadow-lg rounded-md max-h-72 my-6"
         />
         <div className="inline-flex flex-col sm:flex-row gap-4">
           <a
