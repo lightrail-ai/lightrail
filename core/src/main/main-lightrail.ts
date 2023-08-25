@@ -41,13 +41,13 @@ export class MainLightrail implements Lightrail {
     log.silly("Registering token: " + token.name);
     this.tokens.set(token.name, token);
   }
-  registerEventListener(
+registerEventListener(
     eventName: LightrailEventName,
     handler: (event: LightrailEvent) => Promise<any>
   ): boolean {
     log.silly("Attempting to register event listener for: " + eventName);
     if (!this.eventListeners[eventName]) {
-      log.silly("No existing listeners for this event. Creating a new array.");
+      log.silly("No existing listeners for event " + eventName + ". Creating a new array.");
       this.eventListeners[eventName] = [];
     }
     this.eventListeners[eventName].push(handler);
@@ -56,45 +56,45 @@ export class MainLightrail implements Lightrail {
   }
 
   sendEvent(event: LightrailEvent, destinationClient?: string): Promise<any> {
-    log.silly("Preparing to send event: ", event);
+    log.silly("Preparing to send event: " + event.name);
     if (destinationClient) {
-      log.silly("Sending event to: " + destinationClient);
+      log.silly("Sending event " + event.name + " to: " + destinationClient);
       return new Promise((resolve) => {
-        log.silly("Actual event sending in progress...");
+        log.silly("Actual event " + event.name + " sending in progress...");
         this.clients[destinationClient].emit(
           "lightrail-event",
           event,
           (response: any) => {
-            log.silly("Event sent, received response: ", response);
+            log.silly("Event " + event.name + " sent, received response: ", response);
             resolve(response);
           }
         );
       });
     } else {
-      log.silly("No specific destination client, sending event to renderer.");
+      log.silly("No specific destination client, sending event " + event.name + " to renderer.");
       this.window.webContents.send("lightrail-event", event);
     }
-    log.silly("Event sent.");
+    log.silly("Event " + event.name + " sent.");
     return new Promise((resolve) => resolve(true));
   }
 
   _processEvent(e: LightrailEvent, callback?: Function) {
-    log.silly("Received event to process: ", e);
+    log.silly("Received event " + e.name + " to process.");
     const listeners = this.eventListeners[e.name];
     if (listeners) {
-      log.silly("Listeners found for this event, iterating...");
+      log.silly("Listeners found for event " + e.name + ", iterating...");
       for (const listener of listeners) {
-        log.silly("Processing listener");
+        log.silly("Processing listener for event " + e.name);
         listener(e).then((response) => {
-          log.silly("Listener completed, response: ", response);
+          log.silly("Listener for event " + e.name + " completed, response: ", response);
           if (callback) {
-            log.silly("Callback found, executing with response.");
+            log.silly("Callback for event " + e.name + " found, executing with response.");
             callback(response);
           }
         });
       }
     } else {
-      log.silly("No listeners found for this event.");
+      log.silly("No listeners found for event " + e.name + ".");
     }
   }
 

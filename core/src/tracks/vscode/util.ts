@@ -98,17 +98,17 @@ export function getChangeProposal(llmOutput: string): Array<[string, string]> {
   // Iterate through the tokens
   for (let i = 0; i < tokens.length - 1; i++) {
     const token = tokens[i];
-    const nextToken = tokens[i + 1];
 
     // Check if the token is of type 'paragraph'
     if (token.type === "paragraph") {
       const trimmedText = token.text.trim();
+      const nextToken = tokens.slice(i + 1).find((t) => t.type !== "space");
       // Check if the trimmed text starts and ends with backticks (`) and does not contain newline characters
       if (
         trimmedText.startsWith("`") &&
         trimmedText.endsWith("`") &&
         !trimmedText.includes("\n") &&
-        nextToken.type === "code"
+        nextToken?.type === "code"
       ) {
         // Extract the filePath and lineNumberRange from the trimmed text
         const filePathWithLineNumbers = trimmedText.slice(1, -1);
