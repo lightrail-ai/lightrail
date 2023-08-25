@@ -40,12 +40,16 @@ function Controls({ controls }: ControlsProps) {
           {control.type === "output" && (
             <div className="border border-neutral-600 rounded-sm p-2 max-h-48 overflow-auto">
               <pre>
-                {control.content ? (
-                  control.content
+                {control.stdout ? (
+                  control.stdout
                 ) : (
-                  <span className="opacity-30 italic">No Output</span>
+                  <span className="opacity-30 italic">No stdout output</span>
                 )}
               </pre>
+
+              {control.stderr && (
+                <pre className="text-red-900">{control.stderr}</pre>
+              )}
             </div>
           )}
           {control.type === "slider" && <input type="range" />}

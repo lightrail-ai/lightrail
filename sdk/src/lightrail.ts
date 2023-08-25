@@ -132,7 +132,8 @@ interface CustomControl {
 
 interface OutputControl {
   type: "output";
-  content: string;
+  stdout: string;
+  stderr: string;
 }
 
 export type LightrailControl =

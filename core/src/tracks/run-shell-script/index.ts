@@ -12,6 +12,11 @@ export default class Track implements LightrailTrack {
   async init() {
     const lightrail = this.lightrail;
 
+    let state = {
+      stdout: "",
+      stderr: "",
+    };
+
     lightrail.registerAction({
       name: "Write a Shell Script",
       description: "Write (& optionally run) a shell script",
@@ -81,6 +86,10 @@ export default class Track implements LightrailTrack {
                 {
                   label: "Discard",
                   onClick: () => {
+                    state = {
+                      stdout: "",
+                      stderr: "",
+                    };
                     lightrail.ui?.reset();
                   },
                 },
@@ -88,6 +97,10 @@ export default class Track implements LightrailTrack {
                   label: "Run",
                   color: "primary",
                   onClick: () => {
+                    state = {
+                      stdout: "",
+                      stderr: "",
+                    };
                     lightrail.sendEvent({
                       name: "shellscript:run",
                       data: response.text,
@@ -99,6 +112,7 @@ export default class Track implements LightrailTrack {
           ]);
         }
       );
+
       lightrail.registerEventListener(
         "shellscript:codegen-token",
         async (event) => {
@@ -108,14 +122,29 @@ export default class Track implements LightrailTrack {
           );
         }
       );
+
       lightrail.registerEventListener(
         "shellscript:run-output",
         async (event) => {
           const output = event.data;
+          state.stdout += output;
           lightrail.ui?.controls.setControls([
             {
               type: "output",
-              content: output,
+              ...state,
+            },
+          ]);
+        }
+      );
+      lightrail.registerEventListener(
+        "shellscript:run-error",
+        async (event) => {
+          const output = event.data;
+          state.stderr += output;
+          lightrail.ui?.controls.setControls([
+            {
+              type: "output",
+              ...state,
             },
           ]);
         }
@@ -131,15 +160,20 @@ export default class Track implements LightrailTrack {
         exec(`bash ${path}`, (error, stdout, stderr) => {
           if (error) {
             console.log(`exec error: ${error}`);
-            return;
+            lightrail.sendEvent({
+              name: "shellscript:run-error",
+              data: error,
+            });
           }
-
-          console.log(`stdout: ${stdout}`);
           lightrail.sendEvent({
             name: "shellscript:run-output",
             data: stdout,
           });
-          console.log(`stderr: ${stderr}`);
+
+          lightrail.sendEvent({
+            name: "shellscript:run-error",
+            data: stderr,
+          });
         });
       });
     }

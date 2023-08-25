@@ -1,6 +1,6 @@
 {
   "name": "lightrail-core",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "description": "A universal AI command bar for developers",
   "main": "./out/main/index.js",
   "author": "lightrail.ai",
@@ -41,7 +41,7 @@
     "fastest-levenshtein": "^1.0.16",
     "jsdom": "^22.1.0",
     "json5": "^2.2.3",
-    "lightrail-sdk": "^0.0.3",
+    "lightrail-sdk": "^0.0.4",
     "llm-api": "^0.9.5",
     "marked": "^7.0.3",
     "myers-diff": "^2.1.0",
