@@ -17,7 +17,9 @@ export default class Track implements LightrailTrack {
       color: "#f8bd13",
       async handler(args, prompt) {
         const TurndownService = require("turndown");
-        const ArticleExtractor = require("@extractus/article-extractor");
+        const { Readability } = require("@mozilla/readability");
+        const { JSDOM } = require("jsdom");
+
         const turndownService = new TurndownService();
 
         const { url, content } = await lightrail.sendEvent(
@@ -35,16 +37,27 @@ export default class Track implements LightrailTrack {
             content: "No content extracted from page",
           });
         } else {
-          const article = await ArticleExtractor.extractFromHtml(content);
-          console.log(article);
-
-          const markdown = turndownService.turndown(article.content);
-
-          prompt.appendContextItem({
-            type: "text",
-            title: url,
-            content: markdown,
+          var doc = new JSDOM(content, {
+            url: url,
           });
+          let reader = new Readability(doc.window.document);
+          let article = reader.parse();
+          if (article.content) {
+            const markdown = turndownService.turndown(article.content);
+
+            prompt.appendContextItem({
+              type: "text",
+              title: url,
+              content: markdown,
+            });
+          } else {
+            const markdown = doc.window.document.body.textContent;
+            prompt.appendContextItem({
+              type: "text",
+              title: url,
+              content: markdown,
+            });
+          }
         }
 
         prompt.appendText(url);

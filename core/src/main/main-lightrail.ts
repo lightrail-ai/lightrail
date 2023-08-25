@@ -41,13 +41,17 @@ export class MainLightrail implements Lightrail {
     log.silly("Registering token: " + token.name);
     this.tokens.set(token.name, token);
   }
-registerEventListener(
+  registerEventListener(
     eventName: LightrailEventName,
     handler: (event: LightrailEvent) => Promise<any>
   ): boolean {
     log.silly("Attempting to register event listener for: " + eventName);
     if (!this.eventListeners[eventName]) {
-      log.silly("No existing listeners for event " + eventName + ". Creating a new array.");
+      log.silly(
+        "No existing listeners for event " +
+          eventName +
+          ". Creating a new array."
+      );
       this.eventListeners[eventName] = [];
     }
     this.eventListeners[eventName].push(handler);
@@ -65,13 +69,20 @@ registerEventListener(
           "lightrail-event",
           event,
           (response: any) => {
-            log.silly("Event " + event.name + " sent, received response: ", response);
+            log.silly(
+              "Event " + event.name + " sent, received response: ",
+              response
+            );
             resolve(response);
           }
         );
       });
     } else {
-      log.silly("No specific destination client, sending event " + event.name + " to renderer.");
+      log.silly(
+        "No specific destination client, sending event " +
+          event.name +
+          " to renderer."
+      );
       this.window.webContents.send("lightrail-event", event);
     }
     log.silly("Event " + event.name + " sent.");
@@ -86,9 +97,16 @@ registerEventListener(
       for (const listener of listeners) {
         log.silly("Processing listener for event " + e.name);
         listener(e).then((response) => {
-          log.silly("Listener for event " + e.name + " completed, response: ", response);
+          log.silly(
+            "Listener for event " + e.name + " completed, response: ",
+            response
+          );
           if (callback) {
-            log.silly("Callback for event " + e.name + " found, executing with response.");
+            log.silly(
+              "Callback for event " +
+                e.name +
+                " found, executing with response."
+            );
             callback(response);
           }
         });
@@ -109,7 +127,7 @@ registerEventListener(
     const settings = jsonStorage.getSync("settings") as SettingsObject;
     log.silly("Settings obtained. Model: " + settings.model);
     log.silly("Creating a new OpenAIChatApi instance...");
-    return new OpenAIChatApi(
+    const client = new OpenAIChatApi(
       {
         apiKey: settings.openAIApiKey,
       },
@@ -118,6 +136,8 @@ registerEventListener(
         stream: true,
       }
     );
+    log.silly("LLM Client created successfully.");
+    return client;
   }
 
   async writeTempFile(data, originalPath?: string): Promise<string> {

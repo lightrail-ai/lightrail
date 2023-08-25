@@ -61,19 +61,26 @@ export default class Track implements LightrailTrack {
           role: "user",
           content: prompt,
         };
-        const response = await (chatState.lastResponse
-          ? chatState.lastResponse.respond(chatMessage, {
-              events: ee,
-            })
-          : await llmClient.chatCompletion([chatMessage], {
-              events: ee,
-            }));
-        chatState.lastResponse = response;
-
-        lightrail.sendEvent({
-          name: "chat:response",
-          data: response.content,
-        });
+        try {
+          const response = await (chatState.lastResponse
+            ? chatState.lastResponse.respond(chatMessage, {
+                events: ee,
+              })
+            : await llmClient.chatCompletion([chatMessage], {
+                events: ee,
+              }));
+          chatState.lastResponse = response;
+          lightrail.sendEvent({
+            name: "chat:response",
+            data: response.content,
+          });
+        } catch (e) {
+          console.error(e);
+          lightrail.sendEvent({
+            name: "chat:response",
+            data: "--- LLM Error, please check logs ---",
+          });
+        }
       },
     });
 
