@@ -28,5 +28,7 @@ lightrailClient.registerEventListener("chrome:get-current-page", async () => {
 chrome.runtime.onMessage.addListener(function (request) {
   if (request.type == "new-page") {
     lightrailClient.sendEvent({ name: "chrome:new-page", data: null });
+  } else if (request.type == "page-active") {
+    // lightrailClient.sendEvent({ name: "chrome:page-active", data: null });
   }
 });

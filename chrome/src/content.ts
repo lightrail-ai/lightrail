@@ -10,3 +10,13 @@ chrome.runtime.onMessage.addListener(function (request, _sender, sendResponse) {
 chrome.runtime.sendMessage({
   type: "new-page",
 });
+
+chrome.runtime.sendMessage({
+  type: "page-active",
+});
+
+setInterval(() => {
+  chrome.runtime.sendMessage({
+    type: "page-active",
+  });
+}, 1000 * 20);
