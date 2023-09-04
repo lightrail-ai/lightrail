@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { EditorState, Plugin } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { Schema } from "prosemirror-model";
@@ -6,27 +6,47 @@ import classNames from "classnames";
 
 import "prosemirror-view/style/prosemirror.css";
 import "./style.css";
-import { rendererLightrail } from "@renderer/util/renderer-lightrail";
+import { rendererTracksManager } from "@renderer/util/lightrail-renderer";
+import { htmlToElement } from "@renderer/util/util";
 
 export const promptSchema = new Schema({
   nodes: {
     text: { group: "inline", inline: true },
     token: {
       attrs: {
+        track: {},
         name: {},
         args: {},
       },
       inline: true,
       group: "inline",
       toDOM: (node) => {
-        const token = rendererLightrail.tokens.get(node.attrs.name);
+        const token = rendererTracksManager.getTokenHandle(
+          node.attrs.track,
+          node.attrs.name
+        );
         let domNode = document.createElement("span");
         domNode.className = "text-sm px-2 py-0.5 my-0.5 rounded-sm border-b";
         if (token) {
           domNode.style.backgroundColor = token.color + "30";
           domNode.style.borderBottomColor = token.color;
           domNode.style.color = token.color;
-          domNode.innerText = token.renderer(node.attrs.args);
+          const rendered = token.render(node.attrs.args);
+          console.log(rendered);
+          if (typeof rendered === "string") {
+            domNode.innerText = rendered;
+          } else {
+            domNode.appendChild(
+              htmlToElement(
+                `<span><span class="opacity-50">${node.attrs.track}.</span>${
+                  node.attrs.name
+                }${rendered.map(
+                  (r) =>
+                    `<span class="mx-1 px-1 rounded-md" style="background-color: ${token.color}50">${r}</span>`
+                )}</span>`
+              )!
+            );
+          }
         }
         return domNode;
       },

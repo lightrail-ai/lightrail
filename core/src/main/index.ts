@@ -1,11 +1,31 @@
-import { app, shell, BrowserWindow, globalShortcut, Event } from "electron";
-import { join } from "path";
+import {
+  app,
+  shell,
+  BrowserWindow,
+  globalShortcut,
+  Event,
+  protocol,
+} from "electron";
+import { join, resolve } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png";
 import { createIPCHandler } from "electron-trpc/main";
 import { getRouter } from "./api";
-import { MainLightrail } from "./main-lightrail";
 import log from "./logger";
+import { MainHandle, mainTracksManager } from "./lightrail-main";
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "lightrailtrack",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      allowServiceWorkers: true,
+      bypassCSP: true,
+    },
+  },
+]);
 
 let mainWindow: BrowserWindow;
 
@@ -41,11 +61,18 @@ function createWindow(): void {
     backgroundColor: "#0A0A0A",
   });
 
-  const mainLightrail = new MainLightrail(mainWindow);
+  // Set up track access from renderer
+  protocol.registerFileProtocol("lightrailtrack", (req, callback) => {
+    const path = req.url.replace("lightrailtrack://", "");
+    callback(resolve("/home/vishnumenon/Documents/lightrail/tracks", path));
+  });
+
+  mainTracksManager.processHandleFactory = (track) =>
+    new MainHandle(track, mainWindow);
 
   log.silly("Creating IPC handler");
   createIPCHandler({
-    router: getRouter(mainLightrail),
+    router: getRouter(mainWindow),
     windows: [mainWindow],
   });
 

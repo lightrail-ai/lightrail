@@ -9,14 +9,15 @@ import type { SettingsObject } from "../../../../main/api";
 import { trpcClient } from "@renderer/util/trpc-client";
 import SelectInput from "../ui-elements/SelectInput/SelectInput";
 
-export interface SettingsProps {}
+const models = ["gpt-3.5-turbo-16k", "gpt-4", "gpt-3.5-turbo"];
 
-const models = ["gpt-3.5-turbo-16k-0613", "gpt-4-0613"];
+export interface SettingsProps {}
 
 function Settings({}: SettingsProps) {
   const setView = useSetRecoilState(viewAtom);
 
   const [settings, setSettings] = useState<SettingsObject | undefined>();
+
   useEffect(() => {
     trpcClient.settings.get.query().then((res) => {
       setSettings(res);
@@ -37,24 +38,48 @@ function Settings({}: SettingsProps) {
       {settings && (
         <>
           <div className="px-6 py-2">
-            <TextInput
-              value={settings.openAIApiKey || ""}
+            <SelectInput
+              options={["lightrail", "openai"]}
+              value={settings.provider}
               onChange={(newVal) =>
-                setSettings({ ...settings, openAIApiKey: newVal })
+                setSettings({
+                  ...settings,
+                  provider: newVal as SettingsObject["provider"],
+                })
               }
-              label="OpenAI API Key"
-              placeholder="Your API Key"
+              label="Provider"
+              placeholder="LLM Provider"
             />
           </div>
           <div className="px-6 py-2">
             <SelectInput
               options={models}
-              value={settings.model || models[0]}
-              onChange={(newVal) => setSettings({ ...settings, model: newVal })}
+              value={settings.model}
+              onChange={(newVal) =>
+                setSettings({
+                  ...settings,
+                  model: newVal as SettingsObject["model"],
+                })
+              }
               label="Model"
               placeholder="Model Name"
             />
           </div>
+          {settings.provider === "openai" && (
+            <div className="px-6 py-2">
+              <TextInput
+                value={settings.apiKeys["openai"] || ""}
+                onChange={(newVal) =>
+                  setSettings({
+                    ...settings,
+                    apiKeys: { ...settings.apiKeys, openai: newVal },
+                  })
+                }
+                label="OpenAI API Key (Required)"
+                placeholder="Your API Key"
+              />
+            </div>
+          )}
         </>
       )}
       <div className="px-6 py-2 flex flex-row items-center justify-end">

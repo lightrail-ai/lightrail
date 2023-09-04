@@ -48,7 +48,7 @@ function Controls({ controls }: ControlsProps) {
               </pre>
 
               {control.stderr && (
-                <pre className="text-red-900">{control.stderr}</pre>
+                <pre className="text-red-800">{control.stderr}</pre>
               )}
             </div>
           )}

@@ -8,23 +8,25 @@ import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap } from "prosemirror-commands";
 import autocomplete, { ActionKind, FromTo } from "prosemirror-autocomplete";
-import OptionsList, { Option, OptionsMode } from "../OptionsList/OptionsList";
+import OptionsList, { OptionsMode } from "../OptionsList/OptionsList";
+import { Option, TokenOption } from "../../../../util/tracks";
 import { useHotkeys } from "react-hotkeys-hook";
 import { faGear } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { promptHistoryAtom, viewAtom } from "@renderer/state";
-import { rendererLightrail } from "@renderer/util/renderer-lightrail";
 import type {
   Token,
   Action,
   TokenArgument,
   TokenArgumentOption,
+  ArgsValues,
 } from "lightrail-sdk";
 import { trpcClient } from "@renderer/util/trpc-client";
 import { useStateWithRef } from "@renderer/util/custom-hooks";
 import { EditorView } from "prosemirror-view";
 import { Node } from "prosemirror-model";
+import { rendererTracksManager } from "@renderer/util/lightrail-renderer";
 
 const PATH_SEPARATOR = "/";
 
@@ -42,7 +44,7 @@ function PromptInput({ onAction }: PromptInputProps) {
   const [options, setOptions, optionsRef] = useStateWithRef<Option[]>([]);
   const [highlightedOption, setHighlightedOption, highlightedOptionRef] =
     useStateWithRef<Option | undefined>(undefined);
-  const [currentToken, setCurrentToken] = useState<Token | undefined>(
+  const [currentToken, setCurrentToken] = useState<TokenOption | undefined>(
     undefined
   );
   const [currentAction, setCurrentAction, currentActionRef] = useStateWithRef<
@@ -210,7 +212,7 @@ function PromptInput({ onAction }: PromptInputProps) {
   useEffect(() => {
     switch (optionsMode) {
       case "actions":
-        const actionOptions = rendererLightrail.getActionOptions();
+        const actionOptions = rendererTracksManager.getActionList();
         setOptions(actionOptions);
         setHighlightedOption(
           actionOptions.find(
@@ -219,7 +221,7 @@ function PromptInput({ onAction }: PromptInputProps) {
         );
         break;
       case "tokens":
-        const newOptions = rendererLightrail.getTokenOptions();
+        const newOptions = rendererTracksManager.getTokenList();
         setOptions(newOptions);
         setHighlightedOption(newOptions[0]);
         break;
@@ -242,7 +244,12 @@ function PromptInput({ onAction }: PromptInputProps) {
         tokenArgs[tokenArgs.length - 1] === "" && // Last arg is followed by whitespace (i.e. complete)
         tokenArgs.length === currentToken.args.length + 1 // Correct number of args (counting the whitespace-indicating token)
       ) {
-        insertToken(tokenName, tokenArgs.slice(0, -1));
+        const namedArgs = currentToken.args.reduce((acc, arg, i) => {
+          acc[arg.name] = tokenArgs[i];
+          return acc;
+        }, {});
+
+        insertToken(currentToken.track, tokenName, namedArgs);
       } else if (tokenName === currentToken.name) {
         const currentArgIndex = tokenArgs.length - 1;
         populateTokenArgOptions(
@@ -252,7 +259,7 @@ function PromptInput({ onAction }: PromptInputProps) {
       }
     } else if (currentFilter) {
       // Haven't selected a token yet, just filter tokens
-      const filteredTokens = rendererLightrail.getTokenOptions(currentFilter);
+      const filteredTokens = rendererTracksManager.getTokenList(currentFilter);
       setOptions(filteredTokens);
       setHighlightedOption(filteredTokens[0]);
     }
@@ -287,9 +294,10 @@ function PromptInput({ onAction }: PromptInputProps) {
     }
   }
 
-  function insertToken(tokenName, tokenArgs) {
+  function insertToken(trackName, tokenName, tokenArgs: ArgsValues) {
     let tokenType = promptSchema.nodes.token;
     let node = tokenType.create({
+      track: trackName,
       name: tokenName,
       args: tokenArgs,
     });
@@ -336,11 +344,12 @@ function PromptInput({ onAction }: PromptInputProps) {
   useEffect(() => {
     if (optionsMode !== "actions") return;
     if (isFilteringActions) {
-      const filteredActions = rendererLightrail.getActionOptions(actionsFilter);
+      const filteredActions =
+        rendererTracksManager.getActionList(actionsFilter);
       setOptions(filteredActions);
       setHighlightedOption(filteredActions[0]);
     } else {
-      const actionOptions = rendererLightrail.getActionOptions();
+      const actionOptions = rendererTracksManager.getActionList();
       setOptions(actionOptions);
     }
   }, [isFilteringActions, actionsFilter]);

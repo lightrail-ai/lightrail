@@ -1,0 +1,24 @@
+{
+  "name": "lightrail-chrome",
+  "version": "1.0.0",
+  "description": "",
+  "main": "track-dist/index.js",
+  "browser": "track-dist/index.mjs",
+  "scripts": {
+    "build:esm": "esbuild index.ts --bundle --platform=node --format=esm --outfile=track-dist/index.mjs",
+    "build:cjs": "esbuild index.ts --bundle --platform=node --outfile=track-dist/index.js",
+    "build": "npm run build:esm && npm run build:cjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.5.7",
+    "esbuild": "^0.19.2"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.4.4",
+    "lightrail-sdk": "file:../../sdk",
+    "linkedom": "^0.15.2",
+    "node-html-markdown": "^1.3.0"
+  }
+}

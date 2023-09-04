@@ -8,7 +8,7 @@ let lightrailClient = new LightrailClient(
   }) as any
 );
 
-lightrailClient.registerEventListener("chrome:get-current-page", async () => {
+lightrailClient.registerHandler("get-current-page", async () => {
   const [tab] = await chrome.tabs.query({
     active: true,
     lastFocusedWindow: true,
@@ -27,8 +27,13 @@ lightrailClient.registerEventListener("chrome:get-current-page", async () => {
 
 chrome.runtime.onMessage.addListener(function (request) {
   if (request.type == "new-page") {
-    lightrailClient.sendEvent({ name: "chrome:new-page", data: null });
+    lightrailClient.sendMessageToMain(
+      "chrome-client",
+      "new-page",
+      undefined,
+      true
+    );
   } else if (request.type == "page-active") {
-    // lightrailClient.sendEvent({ name: "chrome:page-active", data: null });
+    // lightrailClient.sendMessageToMain("chrome-client", "page-active", undefined, true);
   }
 });

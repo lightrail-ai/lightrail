@@ -30,6 +30,8 @@
     "@types/react": "^18.2.19",
     "@types/websocket": "^1.0.5",
     "@types/ws": "^8.5.5",
+    "electron-log": "^5.0.0-beta.28",
+    "langchain": "^0.0.136",
     "llm-api": "^0.9.5",
     "typescript": "^5.0.2",
     "vite": "^4.4.5",
@@ -37,10 +39,10 @@
     "ws": "^8.13.0"
   },
   "dependencies": {
-    "socket.io-client": "4.7.1",
     "@types/node": "^20.4.9",
     "@types/react": "^18.2.19",
     "@types/websocket": "^1.0.5",
-    "@types/ws": "^8.5.5"
+    "@types/ws": "^8.5.5",
+    "socket.io-client": "4.7.1"
   }
 }

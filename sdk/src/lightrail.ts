@@ -9,10 +9,10 @@
  * Actions can define their arguments, but their first argument will always be a free-form prompt of some kind.
  * Tokens can also define arguments as well as a function to transform the prompt using provided helpers.
  *
- * Tracks can also define event listeners, which are similarly registered with the Lightrail instance.
- * Event listeners are called when a certain event occurs, and are passed the event object as an argument.
- * Event names can be predefined Lightrail events, or custom events. Custom events are strings, but should be namespaced to avoid collisions (i.e. extension-name:event-name-kabob).
- * Events can also be sent by third-party code / extensions to trigger actions or other functionality.
+ * Tracks can also define message handlers, which are similarly registered with the Lightrail instance.
+ * message handlers are called when a certain message occurs, and are passed the message object as an argument.
+ * message names can be predefined Lightrail messages, or custom messages. Custom messages are strings, but should be namespaced to avoid collisions (i.e. extension-name:message-name-kabob).
+ * messages can also be sent by third-party code / extensions to trigger actions or other functionality.
  *
  *
  * A Track is initialized by calling its init() method, which registers its Tokens and Actions with the Lightrail instance
@@ -21,12 +21,12 @@
  * Tracks should be designed with the Unix Philosphy in mind, i.e. composability, modularity, and reusability, with a focus on doing one thing well and using text as the universal interface.
  */
 
-// import type { OpenAIChatApi } from "llm-api";
+import type { MainLogger } from "electron-log";
+import type { RendererLogger } from "electron-log";
 import type { Dispatch, SetStateAction } from "react";
-
-type OpenAIChatApi = any;
-
-export type ColorPair = [background: string, foreground: string];
+import type { BaseLanguageModelCallOptions } from "langchain/base_language";
+import type { BaseMessage } from "langchain/schema";
+import type { BaseChatModel } from "langchain/chat_models/base";
 
 export type ActionArgument = {
   name: string;
@@ -39,20 +39,7 @@ export type ActionArgument = {
   | { type: "path" }
 );
 
-export interface TrackEventChannel {
-  send(eventName: string, eventData: any): void;
-}
-
-export type Action = {
-  name: string;
-  icon: string; // icon name, from fontawesome-regular (eg. "fa-file")
-  color: string; // hex color
-  description: string; // short description of the action
-  args: ActionArgument[]; // a list of AUXILIARY arguments that the action expects (i.e. not including the initial prompt)
-  rendererHandler?: (prompt: object, args: object[]) => Promise<void> | void; // Arguments are passed to the action handler as objects, and the handler is expected to parse them into the appropriate types.
-  mainHandler?: (prompt: string, args: string[]) => Promise<void>; // Arguments are passed to the action handler as strings, and the handler is expected to parse them into the appropriate types.
-  disabled?: boolean;
-};
+export type ArgsValues = { [key: string]: string };
 
 export type TokenArgument = ActionArgument;
 
@@ -62,44 +49,125 @@ export type PromptContextItem = {
   content: string;
 };
 
+interface TokenStore {
+  getTokenHandle(track: string, name: string): TokenHandle | undefined;
+}
+
 export class Prompt {
   _body: string = "";
   _context: PromptContextItem[] = [];
+  _json: any;
+  _hydrated: boolean = false;
+  _tracksManager: TokenStore;
+
+  constructor(json: any, tracksManager: TokenStore) {
+    this._json = json;
+    this._tracksManager = tracksManager;
+  }
+
   appendContextItem(item: PromptContextItem) {
     this._context.push(item);
   }
   appendText(text: string) {
     this._body += text;
   }
+  async hydrate(
+    mainHandle: LightrailMainProcessHandle,
+    tokenOverrides?: any
+  ): Promise<void> {
+    if (tokenOverrides) {
+      throw new Error("Token overrides not yet implemented");
+    }
+
+    const nodes = this._json["content"];
+
+    for (const node of nodes) {
+      if (node.type === "text") {
+        this.appendText(node.text);
+      } else if (node.type === "token") {
+        const token = this._tracksManager.getTokenHandle(
+          node.attrs.track,
+          node.attrs.name
+        );
+        if (!token) {
+          mainHandle.logger.error("Couldn't find token.", node.attrs);
+          throw new Error(`Unknown token ${node.attrs.name}`);
+        }
+        await token.hydrate(mainHandle, node.attrs.args, this);
+      }
+    }
+
+    this._hydrated = true;
+  }
+
+  toString(): string {
+    if (!this._hydrated) {
+      throw new Error(
+        "Prompt must be hydrated before converting to string; call `await prompt.hydrate(handle)` first."
+      );
+    }
+
+    let output =
+      this._context.length > 0
+        ? "Use the following context to help you respond. Each context item is delimited by the string '======' and starts with the item's title or identifier (i.e a filename, url, etc) as the first line (in backticks):\n\n"
+        : "";
+    for (const contextItem of this._context) {
+      output += "======\n";
+      switch (contextItem.type) {
+        case "code":
+          output += "`" + contextItem.title + "`\n\n";
+          output += "```\n" + contextItem.content + "\n```";
+          break;
+        case "text":
+          output += "`" + contextItem.title + "`\n\n";
+          output += contextItem.content;
+      }
+      output += "\n======\n\n";
+    }
+    if (this._context.length > 0) {
+      output += "Use the above context to respond to the following prompt:\n\n";
+    }
+
+    output += this._body;
+
+    return output;
+  }
 }
+
+export type Action = {
+  name: string;
+  icon: string; // icon name, from fontawesome-regular (eg. "fa-file")
+  color: string; // hex color
+  description: string; // short description of the action
+  args: ActionArgument[]; // a list of AUXILIARY arguments that the action expects (i.e. not including the initial prompt)
+  handler: (
+    mainHandle: LightrailMainProcessHandle,
+    promptHandle: Prompt,
+    args: ArgsValues
+  ) => Promise<void>; // the function that handles the action
+  disabled?: boolean;
+};
 
 export type Token = {
   name: string;
   color: string;
   description: string;
   args: TokenArgument[]; // Argument values are passed to the token handler/renderer as strings, and the handler is expected to parse them into the appropriate types as needed.
-  renderer: (args: string[]) => string; // Returns a string for displaying the token in the prompt field.
-  handler: (args: string[], prompt: Prompt) => Promise<Prompt>;
+  render: (args: ArgsValues) => string | string[]; // Returns a string to display as the token, or a rendering of args as a string array
+  hydrate: (
+    mainHandle: LightrailMainProcessHandle,
+    args: ArgsValues,
+    prompt: Prompt
+  ) => Promise<void>; // Modify the prompt object to include the token's content.
   disabled?: boolean;
 };
 
+/* Potentially rename this to just a general ArgumentOption type? */
 export interface TokenArgumentOption {
   value: any;
   description: string;
   name: string;
 }
-
-export type LightrailEventName =
-  | "lightrail:client-connected"
-  | "lightrail:client-disconnected"
-  | (string & Record<never, never>);
-
-export type LightrailView = "prompt" | "settings" | "chat";
-
-export type LightrailEvent = {
-  name: LightrailEventName;
-  data: any;
-};
 
 interface UserChatHistoryItem {
   sender: "user";
@@ -153,31 +221,87 @@ export interface LightrailUI {
   };
 }
 
-export interface ActionHandle {
+export interface LLMPromptOptions {}
+
+export interface LightrailLLM {
+  chat: {
+    reset(): void; // Reset the chat model history
+    model: BaseChatModel; // Access the current chat model (underlying)
+    converse(
+      messages: BaseMessage[],
+      options?: BaseLanguageModelCallOptions
+    ): Promise<BaseMessage>; // Wrapper for model.call that maintains history (new messages are appended to existing history)
+  };
+}
+
+export interface LightrailFS {
+  writeTempFile: (data: string, originalPath?: string) => Promise<string>;
+}
+
+export interface ListItemHandle {
   disable(): void;
   enable(): void;
   prioritize(): void; // Move to top of suggestions list
 }
 
-export type TokenHandle = ActionHandle;
+export type TokenHandle = Token & ListItemHandle;
+export type ActionHandle = Action & ListItemHandle;
 
-export interface Lightrail {
-  registerAction(action: Action): void | ActionHandle;
-  registerToken(token: Token): void | TokenHandle;
-  registerEventListener(
-    eventName: LightrailEventName,
-    handler: (event: LightrailEvent) => Promise<any>
-  ): boolean;
-  sendEvent(event: LightrailEvent, destinationClient?: string): Promise<any>;
-  getLLMClient(): OpenAIChatApi | void;
-  isRenderer: boolean;
-  isMain: boolean;
-  writeTempFile: (data: string, originalPath?: string) => Promise<string>;
-  ui: LightrailUI | undefined;
+export interface LightrailMainProcessHandle {
+  env: "main";
+  sendMessageToRenderer(
+    messageName: string,
+    messageBody?: any,
+    broadcast?: any
+  ): void;
+  sendMessageToExternalClient(
+    clientName: string,
+    messageName: string,
+    messageBody?: any
+  ): Promise<any>;
+  getTrackTokens(): Token[];
+  getTrackActions(): Action[];
+  getTokenByName(name: string): Token | undefined;
+  getActionByName(name: string): Action | undefined;
+  llm: LightrailLLM;
+  fs: LightrailFS;
+  logger: MainLogger;
 }
 
+export interface LightrailRendererProcessHandle {
+  env: "renderer";
+  sendMessageToMain(
+    messageName: string,
+    messageBody?: any,
+    broadcast?: boolean
+  ): Promise<any>;
+  getTrackTokens(): TokenHandle[];
+  getTrackActions(): ActionHandle[];
+  getTokenByName(name: string): TokenHandle | undefined;
+  getActionByName(name: string): ActionHandle | undefined;
+  ui: LightrailUI | undefined;
+  logger: RendererLogger;
+}
+
+export type LightrailMainMessageHandler = (
+  mainHandle: LightrailMainProcessHandle,
+  messageBody?: any
+) => Promise<any>;
+export type LightrailRendererMessageHandler = (
+  rendererHandle: LightrailRendererProcessHandle,
+  messageBody?: any
+) => Promise<void>;
+
 export interface LightrailTrack {
-  lightrail: Lightrail;
-  setup?(): Promise<void>; // Run once, on install, if present
-  init(): Promise<void>; // Run on load to register actions and tokens
+  name: string;
+  tokens?: Token[];
+  actions?: Action[];
+  handlers?: {
+    main?: {
+      [messageName: string]: LightrailMainMessageHandler;
+    };
+    renderer?: {
+      [messageName: string]: LightrailRendererMessageHandler;
+    };
+  };
 }
