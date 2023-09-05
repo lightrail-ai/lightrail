@@ -37,14 +37,14 @@ export default function Home() {
       <div className="w-full h-screen absolute top-0 left-0 hero-bg"></div>
       <div className="w-full h-screen absolute top-0 left-0 bg-gradient-to-b from-transparent to-neutral-950"></div>
       <div className="container m-auto max-w-6xl min-h-screen mb-8 flex flex-col items-center px-4 py-24 relative gap-8">
-        <div className="text-center text-4xl sm:text-5xl lg:text-7xl font-extrabold ">
-          The <span className="">Universal</span> <br /> AI Command Bar
+        <div className="text-center text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-slate-100 to-slate-500">
+          The Universal <br /> AI Command Bar
         </div>
         <div className="rounded-full border text-xs md:text-base border-neutral-600 px-4 py-2 opacity-40 text-center">
           Software Development, Simplified
         </div>
         <img
-          src={"/screenshot1.png"}
+          src={"/screenshot5.png"}
           className="flex-shrink shadow-lg rounded-md max-h-72 my-6"
         />
         <div className="inline-flex flex-col sm:flex-row gap-4">

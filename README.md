@@ -3,7 +3,7 @@
 [![](https://dcbadge.vercel.app/api/server/57bNyxgb7g)](https://discord.gg/57bNyxgb7g)
 
 <div style="text-align: center; padding: 24px 0">
-    <img src="./assets/screenshot1.png" height="280" />
+    <img src="./assets/screenshot5-with-bg.jpeg" height="280" />
 </div>
 
 ## Description
@@ -31,9 +31,6 @@ Lightrail is currently pre-release, so installation requires a few steps. For VS
    3. In Chrome, go to `chrome://extensions`. There should be a toggle in the upper-right labelled `Developer Mode`. Toggle it so that `Developer Mode` is enabled.
    4. Click the `Load unpacked` button, and select the `dist` folder (from step 2).
    5. Done! For more details / pictures, see: [https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked)
-4. **Set up Lightrail**
-   1. Launch the lightrail program, click the gear icon in the upper-right corner, and enter a valid OpenAI API key. If you'd like, you can also select the model you'd like to default to.
-   2. Done! See 'Usage' below for more on using Lightrail.
 
 ## Usage
 
@@ -42,10 +39,15 @@ Lightrail is currently pre-release, so installation requires a few steps. For VS
 - Enter text in the prompt, use the up- and down-arrow keys to select an action, and hit `enter/return` to send the prompt to the action.
 - Type the forward-slash at any point in a prompt (`/`) to open the Tokens menu. Use the arrow keys to select a token and hit enter to insert that token into your prompt.
   - Tokens make it easy to pull in additional sources of context for your prompt. In general, try to be explicit about what sources of content you'd like to include for best results.
+- `Cmd/Ctrl-Up` and `Cmd/Ctrl-Down` cycle through the prompt history
+- By default, the application uses a lightrail.ai-provided gateway to access OpenAI's LLMs. If you'd like to switch to using your own API key and accessing the OpenAI API directly, you can configure that in Settings (click the gear icon in the prompt input box).
 
 ## Writing Tracks
 
-_Documentation Coming Soon_
+The `lightrail-sdk` npm package makes it easy to create additional tracks and extend lightrail's functionality.
+
+- To get started, copy this project layout: [starter](https://github.com/lightrail-ai/lightrail/tree/main/tracks/starter)
+- See this repository's [tracks](https://github.com/lightrail-ai/lightrail/tree/main/tracks) for example usage of the SDK (**More Documentation Coming Soon**)
 
 ## Contributing
 
