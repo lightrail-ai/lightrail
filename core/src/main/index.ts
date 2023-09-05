@@ -14,6 +14,9 @@ import { getRouter } from "./api";
 import log from "./logger";
 import { MainHandle, mainTracksManager } from "./lightrail-main";
 import { TRACKS_DIR } from "./track-admin";
+import setUpUpdates from "update-electron-app";
+
+setUpUpdates();
 
 protocol.registerSchemesAsPrivileged([
   {
