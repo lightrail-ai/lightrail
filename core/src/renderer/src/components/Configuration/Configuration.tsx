@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Settings from "../Settings/Settings";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -6,6 +6,7 @@ import { viewAtom } from "@renderer/state";
 import { useSetRecoilState } from "recoil";
 import classNames from "classnames";
 import TrackAdmin from "../TrackAdmin/TrackAdmin";
+import { trpcClient } from "@renderer/util/trpc-client";
 
 const TabButton = ({ label, currentTab, setTab }) => (
   <button
@@ -21,7 +22,12 @@ const TabButton = ({ label, currentTab, setTab }) => (
 
 const Configuration = () => {
   const [tab, setTab] = useState("Tracks");
+  const [version, setVersion] = useState("");
   const setView = useSetRecoilState(viewAtom);
+
+  useEffect(() => {
+    trpcClient.version.query().then((v) => setVersion(v));
+  }, []);
 
   return (
     <div className="min-w-[600px] py-4">
@@ -29,6 +35,8 @@ const Configuration = () => {
         <div className="px-6 py-2 flex flex-col gap-4 border-r border-r-neutral-700">
           <TabButton label="Tracks" currentTab={tab} setTab={setTab} />
           <TabButton label="Settings" currentTab={tab} setTab={setTab} />
+          <div className="flex-1" />
+          <div className="text-xs opacity-40 text-center">v{version}</div>
         </div>
         <div className="px-6 py-2 flex-1">
           <div className="px-6 py-2 flex flex-row items-center">

@@ -1,6 +1,6 @@
 {
   "name": "lightrail-sdk",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "module",
   "main": "./dist/lightrail-sdk.umd.cjs",
   "module": "./dist/lightrail-sdk.js",
@@ -26,23 +26,17 @@
     "*"
   ],
   "devDependencies": {
-    "@types/node": "^20.4.9",
-    "@types/react": "^18.2.19",
-    "@types/websocket": "^1.0.5",
-    "@types/ws": "^8.5.5",
-    "electron-log": "^5.0.0-beta.28",
-    "langchain": "^0.0.136",
-    "llm-api": "^0.9.5",
     "typescript": "^5.0.2",
     "vite": "^4.4.5",
-    "vite-plugin-dts": "^3.5.1",
-    "ws": "^8.13.0"
+    "vite-plugin-dts": "^3.5.1"
   },
   "dependencies": {
     "@types/node": "^20.4.9",
     "@types/react": "^18.2.19",
     "@types/websocket": "^1.0.5",
     "@types/ws": "^8.5.5",
-    "socket.io-client": "4.7.1"
+    "socket.io-client": "4.7.1",
+    "electron-log": "^5.0.0-beta.28",
+    "langchain": "^0.0.136"
   }
 }

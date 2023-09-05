@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@types/turndown": "^5.0.1",
-    "lightrail-sdk": "^0.0.5",
+    "lightrail-sdk": "^0.0.6",
     "socket.io-client": "^4.7.2",
     "turndown": "^7.1.2"
   }

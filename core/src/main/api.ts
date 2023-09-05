@@ -1,6 +1,6 @@
 import z from "zod";
 import { initTRPC } from "@trpc/server";
-import { clipboard } from "electron";
+import { app, clipboard } from "electron";
 import jsonStorage from "electron-json-storage";
 import { promisify } from "util";
 import * as fs from "fs/promises";
@@ -40,6 +40,10 @@ let loadingStatus = {
 
 export const getRouter = (window: BrowserWindow) =>
   t.router({
+    version: t.procedure.query(() => {
+      log.silly("tRPC Call: version");
+      return app.getVersion();
+    }),
     size: t.procedure
       .input(z.object({ height: z.number(), width: z.number() }))
       .mutation((req) => {
