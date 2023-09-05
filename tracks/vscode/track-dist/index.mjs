@@ -2738,7 +2738,10 @@ var vscode_default = {
             ]
           }
         );
-        handle.sendMessageToRenderer("new-message", response.content);
+        handle.sendMessageToRenderer("new-message", {
+          sender: "ai",
+          content: response.content
+        });
         const proposedContent = getChangeProposal(response.content);
         console.log(proposedContent);
         const tempFiles = await Promise.all(

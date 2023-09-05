@@ -25,16 +25,7 @@ function Settings({}: SettingsProps) {
   }, []);
 
   return (
-    <div className="min-w-[600px] py-4">
-      <div className="px-6 py-2 flex flex-row items-center">
-        <button
-          className="opacity-50 hover:opacity-100"
-          onClick={() => setView("prompt")}
-        >
-          <FontAwesomeIcon fixedWidth icon={faArrowLeft} className="pr-6 " />
-        </button>
-        <div className="text-neutral-50">Settings</div>
-      </div>
+    <div className="py-4">
       {settings && (
         <>
           <div className="px-6 py-2">

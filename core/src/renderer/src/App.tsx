@@ -1,17 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import PromptInput from "./components/PromptInput/PromptInput";
 import { trpcClient } from "./util/trpc-client";
-import Settings from "./components/Settings/Settings";
 import { RecoilRoot, useRecoilValue, useSetRecoilState } from "recoil";
 import { promptHistoryAtom, viewAtom } from "./state";
 import ChatHistory from "./components/ChatHistory/ChatHistory";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { far } from "@fortawesome/free-regular-svg-icons";
-import {
-  LightrailControl,
-  type ChatHistoryItem,
-  LightrailTrack,
-} from "lightrail-sdk";
+import { LightrailControl, type ChatHistoryItem } from "lightrail-sdk";
 import Loading from "./components/Loading"; // Import the Loading component
 import Controls from "./components/Controls/Controls";
 import log from "./util/logger";
@@ -22,8 +17,8 @@ import {
 } from "./util/lightrail-renderer";
 import { Option } from "../../util/tracks";
 import ErrorDisplay from "./components/Error/Error";
-import ChatTrack from "../../basic-tracks/chat";
-import SystemTrack from "../../basic-tracks/system";
+import Configuration from "./components/Configuration/Configuration";
+import { loadTracks } from "./util/track-admin";
 
 library.add(far);
 
@@ -92,24 +87,9 @@ function App(): JSX.Element {
       log.silly("Running setup routine");
       await trpcClient.setup.mutate();
       log.silly("Sending event to load tracks on main process...");
-      const trackPaths = await trpcClient.loadTracks.mutate();
+      const trackPaths = await trpcClient.tracks.load.mutate();
       log.silly("Received track listing: ", trackPaths);
-      for (const browserPath of trackPaths) {
-        log.silly("Loading track from path: " + browserPath);
-        const imp = await import(/* @vite-ignore */ browserPath);
-        const track: LightrailTrack = imp.default;
-        if (!track.name) {
-          log.error("Track import failed from path: " + browserPath);
-        } else {
-          rendererMessagingHub.registerTrack(track);
-          rendererTracksManager.registerTrack(track);
-        }
-      }
-      log.silly("Loading built-in tracks...");
-      for (const track of [SystemTrack, ChatTrack]) {
-        rendererMessagingHub.registerTrack(track);
-        rendererTracksManager.registerTrack(track);
-      }
+      await loadTracks(trackPaths);
       log.silly("Sending event to start socket server on main process...");
       await trpcClient.startSocketServer.mutate();
       const { height } = await trpcClient.screenSize.query();
@@ -153,7 +133,7 @@ function App(): JSX.Element {
   function renderView() {
     switch (view) {
       case "settings":
-        return <Settings />;
+        return <Configuration />;
       case "prompt":
         return (
           <>

@@ -14,9 +14,8 @@ import {
   mainMessagingHub,
   mainTracksManager,
 } from "./lightrail-main";
-import { LightrailTrack, Prompt } from "lightrail-sdk";
-import ChatTrack from "../basic-tracks/chat";
-import SystemTrack from "../basic-tracks/system";
+import { Prompt } from "lightrail-sdk";
+import { TRACKS_DIR, installTrack, loadTracks } from "./track-admin";
 
 const t = initTRPC.create({
   isServer: true,
@@ -68,6 +67,7 @@ export const getRouter = (window: BrowserWindow) =>
       // Initialize settings
       const settings = jsonStorage.getSync("settings") as SettingsObject;
       if (!settings || !settings.provider || !settings.model) {
+        log.silly("No valid settings found, (re)initializing settings");
         await promisify(jsonStorage.set)("settings", {
           provider: "lightrail",
           model: "gpt-3.5-turbo-16k",
@@ -75,45 +75,34 @@ export const getRouter = (window: BrowserWindow) =>
         } as SettingsObject);
         chatManager.model = LightrailChatLLMInterface.initializeModel();
       }
+      // Make sure track directory exists
+      await fs.mkdir(TRACKS_DIR, { recursive: true });
+      // If track directory is empty, install the default tracks
+      const trackDirs = await fs.readdir(TRACKS_DIR);
+      if (trackDirs.length === 0) {
+        log.silly("No tracks found, installing default starter tracks");
+        await installTrack(
+          "https://github.com/lightrail-ai/lightrail/releases/latest/download/starter-tracks.zip"
+        );
+      }
     }),
 
-    loadTracks: t.procedure.mutation(async () => {
-      log.silly("tRPC Call: loadTracks");
-      // Load tracks from disk
-      const tracksRoot = "/home/vishnumenon/Documents/lightrail/tracks";
-      // List tracks from tracks folder
-      const trackDirs = await fs.readdir(tracksRoot);
-      log.silly("Found Tracks: " + JSON.stringify(trackDirs));
-      let pathsForRenderer: string[] = [];
-      for (const trackDir of trackDirs) {
-        log.silly("Loading track from dir: " + trackDir);
-        const trackDirPath = path.join(tracksRoot, trackDir);
-        const packageJson = JSON.parse(
-          await fs.readFile(path.join(trackDirPath, "package.json"), "utf-8")
-        );
-        const mainPath = path.resolve(trackDirPath, packageJson.main);
-        const browserPath = path.resolve(trackDirPath, packageJson.browser);
-        log.silly("Loading track from path: " + mainPath);
-        pathsForRenderer.push(
-          "lightrailtrack://" + path.relative(tracksRoot, browserPath)
-        );
-        const imp = (await import(mainPath)).default;
-        // NB: This is a hack to deal w/ some weirdness in the way bundling works currently for tracks
-        const track: LightrailTrack = imp.default ? imp.default : imp;
-        if (!track.name) {
-          log.error("Track import failed from path: " + mainPath);
-        } else {
-          mainMessagingHub.registerTrack(track);
-          mainTracksManager.registerTrack(track);
-        }
-      }
-      // Load built-in tracks
-      for (const track of [SystemTrack, ChatTrack]) {
-        mainMessagingHub.registerTrack(track);
-        mainTracksManager.registerTrack(track);
-      }
-      log.silly("Tracks loaded");
-      return pathsForRenderer;
+    tracks: t.router({
+      location: t.procedure.query(() => {
+        log.silly("tRPC Call: tracks.location");
+        return TRACKS_DIR;
+      }),
+      load: t.procedure.mutation(async () => {
+        log.silly("tRPC Call: tracks.load");
+        const paths = await loadTracks();
+        return paths;
+      }),
+      install: t.procedure.input(z.string()).mutation(async (req) => {
+        log.silly("tRPC Call: tracks.install");
+        await installTrack(req.input);
+        const paths = await loadTracks();
+        return paths;
+      }),
     }),
 
     startSocketServer: t.procedure.mutation(() => {

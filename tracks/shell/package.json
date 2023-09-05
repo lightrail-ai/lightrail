@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "langchain": "^0.0.138",
-    "lightrail-sdk": "file:../../sdk",
+    "lightrail-sdk": "^0.0.5",
     "marked": "^7.0.5"
   }
 }

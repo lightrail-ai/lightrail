@@ -13,6 +13,7 @@ import { createIPCHandler } from "electron-trpc/main";
 import { getRouter } from "./api";
 import log from "./logger";
 import { MainHandle, mainTracksManager } from "./lightrail-main";
+import { TRACKS_DIR } from "./track-admin";
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -64,7 +65,7 @@ function createWindow(): void {
   // Set up track access from renderer
   protocol.registerFileProtocol("lightrailtrack", (req, callback) => {
     const path = req.url.replace("lightrailtrack://", "");
-    callback(resolve("/home/vishnumenon/Documents/lightrail/tracks", path));
+    callback(resolve(TRACKS_DIR, path));
   });
 
   mainTracksManager.processHandleFactory = (track) =>
