@@ -1,9 +1,8 @@
 import { Server } from "socket.io";
-import { MainLightrail } from "./main-lightrail";
-import type { LightrailEvent } from "lightrail-sdk";
 import log from "./logger";
+import { mainMessagingHub, mainTracksManager } from "./lightrail-main";
 
-export function startWSServer(mainLightrail: MainLightrail) {
+export function startWSServer() {
   // Create a SocketIO server
   log.silly("Starting WebSocket Server...");
   const wss = new Server({
@@ -22,34 +21,49 @@ export function startWSServer(mainLightrail: MainLightrail) {
     ws.on("register-client", (from) => {
       log.silly("Client registered: " + from);
       connectionDetails.name = from;
-      mainLightrail._registerClient(from, ws);
-      const connectEvent: LightrailEvent = {
-        name: "lightrail:client-connected",
-        data: {
-          name: connectionDetails.name,
+      mainMessagingHub.registerClient(from, ws);
+      mainMessagingHub.routeMessage(
+        "lightrail",
+        mainTracksManager,
+        "client-connected",
+        {
+          name: from,
         },
-      };
-      log.silly("Processing connectEvent: ", connectEvent);
-      mainLightrail._processEvent(connectEvent);
-      mainLightrail.sendEvent(connectEvent);
+        true
+      );
     });
 
-    ws.on("lightrail-event", (event: LightrailEvent, callback?: Function) => {
-      log.silly("Received lightrail-event: ", event);
-      mainLightrail._processEvent(event, callback);
-      mainLightrail.sendEvent(event);
-    });
+    ws.on(
+      "lightrail-message",
+      (trackName, messageName, messageBody, broadcast) => {
+        log.silly(
+          `Received message from client '${connectionDetails.name}': `,
+          trackName,
+          messageName,
+          messageBody,
+          broadcast ? "(broadcast)" : ""
+        );
+        mainMessagingHub.routeMessage(
+          trackName,
+          mainTracksManager,
+          messageName,
+          messageBody,
+          broadcast
+        );
+      }
+    );
 
     ws.on("disconnect", () => {
-      const diconnectEvent = {
-        name: "lightrail:client-disconnected",
-        data: {
+      log.silly("Client disconnected: ", connectionDetails.name);
+      mainMessagingHub.routeMessage(
+        "lightrail",
+        mainTracksManager,
+        "client-disconnected",
+        {
           name: connectionDetails.name,
         },
-      };
-      log.silly("Processing disconnect event: ", diconnectEvent);
-      mainLightrail._processEvent(diconnectEvent);
-      mainLightrail.sendEvent(diconnectEvent);
+        true
+      );
     });
   });
 

@@ -5,6 +5,7 @@ import classNames from "classnames";
 import type { Action, Token, TokenArgumentOption } from "lightrail-sdk";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Option } from "src/util/tracks";
 
 export interface OptionsListProps {
   highlightedOption: Option | undefined;
@@ -12,11 +13,6 @@ export interface OptionsListProps {
   options: Option[];
   mode: OptionsMode;
 }
-
-export type Option =
-  | (Action & { kind: "actions" })
-  | (Token & { kind: "tokens" })
-  | (TokenArgumentOption & { kind: "token-args" });
 
 export type OptionsMode = Option["kind"];
 
@@ -96,7 +92,7 @@ function OptionsListItem({
                 : {}
             }
           >
-            /{currentToken?.name}
+            {currentToken?.name}
           </div>
         );
     }
@@ -116,10 +112,37 @@ function OptionsListItem({
       )}
     >
       {renderIcon()}
-      <span>{option.name}</span>
-      {option.description && highlighted && (
-        <span className="opacity-30 pl-4">{option.description}</span>
-      )}
+      {option.kind === "actions" ? (
+        <div
+          className="text-sm px-2 py-0.5 my-0.5 mr-2 rounded-sm border"
+          style={{
+            backgroundColor: option.color + "30",
+            borderColor: option.color,
+            color: option.color,
+          }}
+        >
+          {option.track}
+        </div>
+      ) : null}
+      {option.kind === "tokens" ? (
+        <div
+          className="rounded-sm"
+          style={{
+            color: option.color,
+          }}
+        >
+          {option.track}.
+        </div>
+      ) : null}
+      <div>{option.name}</div>
+      <div
+        className={classNames("flex-1 px-4 truncate", {
+          "opacity-30": highlighted,
+          "opacity-0": !highlighted,
+        })}
+      >
+        {option.description}
+      </div>
     </div>
   );
 }

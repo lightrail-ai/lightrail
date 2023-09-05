@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
     )
   );
 
-  lightrailClient.registerEventListener("vscode:get-selection", async () => {
+  lightrailClient.registerHandler("get-selection", async () => {
     return {
       content: vscode.window.activeTextEditor?.document.getText(
         vscode.window.activeTextEditor.selection
@@ -28,27 +28,22 @@ export function activate(context: vscode.ExtensionContext) {
     };
   });
 
-  lightrailClient.registerEventListener(
-    "vscode:get-selected-files",
-    async () => {
-      const originalClipboard = await vscode.env.clipboard.readText();
-      await vscode.commands.executeCommand("copyFilePath");
-      const folder = await vscode.env.clipboard.readText();
-      await vscode.env.clipboard.writeText(originalClipboard);
+  lightrailClient.registerHandler("get-selected-files", async () => {
+    const originalClipboard = await vscode.env.clipboard.readText();
+    await vscode.commands.executeCommand("copyFilePath");
+    const folder = await vscode.env.clipboard.readText();
+    await vscode.env.clipboard.writeText(originalClipboard);
 
-      return folder.split("\n");
-    }
-  );
+    return folder.split("\n");
+  });
 
-  lightrailClient.registerEventListener("vscode:get-editing-file", async () => {
+  lightrailClient.registerHandler("get-editing-file", async () => {
     return vscode.window.activeTextEditor?.document.fileName;
   });
 
-  lightrailClient.registerEventListener(
-    "vscode:codegen-proposals",
-    async ({ data }) => {
-      const proposals = data as [string, string][];
-
+  lightrailClient.registerHandler(
+    "codegen-proposals",
+    async (proposals: [string, string][]) => {
       await provider.propose(proposals);
       vscode.commands.executeCommand("lightrail.proposal-confirmation.focus");
     }
@@ -57,20 +52,14 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.window.onDidChangeTextEditorSelection((event) => {
     const selection = event.selections[0];
     if (!selection.isEmpty) {
-      lightrailClient.sendEvent({
-        name: "vscode:new-selection",
-        data: null,
-      });
+      lightrailClient.sendMessageToMain(
+        "vscode-client",
+        "new-selection",
+        null,
+        true
+      );
     }
   });
-
-  // Send heartbeat event every 2 seconds
-  setInterval(() => {
-    lightrailClient.sendEvent({
-      name: "vscode:heartbeat",
-      data: null,
-    });
-  }, 2000);
 }
 
 class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
@@ -157,20 +146,22 @@ class ProposalConfirmationViewProvider implements vscode.WebviewViewProvider {
         <link href="${stylesUri}" rel="stylesheet">
 				<title>Lightrail Proposal</title>
 			</head>
-			<body>
-        <div id="proposals-container" style="display: none">
-          <h2 style="margin: 1rem">        
-            Lightrail proposed this change for:
-          </h2>
-          <div style="margin: 1rem" id="proposal-file-name"></div>
-          <button style="margin: 1rem" id="accept-button">Accept</button>
-          <button class="secondary" style="margin: 1rem" id="reject-button">Reject</button>
-          <div>
-            Proposal <span id="proposal-counter"></span>.
+			<body style="width: 100%; height: 100%">
+        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+          <div id="proposals-container" style="display: none">
+            <h2 style="">        
+              Lightrail proposed this change for:
+            </h2>
+            <div style="margin-top: 1rem" id="proposal-file-name"></div>
+            <button style="margin-top: 1rem" id="accept-button">Accept</button>
+            <button class="secondary" style="margin-left: 1rem; margin-top: 1rem" id="reject-button">Reject</button>
+            <div style="margin-top:1rem">
+              Proposal <span id="proposal-counter"></span>.
+            </div>
           </div>
-        </div>
-        <div id="no-proposals-message" style="margin: 1rem; opacity: 0.5">
-          No proposal currently active
+          <div id="no-proposals-message" style="margin: 1rem; opacity: 0.5">
+            No proposal currently active
+          </div>
         </div>
         <script src="${scriptUri}"></script>
 			</body>

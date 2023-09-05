@@ -3,7 +3,10 @@ const { contextBridge, ipcRenderer } = require("electron");
 import "./typedefs";
 
 const ipcApi = {
-  onLightrailEvent: (callback) => ipcRenderer.on("lightrail-event", callback),
+  onLightrailMessage: (callback) => {
+    ipcRenderer.removeAllListeners("lightrail-message");
+    ipcRenderer.on("lightrail-message", callback);
+  },
 };
 
 export type ipcApiType = typeof ipcApi;

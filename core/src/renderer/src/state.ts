@@ -1,7 +1,6 @@
 import { atom } from "recoil";
-import type { LightrailView } from "lightrail-sdk";
 
-export const viewAtom = atom<LightrailView>({
+export const viewAtom = atom<"prompt" | "settings">({
   key: "viewState",
   default: "prompt",
 });

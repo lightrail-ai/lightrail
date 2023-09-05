@@ -7,7 +7,8 @@
     "src/preload/index.ts",
     "src/preload/typedefs.ts",
     "src/main/*.ts",
-    "src/tracks/**/*.ts" ],
+    "src/util/*.ts",
+    "src/basic-tracks/*.ts" ],
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",

@@ -6,8 +6,13 @@
   --input-margin-horizontal: 0;
 }
 
+html {
+  width: 100%;
+  height: 100%;
+}
+
 body {
-  padding: 0 var(--container-paddding);
+  padding: 0;
   color: var(--vscode-foreground);
   font-size: var(--vscode-font-size);
   font-weight: var(--vscode-font-weight);
@@ -93,6 +98,14 @@ textarea::placeholder {
 }
 
 #proposal-file-name {
-  font-size: 1.2rem;
+  font-size: 1.2em;
   font-family: monospace;
+}
+
+#proposals-container {
+  margin-left: 1rem;
+  margin-right: 1rem;
+  border-radius: 6px;
+  padding: 1rem;
+  border: 1px solid var(--vscode-input-border);
 }
