@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Release sql track
-        uses: ./.github/workflows/release-track.yaml
+        uses: lightrail-ai/lightrail/.github/workflows/release-track.yaml@main
         with:
           directory: ./tracks/sql
 
