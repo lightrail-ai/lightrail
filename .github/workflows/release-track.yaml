@@ -51,9 +51,12 @@ jobs:
         with:
           args: zip -qq -r "${{ fromJson(steps.get_package_json.outputs.packageJson).name }}.zip" "track-temp/${{ fromJson(steps.get_package_json.outputs.packageJson).name }}"
 
+      - name: ls
+        run: ls -al
+
       - name: release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
           files: |
-            "${{ fromJson(steps.get_package_json.outputs.packageJson).name }}.zip"
+            ${{ fromJson(steps.get_package_json.outputs.packageJson).name }}.zip
