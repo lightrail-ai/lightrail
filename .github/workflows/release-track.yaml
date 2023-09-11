@@ -7,13 +7,12 @@ on:
         type: string
         default: .
 
-defaults:
-  run:
-    working-directory: ${{ inputs.directory }}
-
 jobs:
   release-track:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.directory }}
 
     steps:
       - name: Check out Git repository
