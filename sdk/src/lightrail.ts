@@ -28,25 +28,37 @@ import type { BaseLanguageModelCallOptions } from "langchain/base_language";
 import type { BaseMessage } from "langchain/schema";
 import type { BaseChatModel } from "langchain/chat_models/base";
 
-export type ActionArgument = {
+export type TokenArgument = {
   name: string;
   description: string;
 } & (
   | { type: "string" }
   | { type: "number" }
   | { type: "boolean" }
-  | { type: "choice"; choices: string[] }
+  | { type: "choice"; choices: TokenArgumentOption[] }
   | { type: "path" }
+  | {
+      type: "history";
+      key?: string; // Optional key to use for storing history, defaults to arg name
+    }
+  | {
+      type: "custom";
+      handler: (
+        mainHandle: LightrailMainProcessHandle,
+        args: ArgsValues
+      ) => Promise<TokenArgumentOption[]>;
+    }
 );
 
 export type ArgsValues = { [key: string]: string };
 
-export type TokenArgument = ActionArgument;
+export type ActionArgument = TokenArgument;
 
 export type PromptContextItem = {
   title: string;
   type: "code" | "text";
   content: string;
+  metadata?: any; // Not included in prompt, only for use in actions
 };
 
 interface TokenStore {
@@ -204,11 +216,17 @@ interface OutputControl {
   stderr: string;
 }
 
+interface DataTableControl {
+  type: "data-table";
+  data: any[];
+}
+
 export type LightrailControl =
   | ButtonGroupControl
   | SliderControl
   | CustomControl
-  | OutputControl;
+  | OutputControl
+  | DataTableControl;
 
 export interface LightrailUI {
   reset(): void;
@@ -247,6 +265,13 @@ export interface ListItemHandle {
 export type TokenHandle = Token & ListItemHandle;
 export type ActionHandle = Action & ListItemHandle;
 
+export interface LightrailDataStores {
+  kv: {
+    get(key: string): Promise<any>;
+    set(key: string, value: any): Promise<void>;
+  };
+}
+
 export interface LightrailMainProcessHandle {
   env: "main";
   sendMessageToRenderer(
@@ -266,6 +291,7 @@ export interface LightrailMainProcessHandle {
   llm: LightrailLLM;
   fs: LightrailFS;
   logger: MainLogger;
+  store: LightrailDataStores;
 }
 
 export interface LightrailRendererProcessHandle {

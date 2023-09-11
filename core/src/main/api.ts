@@ -14,8 +14,13 @@ import {
   mainMessagingHub,
   mainTracksManager,
 } from "./lightrail-main";
-import { Prompt } from "lightrail-sdk";
+import {
+  LightrailMainProcessHandle,
+  Prompt,
+  TokenArgumentOption,
+} from "lightrail-sdk";
 import { TRACKS_DIR, installTrack, loadTracks } from "./track-admin";
+import { LightrailKVStore } from "./storage";
 
 const t = initTRPC.create({
   isServer: true,
@@ -44,14 +49,21 @@ export const getRouter = (window: BrowserWindow) =>
       log.silly("tRPC Call: version");
       return app.getVersion();
     }),
-    size: t.procedure
-      .input(z.object({ height: z.number(), width: z.number() }))
-      .mutation((req) => {
-        log.silly("tRPC Call: size: " + JSON.stringify(req.input));
-        const { input } = req;
-        window.setSize(input.width, input.height);
-        window.center();
+    size: t.router({
+      set: t.procedure
+        .input(z.object({ height: z.number(), width: z.number() }))
+        .mutation((req) => {
+          log.silly("tRPC Call: size: " + JSON.stringify(req.input));
+          const { input } = req;
+          window.setSize(input.width, input.height);
+          window.center();
+        }),
+      get: t.procedure.query(() => {
+        log.silly("tRPC Call: size");
+        const { width, height } = window.getBounds();
+        return { width, height };
       }),
+    }),
     clipboard: t.procedure.input(z.string()).mutation((req) => {
       log.silly("tRPC Call: clipboard");
       const { input } = req;
@@ -213,6 +225,82 @@ export const getRouter = (window: BrowserWindow) =>
         });
       }),
     }),
+
+    argHistory: t.router({
+      get: t.procedure
+        .input(
+          z.object({
+            track: z.string(),
+            token: z.string(),
+            arg: z.string(),
+          })
+        )
+        .query(async (req) => {
+          log.silly("tRPC Call: argHistory.get");
+          const { track, token, arg } = req.input;
+          const trackKVStore = new LightrailKVStore(
+            mainTracksManager.getTrack(track)!
+          );
+          const res = await trackKVStore.get<TokenArgumentOption[]>(
+            `argHistory-${token}-${arg}`
+          );
+          return res?.map((o) => ({ ...o, value: o.value as object })) ?? [];
+        }),
+      append: t.procedure
+        .input(
+          z.object({
+            track: z.string(),
+            token: z.string(),
+            arg: z.string(),
+            option: z.object({
+              value: z.any(),
+              description: z.string(),
+              name: z.string(),
+            }),
+          })
+        )
+        .mutation(async (req) => {
+          log.silly("tRPC Call: argHistory.append");
+          const { track, token, arg, option } = req.input;
+          const trackKVStore = new LightrailKVStore(
+            mainTracksManager.getTrack(track)!
+          );
+          const history =
+            (await trackKVStore.get<TokenArgumentOption[]>(
+              `argHistory-${token}-${arg}`
+            )) ?? [];
+
+          return trackKVStore.set(`argHistory-${token}-${arg}`, [
+            option,
+            ...history.filter((o) => o.value !== option.value),
+          ]);
+        }),
+    }),
+
+    handlers: t.procedure
+      .input(
+        z.object({
+          track: z.string(),
+          token: z.string(),
+          arg: z.string(),
+          input: z.any(),
+        })
+      )
+      .query(async (req) => {
+        log.silly("tRPC Call: handlers");
+        const { track, token, arg: argName, input } = req.input;
+        const tokenHandle = mainTracksManager.getTokenHandle(track, token);
+        const arg = tokenHandle?.args.find((a) => a.name === argName);
+        if (!arg || arg.type !== "custom") {
+          throw new Error("Handler not found");
+        }
+        const processHandle = mainTracksManager.getProcessHandle(
+          track
+        ) as LightrailMainProcessHandle;
+
+        const result = await arg.handler(processHandle, input);
+        return result.map((r) => ({ ...r, value: r.value as object }));
+      }),
 
     files: t.router({
       list: t.procedure.input(z.string()).query(async (req) => {

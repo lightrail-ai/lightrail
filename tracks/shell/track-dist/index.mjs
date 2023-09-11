@@ -2582,10 +2582,10 @@ var shell_default = {
           sender: "user",
           content: userPrompt._json
         });
+        await userPrompt.hydrate(handle);
         userPrompt.appendText(
           "\n\nOutput only a code-block containing a bash shell script. Any descriptions should be comments in the shell script. Do not output anything outside of the code block. The shell script must be executable as-is."
         );
-        await userPrompt.hydrate(handle);
         const response = await handle.llm.chat.converse(
           [new HumanMessage(userPrompt.toString())],
           {

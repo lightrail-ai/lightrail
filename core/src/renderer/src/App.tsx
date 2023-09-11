@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import PromptInput from "./components/PromptInput/PromptInput";
 import { trpcClient } from "./util/trpc-client";
 import { RecoilRoot, useRecoilValue, useSetRecoilState } from "recoil";
@@ -26,7 +26,10 @@ function App(): JSX.Element {
   const view = useRecoilValue(viewAtom);
   const setPromptHistory = useSetRecoilState(promptHistoryAtom);
   const [ready, setReady] = useState(false);
+  const [maxWidth, setMaxWidth] = useState(0);
   const [maxHeight, setMaxHeight] = useState(0);
+  const [targetWidth, setTargetWidth] = useState(0);
+  const [targetHeight, setTargetHeight] = useState(0);
 
   const resizeObserverRef = useCallback((node: HTMLDivElement) => {
     if (!node) return;
@@ -35,13 +38,29 @@ function App(): JSX.Element {
         height: Math.ceil(node.getBoundingClientRect().height),
         width: Math.ceil(node.getBoundingClientRect().width),
       };
-      log.silly("Main Div Resized: ", newDimensions);
       if (newDimensions.height > 0 && newDimensions.width > 0) {
-        trpcClient.size.mutate(newDimensions);
+        setTargetWidth(newDimensions.width);
+        setTargetHeight(newDimensions.height);
       }
     });
     resizeObserver.observe(node);
   }, []);
+
+  const transitioningObserverRef = useCallback((node: HTMLDivElement) => {
+    if (!node) return;
+    const resizeObserver = new ResizeObserver(() => {
+      const newDimensions = {
+        height: Math.ceil(node.getBoundingClientRect().height),
+        width: Math.ceil(node.getBoundingClientRect().width),
+      };
+      log.silly("Main Div Resized: ", newDimensions);
+      if (newDimensions.height > 0 && newDimensions.width > 0) {
+        trpcClient.size.set.mutate(newDimensions);
+      }
+    });
+    resizeObserver.observe(node);
+  }, []);
+
   const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
   const [controls, setControls] = useState<LightrailControl[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -92,11 +111,12 @@ function App(): JSX.Element {
       await loadTracks(trackPaths);
       log.silly("Sending event to start socket server on main process...");
       await trpcClient.startSocketServer.mutate();
-      const { height } = await trpcClient.screenSize.query();
+      const { height, width } = await trpcClient.screenSize.query();
       log.silly("Restoring history...");
       setPromptHistory(await trpcClient.history.get.query());
       setMaxHeight(height - 100);
-      setTimeout(() => setReady(true), 2000);
+      setMaxWidth(width - 100);
+      setTimeout(() => setReady(true), 500);
     })();
   }, []);
 
@@ -148,13 +168,25 @@ function App(): JSX.Element {
 
   return (
     <div
-      ref={resizeObserverRef}
-      className="w-fit h-fit flex flex-col overflow-hidden"
+      ref={transitioningObserverRef}
       style={{
-        maxHeight: `${maxHeight}px`,
+        transitionProperty: "height, width",
+        transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
+        transitionDuration: "300ms",
+        width: `${targetWidth}px`,
+        height: `${targetHeight}px`,
       }}
     >
-      {!ready ? <Loading /> : renderView()}
+      <div
+        ref={resizeObserverRef}
+        className="w-fit h-fit flex flex-col overflow-hidden "
+        style={{
+          maxHeight: `${maxHeight}px`,
+          maxWidth: `${maxWidth}px`,
+        }}
+      >
+        {!ready ? <Loading /> : renderView()}
+      </div>
     </div>
   );
 }

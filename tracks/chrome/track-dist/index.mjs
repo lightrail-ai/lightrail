@@ -20481,6 +20481,7 @@ var require_dist2 = __commonJS({
 });
 
 // index.ts
+var timeout = (prom, time) => Promise.race([prom, new Promise((_r, rej) => setTimeout(rej, time))]);
 var chrome_default = {
   name: "chrome",
   tokens: [
@@ -20498,9 +20499,12 @@ var chrome_default = {
         const { NodeHtmlMarkdown } = await Promise.resolve().then(() => __toESM(require_dist2()));
         let url, content;
         try {
-          ({ url, content } = await mainHandle.sendMessageToExternalClient(
-            "chrome-client",
-            "get-current-page"
+          ({ url, content } = await timeout(
+            mainHandle.sendMessageToExternalClient(
+              "chrome-client",
+              "get-current-page"
+            ),
+            3e3
           ));
         } catch (e) {
           throw new Error("Chrome client failed to respond.");
@@ -20533,12 +20537,69 @@ var chrome_default = {
         }
         prompt.appendText(url);
       }
+    },
+    {
+      name: "current-selection",
+      description: "Google Chrome Current Selection",
+      args: [],
+      color: "#f8bd13",
+      render(_args) {
+        return [];
+      },
+      async hydrate(mainHandle, args, prompt) {
+        const { Readability } = await Promise.resolve().then(() => __toESM(require_readability()));
+        const { parseHTML: parseHTML2 } = await Promise.resolve().then(() => (init_esm10(), esm_exports5));
+        const { NodeHtmlMarkdown } = await Promise.resolve().then(() => __toESM(require_dist2()));
+        let url, content;
+        try {
+          ({ url, content } = await timeout(
+            mainHandle.sendMessageToExternalClient(
+              "chrome-client",
+              "get-current-selection"
+            ),
+            3e3
+          ));
+        } catch (e) {
+          throw new Error("Chrome client failed to respond.");
+        }
+        const title = `Current Chrome Selection (on ${url}):`;
+        if (!content) {
+          prompt.appendContextItem({
+            type: "text",
+            title,
+            content: "(no content)"
+          });
+        } else {
+          let { document: document2 } = parseHTML2(`<html><body>${content}</body></html>`);
+          let reader = new Readability(document2);
+          let article = reader.parse();
+          if (article?.content) {
+            const markdown = NodeHtmlMarkdown.translate(article.content);
+            prompt.appendContextItem({
+              type: "code",
+              title,
+              content: markdown
+            });
+          } else {
+            const content2 = document2.body.textContent || "(no content)";
+            prompt.appendContextItem({
+              type: "text",
+              title,
+              content: content2
+            });
+          }
+        }
+        prompt.appendText("Current Chrome Selection");
+      }
     }
   ],
   actions: [],
   handlers: {
     main: {
       "chrome-client:new-page": async (handler4) => {
+        handler4.sendMessageToRenderer("prioritize-tokens");
+      },
+      "chrome-client:new-selection": async (handler4) => {
         handler4.sendMessageToRenderer("prioritize-tokens");
       }
     },

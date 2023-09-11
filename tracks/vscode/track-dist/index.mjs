@@ -2617,9 +2617,14 @@ function extractFilePathAndRange(filePath) {
 
 // index.ts
 var FAILED_TO_RESPOND = "VSCode client failed to respond. Is VSCode running with the Lightrail extension installed?";
+var timeout = (prom, time) => Promise.race([
+  prom,
+  new Promise(
+    (_r, rej) => setTimeout(() => rej(new Error(FAILED_TO_RESPOND)), time)
+  )
+]);
 var vscode_default = {
   name: "vscode",
-  // Everything except name is optional
   tokens: [
     {
       name: "selection",
@@ -2629,9 +2634,12 @@ var vscode_default = {
       async hydrate(handle, args, prompt) {
         let file, range, content;
         try {
-          ({ file, range, content } = await handle.sendMessageToExternalClient(
-            "vscode-client",
-            "get-selection"
+          ({ file, range, content } = await timeout(
+            handle.sendMessageToExternalClient(
+              "vscode-client",
+              "get-selection"
+            ),
+            3e3
           ));
         } catch (e) {
           throw new Error(FAILED_TO_RESPOND);
@@ -2656,9 +2664,12 @@ var vscode_default = {
       async hydrate(handle, args, prompt) {
         let selectedFiles;
         try {
-          selectedFiles = await handle.sendMessageToExternalClient(
-            "vscode-client",
-            "get-selected-files"
+          selectedFiles = await timeout(
+            handle.sendMessageToExternalClient(
+              "vscode-client",
+              "get-selected-files"
+            ),
+            3e3
           );
         } catch (e) {
           throw new Error(FAILED_TO_RESPOND);
@@ -2689,9 +2700,12 @@ var vscode_default = {
         const fs = __require("fs");
         let currentFile;
         try {
-          currentFile = await handle.sendMessageToExternalClient(
-            "vscode-client",
-            "get-editing-file"
+          currentFile = await timeout(
+            handle.sendMessageToExternalClient(
+              "vscode-client",
+              "get-editing-file"
+            ),
+            3e3
           );
         } catch (e) {
           throw new Error(FAILED_TO_RESPOND);
@@ -2715,16 +2729,16 @@ var vscode_default = {
       description: "Suggest appropriate changes in VSCode",
       args: [],
       color: "#007ACC",
-      icon: "window-maximize",
+      icon: "pen-to-square",
       async handler(handle, prompt) {
         handle.sendMessageToRenderer("new-message", {
           sender: "user",
           content: prompt._json
         });
-        prompt.appendText(
-          "\n\nOutput your response as a series of file paths (in backticks, i.e. as inline code) followed by code blocks of the updated file contents you'd like to propose, like this: \n\n`/path/to/file1.js`\n```js\nconst x = 1;\n```\n\n`/path/to/file2.py`\n```python\nprint(\"Hello World\")\n```\n\nDon't output any other content in your response. If editing a section of a file that was provided with line-numbers, please output the line-numbers in the file path, like this: `/path/to/file1.js:1-3`. Do not use line-numbers unless they were provided in the original context entry. To propose creation of a new file, just output the file path and contents as above. Make sure you do not skip any lines in your output"
-        );
         await prompt.hydrate(handle);
+        prompt.appendText(
+          "\n\nOutput your response as a series of file paths (in backticks, i.e. as inline code) followed by code blocks of the updated file contents you'd like to propose, like this: \n\n`/path/to/file1.js`\n```js\nconst x = 1;\n```\n\n`/path/to/file2.py`\n```python\nprint(\"Hello World\")\n```\n\nDon't output any other content in your response outside of the code blocks. Any explanation should be provided as comments only. If editing a section of a file that was provided with line-numbers, please output the line-numbers in the file path, like this: `/path/to/file1.js:1-3`. Do not use line-numbers unless they were provided in the original context entry. To propose creation of a new file, just output the file path and contents as above. Make sure you do not skip any lines in your output, even if they are unchanged."
+        );
         const response = await handle.llm.chat.converse(
           [new HumanMessage(prompt.toString())],
           {
@@ -2768,7 +2782,7 @@ var vscode_default = {
   handlers: {
     main: {
       "vscode-client:new-selection": async (handle) => {
-        handle.sendMessageToRenderer("prioritize-token", "vscode-selection");
+        handle.sendMessageToRenderer("prioritize-token", "selection");
       }
     },
     renderer: {

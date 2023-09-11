@@ -17,6 +17,7 @@ import { LightrailMessagingHub } from "../util/messaging";
 import { TracksManager } from "../util/tracks";
 import jsonStorage from "electron-json-storage";
 import type { SettingsObject } from "./api";
+import { LightrailDataStoresInterface } from "./storage";
 
 export class LightrailChatLLMInterface {
   _history: BaseMessage[] = [];
@@ -65,10 +66,12 @@ export class MainHandle implements LightrailMainProcessHandle {
   _track: LightrailTrack;
   _window: BrowserWindow;
   env: "main" = "main";
+  store;
 
   constructor(track: LightrailTrack, window: BrowserWindow) {
     this._track = track;
     this._window = window;
+    this.store = new LightrailDataStoresInterface(track);
   }
 
   llm: LightrailLLM = {

@@ -54,15 +54,6 @@ function ChatHistory({ items, partialMessage }: ChatHistoryProps) {
             </ReactMarkdown>
           </div>
         );
-      case "error":
-        return (
-          <div
-            className="mx-4 px-2 my-2 border-l-4 text-red-900 border-l-red-900 bg-red-900 bg-opacity-10 prose prose-invert"
-            key={index}
-          >
-            {item.content.replaceAll('":"', '": "')}
-          </div>
-        );
     }
   }
 

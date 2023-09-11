@@ -45,7 +45,7 @@
     "jsdom": "^22.1.0",
     "json5": "^2.2.3",
     "langchain": "^0.0.136",
-    "lightrail-sdk": "^0.0.5",
+    "lightrail-sdk": "^0.0.7",
     "marked": "^7.0.3",
     "myers-diff": "^2.1.0",
     "prosemirror-autocomplete": "^0.4.3",

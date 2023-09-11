@@ -9,7 +9,7 @@ export default <LightrailTrack>{
       description: "Send a message to LLM",
       color: "#74a89b",
       args: [],
-      icon: "circle-up",
+      icon: "message",
       async handler(mainHandle, prompt) {
         mainHandle.sendMessageToRenderer("new-message", {
           sender: "user",

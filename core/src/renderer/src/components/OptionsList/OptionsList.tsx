@@ -1,8 +1,7 @@
 import React, { useEffect, useRef } from "react";
-import { IconDefinition } from "@fortawesome/fontawesome-common-types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import classNames from "classnames";
-import type { Action, Token, TokenArgumentOption } from "lightrail-sdk";
+import type { Token, TokenArgument } from "lightrail-sdk";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Option } from "src/util/tracks";
@@ -10,8 +9,11 @@ import { Option } from "src/util/tracks";
 export interface OptionsListProps {
   highlightedOption: Option | undefined;
   currentToken: Token | undefined;
+  currentTokenArg: TokenArgument | undefined;
+  onHighlightedOptionChange: (option: Option) => void;
   options: Option[];
   mode: OptionsMode;
+  onOptionClick: (option: Option) => void;
 }
 
 export type OptionsMode = Option["kind"];
@@ -21,11 +23,15 @@ function OptionsListItem({
   currentToken,
   highlighted,
   mode,
+  onMouseEnter,
+  onClick,
 }: {
   option: Option;
   highlighted: boolean;
   currentToken: Token | undefined;
   mode: OptionsMode;
+  onMouseEnter: () => void;
+  onClick: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -100,6 +106,8 @@ function OptionsListItem({
 
   return (
     <div
+      onMouseEnter={onMouseEnter}
+      onClick={onClick}
       ref={ref}
       className={classNames(
         "transition-colors px-6 py-2 border-l-2 flex flex-row items-center",
@@ -150,36 +158,72 @@ function OptionsListItem({
 function OptionsList({
   highlightedOption,
   currentToken,
+  currentTokenArg,
   options,
   mode,
+  onHighlightedOptionChange,
+  onOptionClick,
 }: OptionsListProps) {
   const [parent, _] = useAutoAnimate({
     duration: 100,
   });
 
   return (
-    <div
-      className={classNames(
-        "overflow-y-auto overflow-x-hidden max-h-52 border-t border-t-neutral-800",
-        {
-          "bg-neutral-800": mode === "tokens" || mode === "token-args",
-        }
+    <>
+      {currentToken && currentTokenArg && (
+        <div className="px-6 py-2 flex flex-row">
+          <div
+            className="pr-6 font-semibold"
+            style={{
+              color: currentToken.color,
+            }}
+          >
+            {currentToken.name}
+          </div>
+          <div className="flex flex-row gap-4">
+            {currentToken.args.map((t) => (
+              <div
+                className={classNames({
+                  "opacity-100": t === currentTokenArg,
+                  "opacity-30": t !== currentTokenArg,
+                })}
+              >
+                <div>{t.name}</div>
+                <div>
+                  {t === currentTokenArg && (
+                    <div className="text-sm">{currentTokenArg.description}</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
-      ref={parent}
-    >
-      {options.map((option, index) => (
-        <OptionsListItem
-          currentToken={currentToken}
-          mode={mode}
-          key={index}
-          option={option}
-          highlighted={
-            option.name === highlightedOption?.name &&
-            option.kind === highlightedOption?.kind
+      <div
+        className={classNames(
+          "overflow-y-auto overflow-x-hidden max-h-52 border-t border-t-neutral-800 cursor-pointer",
+          {
+            "bg-neutral-800": mode === "tokens" || mode === "token-args",
           }
-        />
-      ))}
-    </div>
+        )}
+        ref={parent}
+      >
+        {options.map((option, index) => (
+          <OptionsListItem
+            onMouseEnter={() => onHighlightedOptionChange(option)}
+            onClick={() => onOptionClick(option)}
+            currentToken={currentToken}
+            mode={mode}
+            key={index}
+            option={option}
+            highlighted={
+              option.name === highlightedOption?.name &&
+              option.kind === highlightedOption?.kind
+            }
+          />
+        ))}
+      </div>
+    </>
   );
 }
 

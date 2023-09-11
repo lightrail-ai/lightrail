@@ -1,6 +1,7 @@
 import type { LightrailTrack } from "lightrail-sdk";
 
-declare function require(module: string): any;
+const timeout = (prom, time) =>
+  Promise.race([prom, new Promise((_r, rej) => setTimeout(rej, time))]);
 
 export default {
   name: "chrome",
@@ -20,9 +21,12 @@ export default {
 
         let url, content;
         try {
-          ({ url, content } = await mainHandle.sendMessageToExternalClient(
-            "chrome-client",
-            "get-current-page"
+          ({ url, content } = await timeout(
+            mainHandle.sendMessageToExternalClient(
+              "chrome-client",
+              "get-current-page"
+            ),
+            3000
           ));
         } catch (e) {
           throw new Error("Chrome client failed to respond.");
@@ -60,11 +64,74 @@ export default {
         prompt.appendText(url);
       },
     },
+    {
+      name: "current-selection",
+      description: "Google Chrome Current Selection",
+      args: [],
+      color: "#f8bd13",
+      render(_args) {
+        return [];
+      },
+      async hydrate(mainHandle, args, prompt) {
+        const { Readability } = await import("@mozilla/readability");
+        const { parseHTML } = await import("linkedom");
+        const { NodeHtmlMarkdown } = await import("node-html-markdown");
+
+        let url, content;
+        try {
+          ({ url, content } = await timeout(
+            mainHandle.sendMessageToExternalClient(
+              "chrome-client",
+              "get-current-selection"
+            ),
+            3000
+          ));
+        } catch (e) {
+          throw new Error("Chrome client failed to respond.");
+        }
+
+        const title = `Current Chrome Selection (on ${url}):`;
+
+        if (!content) {
+          prompt.appendContextItem({
+            type: "text",
+            title,
+            content: "(no content)",
+          });
+        } else {
+          let { document } = parseHTML(`<html><body>${content}</body></html>`);
+
+          let reader = new Readability(document);
+          let article = reader.parse();
+          if (article?.content) {
+            const markdown = NodeHtmlMarkdown.translate(article.content);
+
+            prompt.appendContextItem({
+              type: "code",
+              title,
+              content: markdown,
+            });
+          } else {
+            const content = document.body.textContent || "(no content)";
+            prompt.appendContextItem({
+              type: "text",
+              title,
+              content,
+            });
+          }
+        }
+
+        prompt.appendText("Current Chrome Selection");
+      },
+    },
   ],
   actions: [],
   handlers: {
     main: {
       "chrome-client:new-page": async (handler) => {
+        handler.sendMessageToRenderer("prioritize-tokens");
+      },
+      "chrome-client:new-selection": async (handler) => {
         handler.sendMessageToRenderer("prioritize-tokens");
       },
     },
