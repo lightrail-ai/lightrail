@@ -9,10 +9,92 @@ jobs:
   release-tracks:
     strategy:
       matrix:
-        track: [sql, vscode]
+        track: [sql, vscode, shell, files, chrome]
     uses: lightrail-ai/lightrail/.github/workflows/release-track.yaml@main
     with:
       directory: ./tracks/${{ matrix.track }}
+
+  release-starter-tracks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 19
+
+      - name: Install dependencies (files)
+        working-directory: .tracks/files
+        run: npm install
+
+      - name: Build track (files)
+        working-directory: ./tracks/files
+        run: npm run build
+
+      - name: Install dependencies (chrome)
+        working-directory: .tracks/chrome
+        run: npm install
+
+      - name: Build track (chrome)
+        working-directory: ./tracks/chrome
+        run: npm run build
+
+      - name: Install dependencies (shell)
+        working-directory: .tracks/shell
+        run: npm install
+
+      - name: Build track (shell)
+        working-directory: ./tracks/shell
+        run: npm run build
+
+      - name: Install dependencies (vscode)
+        working-directory: .tracks/vscode
+        run: npm install
+
+      - name: Build track (vscode)
+        working-directory: ./tracks/vscode
+        run: npm run build
+
+      - name: Install dependencies (sql)
+        working-directory: .tracks/sql
+        run: npm install
+
+      - name: Build track (sql)
+        working-directory: ./tracks/sql
+        run: npm run build
+
+      - name: Make an output directory for assembling zipfile contents
+        run: mkdir track-temp && mkdir track-temp/files && mkdir track-temp/chrome && mkdir track-temp/shell && mkdir track-temp/vscode && mkdir track-temp/sql
+
+      - name: Move required files into output directory
+        run: |
+          mv ./tracks/files/package.json track-temp/files/
+          mv ./tracks/files/track-dist track-temp/files/
+          mv ./tracks/chrome/package.json track-temp/chrome/
+          mv ./tracks/chrome/track-dist track-temp/chrome/
+          mv ./tracks/shell/package.json track-temp/shell/
+          mv ./tracks/shell/track-dist track-temp/shell/
+          mv ./tracks/vscode/package.json track-temp/vscode/
+          mv ./tracks/vscode/track-dist track-temp/vscode/
+          mv ./tracks/sql/package.json track-temp/sql/
+          mv ./tracks/sql/track-dist track-temp/sql/
+
+      - name: Install zip
+        uses: montudor/action-zip@v1
+
+      - name: Zip output
+        working-directory: ./track-temp
+        run: zip -qq -r starter-tracks.zip ./*
+
+      - name: release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            track-temp/starter-tracks.zip
 
   release-vscode:
     runs-on: ubuntu-latest

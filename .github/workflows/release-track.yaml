@@ -53,9 +53,6 @@ jobs:
         working-directory: ./track-temp
         run: zip -qq -r ${{ fromJson(steps.get_package_json.outputs.packageJson).name }}.zip ${{ fromJson(steps.get_package_json.outputs.packageJson).name }}
 
-      - name: ls
-        run: ls -al ./track-temp
-
       - name: release
         uses: softprops/action-gh-release@v1
         with:
