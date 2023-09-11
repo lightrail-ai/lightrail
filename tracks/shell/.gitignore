@@ -2,6 +2,3 @@ node_modules
 dist
 out
 *.log*
-
-# DO NOT ADD track-dist TO THIS FILE! 
-# Lightrail requires the track-dist directory to be committed to the repo for track installs to function properly.

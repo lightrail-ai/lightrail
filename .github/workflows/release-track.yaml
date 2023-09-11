@@ -25,7 +25,7 @@ jobs:
           node-version: 19
           cache: "npm"
           cache-dependency-path: package-lock.json
-      
+
       - name: Install dependencies
         run: npm install
 
@@ -41,23 +41,21 @@ jobs:
           content="${content//$'\r'/'%0D'}"
           # end of optional handling for multi line json
           echo "::set-output name=packageJson::$content"
-      
+
       - name: Make an output directory for assembling zipfile contents
         run: mkdir track-temp && mkdir "track-temp/${{ fromJson(steps.get_package_json.outputs.packageJson).name }}"
 
-      - name: Move required files into output directory:
+      - name: Move required files into output directory
         run: mv package.json track-dist "track-temp/${{ fromJson(steps.get_package_json.outputs.packageJson).name }}/"
 
       - name: Zip output
         uses: montudor/action-zip@v1
         with:
           args: zip -qq -r "${{ fromJson(steps.get_package_json.outputs.packageJson).name }}.zip" "track-temp/${{ fromJson(steps.get_package_json.outputs.packageJson).name }}"
-        
+
       - name: release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
           files: |
             "${{ fromJson(steps.get_package_json.outputs.packageJson).name }}.zip"
-
-      
