@@ -8,9 +8,10 @@ on:
 jobs:
   release-tracks:
     runs-on: ubuntu-latest
+    steps:
       - name: Release sql track
         uses: ./.github/workflows/release-track.yaml
-        with: 
+        with:
           directory: ./tracks/sql
 
   release-vscode:
