@@ -7,12 +7,12 @@ on:
 
 jobs:
   release-tracks:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Release sql track
-        uses: lightrail-ai/lightrail/.github/workflows/release-track.yaml@main
-        with:
-          directory: ./tracks/sql
+    strategy:
+      matrix:
+        track: [sql, vscode]
+    uses: lightrail-ai/lightrail/.github/workflows/release-track.yaml@main
+    with:
+      directory: ./tracks/${{ matrix.track }}
 
   release-vscode:
     runs-on: ubuntu-latest
