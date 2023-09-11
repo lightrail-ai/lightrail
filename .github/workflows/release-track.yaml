@@ -10,9 +10,6 @@ on:
 jobs:
   release-track:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ inputs.directory }}
 
     steps:
       - name: Check out Git repository
@@ -23,17 +20,19 @@ jobs:
         with:
           node-version: 19
           cache: "npm"
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: ${{ inputs.directory }}/package-lock.json
 
       - name: Install dependencies
+        working-directory: ${{ inputs.directory }}
         run: npm install
 
       - name: Build track
+        working-directory: ${{ inputs.directory }}
         run: npm run build
 
       - id: get_package_json
         run: |
-          content=`cat package.json`
+          content=`cat ${{ inputs.directory }}/package.json`
           # the following lines are only required for multi line json
           content="${content//'%'/'%25'}"
           content="${content//$'\n'/'%0A'}"
@@ -45,7 +44,7 @@ jobs:
         run: mkdir track-temp && mkdir "track-temp/${{ fromJson(steps.get_package_json.outputs.packageJson).name }}"
 
       - name: Move required files into output directory
-        run: mv package.json track-dist "track-temp/${{ fromJson(steps.get_package_json.outputs.packageJson).name }}/"
+        run: mv ${{ inputs.directory }}/package.json ${{ inputs.directory }}/track-dist "track-temp/${{ fromJson(steps.get_package_json.outputs.packageJson).name }}/"
 
       - name: Zip output
         uses: montudor/action-zip@v1
