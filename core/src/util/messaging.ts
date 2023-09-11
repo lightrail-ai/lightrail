@@ -68,13 +68,14 @@ export class LightrailMessagingHub {
         this._logger.error(`Client ${clientName} not found!`);
         resolve(undefined);
       } else {
+        this._logger.silly("Sending message " + messageName + " to client...");
         this._clients[clientName].emit(
           "lightrail-message",
           messageName,
           messageBody,
           (response: any) => {
             this._logger.silly(
-              "Event " + messageName + " sent, received response: ",
+              "Message " + messageName + " sent, received response: ",
               response
             );
             resolve(response);

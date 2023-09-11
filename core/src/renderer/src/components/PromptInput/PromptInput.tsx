@@ -7,7 +7,11 @@ import { EditorState } from "prosemirror-state";
 import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap } from "prosemirror-commands";
-import autocomplete, { ActionKind, FromTo } from "prosemirror-autocomplete";
+import autocomplete, {
+  ActionKind,
+  FromTo,
+  closeAutocomplete,
+} from "prosemirror-autocomplete";
 import OptionsList, { OptionsMode } from "../OptionsList/OptionsList";
 import { Option, TokenOption } from "../../../../util/tracks";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -47,6 +51,9 @@ function PromptInput({ onAction }: PromptInputProps) {
   const [currentToken, setCurrentToken] = useState<TokenOption | undefined>(
     undefined
   );
+  const [currentTokenArg, setCurrentTokenArg] = useState<
+    TokenArgument | undefined
+  >();
   const [currentAction, setCurrentAction, currentActionRef] = useStateWithRef<
     Action | undefined
   >(undefined);
@@ -77,11 +84,12 @@ function PromptInput({ onAction }: PromptInputProps) {
       schema: promptSchema,
       plugins: [
         ...autocomplete({
-          triggers: [{ name: "token", trigger: "/" }],
+          triggers: [{ name: "token", trigger: /(?:^|\s)(\/)/ }],
           reducer: (action) => {
             switch (action.kind) {
               case ActionKind.open:
                 setOptionsMode("tokens");
+                editorRangeRef.current = action.range;
                 return true;
               case ActionKind.close:
                 setOptionsMode("actions");
@@ -223,7 +231,6 @@ function PromptInput({ onAction }: PromptInputProps) {
       case "tokens":
         const newOptions = rendererTracksManager.getTokenList();
         setOptions(newOptions);
-        setHighlightedOption(newOptions[0]);
         break;
     }
   }, [optionsMode]);
@@ -244,10 +251,21 @@ function PromptInput({ onAction }: PromptInputProps) {
         tokenArgs[tokenArgs.length - 1] === "" && // Last arg is followed by whitespace (i.e. complete)
         tokenArgs.length === currentToken.args.length + 1 // Correct number of args (counting the whitespace-indicating token)
       ) {
-        const namedArgs = currentToken.args.reduce((acc, arg, i) => {
-          acc[arg.name] = tokenArgs[i];
-          return acc;
-        }, {});
+        const namedArgs = createArgsValues(currentFilter, currentToken.args);
+        for (const arg of currentToken.args) {
+          if (arg.type === "history") {
+            trpcClient.argHistory.append.mutate({
+              track: currentToken.track,
+              token: arg.key ? `#key` : currentToken.name,
+              arg: arg.key ?? arg.name,
+              option: {
+                value: namedArgs[arg.name] + " ",
+                name: namedArgs[arg.name],
+                description: "",
+              },
+            });
+          }
+        }
 
         insertToken(currentToken.track, tokenName, namedArgs);
       } else if (tokenName === currentToken.name) {
@@ -260,16 +278,32 @@ function PromptInput({ onAction }: PromptInputProps) {
     } else if (currentFilter) {
       // Haven't selected a token yet, just filter tokens
       const filteredTokens = rendererTracksManager.getTokenList(currentFilter);
+      // if (filteredTokens.length < 1) {
+      //   closeAutocomplete(editorViewRef.current!);
+      // } else {
       setOptions(filteredTokens);
       setHighlightedOption(filteredTokens[0]);
+      // }
     }
   }, [currentFilter, currentToken]);
+
+  // Make highlighted option the first option when options change (if its not currently in options)
+  useEffect(() => {
+    if (
+      options &&
+      (!highlightedOption || !options.includes(highlightedOption))
+    ) {
+      setHighlightedOption(options[0]);
+    }
+  }, [options, highlightedOption]);
 
   // get options for different token arg types
   async function populateTokenArgOptions(
     tokenArg: TokenArgument,
     argFilter: string
   ) {
+    if (!tokenArg) return;
+    setCurrentTokenArg(tokenArg);
     if (tokenArg.type === "path") {
       const pathComponents = argFilter.split(PATH_SEPARATOR);
       const dir = pathComponents.slice(0, -1).join(PATH_SEPARATOR);
@@ -291,6 +325,31 @@ function PromptInput({ onAction }: PromptInputProps) {
             }))
         );
       });
+    } else if (tokenArg.type === "history") {
+      const historyOptions = await trpcClient.argHistory.get.query({
+        track: currentToken!.track,
+        token: tokenArg.key ? `#key` : currentToken!.name,
+        arg: tokenArg.key ?? tokenArg.name,
+      });
+      setOptions(
+        historyOptions.map((option) => ({
+          ...option,
+          kind: "token-args",
+        }))
+      );
+    } else if (tokenArg.type === "custom") {
+      const customOptions = await trpcClient.handlers.query({
+        track: currentToken!.track,
+        token: currentToken!.name,
+        arg: tokenArg.name,
+        input: createArgsValues(currentFilterRef.current!, currentToken!.args),
+      });
+      setOptions(
+        customOptions.map((option) => ({
+          ...option,
+          kind: "token-args",
+        }))
+      );
     }
   }
 
@@ -322,6 +381,14 @@ function PromptInput({ onAction }: PromptInputProps) {
 
   function getTokenAndArgsArray(filter: string) {
     return filter.split(/\s+/);
+  }
+
+  function createArgsValues(str: string, args: TokenArgument[]): ArgsValues {
+    const [_, ...tokenArgs] = getTokenAndArgsArray(str);
+    return args.reduce((acc, arg, i) => {
+      acc[arg.name] = tokenArgs[i];
+      return acc;
+    }, {});
   }
 
   function insertTokenArg(tokenArg: TokenArgumentOption) {
@@ -437,9 +504,15 @@ function PromptInput({ onAction }: PromptInputProps) {
       )}
       <OptionsList
         currentToken={currentToken}
+        currentTokenArg={currentTokenArg}
         options={options}
         mode={optionsMode}
         highlightedOption={highlightedOption}
+        onHighlightedOptionChange={setHighlightedOption}
+        onOptionClick={(option) => {
+          setHighlightedOption(option);
+          selectOption();
+        }}
       />
     </div>
   );

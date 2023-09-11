@@ -2,6 +2,7 @@ import React from "react";
 import { LightrailControl } from "lightrail-sdk";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import Button from "../ui-elements/Button/Button";
+import DataTableControl from "./DataTableControl";
 
 interface ControlsProps {
   controls: LightrailControl[];
@@ -13,7 +14,7 @@ function Controls({ controls }: ControlsProps) {
   });
 
   return (
-    <div className="" ref={parent}>
+    <div className="flex-grow flex-shrink min-h-0 overflow-auto" ref={parent}>
       {controls.map((control, index) => (
         <div key={index} className="px-4 py-2">
           {(control.type === "button-group" || control.type === "buttons") && (
@@ -50,6 +51,11 @@ function Controls({ controls }: ControlsProps) {
               {control.stderr && (
                 <pre className="text-red-800">{control.stderr}</pre>
               )}
+            </div>
+          )}
+          {control.type === "data-table" && (
+            <div>
+              <DataTableControl data={control.data} />
             </div>
           )}
           {control.type === "slider" && <input type="range" />}

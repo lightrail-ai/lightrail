@@ -6,6 +6,13 @@ on:
       - v*.*.*
 
 jobs:
+  release-tracks:
+    runs-on: ubuntu-latest
+      - name: Release sql track
+        uses: ./.github/workflows/release-track.yaml
+        with: 
+          directory: ./tracks/sql
+
   release-vscode:
     runs-on: ubuntu-latest
 

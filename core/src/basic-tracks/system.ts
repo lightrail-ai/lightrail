@@ -9,7 +9,7 @@ export default <LightrailTrack>{
       description: "Clear History",
       color: "#999999",
       args: [],
-      icon: "message",
+      icon: "rectangle-xmark",
       async handler(mainHandle, _prompt) {
         mainHandle.llm.chat.reset();
         mainHandle.sendMessageToRenderer("reset-chat");
