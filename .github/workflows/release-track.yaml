@@ -46,17 +46,19 @@ jobs:
       - name: Move required files into output directory
         run: mv ${{ inputs.directory }}/package.json ${{ inputs.directory }}/track-dist "track-temp/${{ fromJson(steps.get_package_json.outputs.packageJson).name }}/"
 
-      - name: Zip output
+      - name: Install zip
         uses: montudor/action-zip@v1
-        with:
-          args: zip -qq -r "${{ fromJson(steps.get_package_json.outputs.packageJson).name }}.zip" "track-temp/${{ fromJson(steps.get_package_json.outputs.packageJson).name }}"
+
+      - name: Zip output
+        working-directory: ./track-temp
+        run: zip -qq -r ${{ fromJson(steps.get_package_json.outputs.packageJson).name }}.zip ${{ fromJson(steps.get_package_json.outputs.packageJson).name }}
 
       - name: ls
-        run: ls -al
+        run: ls -al ./track-temp
 
       - name: release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
           files: |
-            ${{ fromJson(steps.get_package_json.outputs.packageJson).name }}.zip
+            track-temp/${{ fromJson(steps.get_package_json.outputs.packageJson).name }}.zip
