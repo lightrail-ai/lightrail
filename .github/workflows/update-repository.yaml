@@ -1,0 +1,25 @@
+name: Update the Tracks Respository
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "track-repository.jsonl"
+
+jobs:
+  upload-repository:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+
+      - name: R2 Release
+        uses: randomairborne/r2-release@v1.0.2
+        with:
+          endpoint: ${{ secrets.TRACK_REPOSITORY_ENDPOINT }}
+          accesskeyid: ${{ secrets.TRACK_REPOSITORY_ACCESS_KEY_ID }}
+          secretaccesskey: ${{ secrets.TRACK_REPOSITORY_SECRET_ACCESS_KEY }}
+          bucket: "lightrail"
+          file: "./track-repository.jsonl"
