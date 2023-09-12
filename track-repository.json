@@ -8,6 +8,12 @@
     },
     "chrome": {
       "url": "https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-chrome-track.zip"
+    },
+    "shell": {
+      "url": "https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-shell-track.zip"
+    },
+    "vscode": {
+      "url": "https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-vscode-track.zip"
     }
   }
 }
