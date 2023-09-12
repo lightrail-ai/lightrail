@@ -27,7 +27,7 @@ jobs:
           node-version: 19
 
       - name: Install dependencies (files)
-        working-directory: .tracks/files
+        working-directory: ./tracks/files
         run: npm install
 
       - name: Build track (files)
@@ -35,7 +35,7 @@ jobs:
         run: npm run build
 
       - name: Install dependencies (chrome)
-        working-directory: .tracks/chrome
+        working-directory: ./tracks/chrome
         run: npm install
 
       - name: Build track (chrome)
@@ -43,7 +43,7 @@ jobs:
         run: npm run build
 
       - name: Install dependencies (shell)
-        working-directory: .tracks/shell
+        working-directory: ./tracks/shell
         run: npm install
 
       - name: Build track (shell)
@@ -51,7 +51,7 @@ jobs:
         run: npm run build
 
       - name: Install dependencies (vscode)
-        working-directory: .tracks/vscode
+        working-directory: ./tracks/vscode
         run: npm install
 
       - name: Build track (vscode)
@@ -59,7 +59,7 @@ jobs:
         run: npm run build
 
       - name: Install dependencies (sql)
-        working-directory: .tracks/sql
+        working-directory: ./tracks/sql
         run: npm install
 
       - name: Build track (sql)
