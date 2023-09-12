@@ -1,5 +1,5 @@
 {
-  "name": "lightrail-chrome",
+  "name": "lightrail-chrome-track",
   "version": "1.0.0",
   "description": "",
   "main": "track-dist/index.js",
