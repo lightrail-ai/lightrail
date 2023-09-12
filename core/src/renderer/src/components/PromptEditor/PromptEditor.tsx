@@ -32,7 +32,6 @@ export const promptSchema = new Schema({
           domNode.style.borderBottomColor = token.color;
           domNode.style.color = token.color;
           const rendered = token.render(node.attrs.args);
-          console.log(rendered);
           if (typeof rendered === "string") {
             domNode.innerText = rendered;
           } else {

@@ -261,7 +261,6 @@ function PromptInput({ onAction }: PromptInputProps) {
               option: {
                 value: namedArgs[arg.name] + " ",
                 name: namedArgs[arg.name],
-                description: "",
               },
             });
           }
@@ -512,6 +511,12 @@ function PromptInput({ onAction }: PromptInputProps) {
         onOptionClick={(option) => {
           setHighlightedOption(option);
           selectOption();
+        }}
+        onRefreshOptions={() => {
+          if (currentTokenArg && currentFilter) {
+            populateTokenArgOptions(currentTokenArg, currentFilter);
+          }
+          // Add other cases here as needed?
         }}
       />
     </div>

@@ -1,7 +1,7 @@
 import React from "react";
 
 export interface TextInputProps {
-  label: string;
+  label?: string;
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
@@ -19,9 +19,11 @@ function TextInput({
 }: TextInputProps) {
   return (
     <label className={"group transition-colors " + containerClassName}>
-      <div className="text-xs opacity-50 group-focus-within:opacity-100">
-        {label}
-      </div>
+      {label && (
+        <div className="text-xs opacity-50 group-focus-within:opacity-100">
+          {label}
+        </div>
+      )}
       <input
         type="text"
         placeholder={placeholder}

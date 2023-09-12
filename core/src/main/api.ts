@@ -254,14 +254,15 @@ export const getRouter = (window: BrowserWindow) =>
             arg: z.string(),
             option: z.object({
               value: z.any(),
-              description: z.string(),
+              description: z.string().optional(),
               name: z.string(),
             }),
           })
         )
         .mutation(async (req) => {
-          log.silly("tRPC Call: argHistory.append");
+          log.silly("tRPC Call: argHistory.append", req.input);
           const { track, token, arg, option } = req.input;
+
           const trackKVStore = new LightrailKVStore(
             mainTracksManager.getTrack(track)!
           );
@@ -269,6 +270,11 @@ export const getRouter = (window: BrowserWindow) =>
             (await trackKVStore.get<TokenArgumentOption[]>(
               `argHistory-${token}-${arg}`
             )) ?? [];
+
+          option.description =
+            option.description ??
+            history.find((o) => o.value === option.value)?.description ??
+            "";
 
           return trackKVStore.set(`argHistory-${token}-${arg}`, [
             option,
