@@ -23,4 +23,3 @@ jobs:
           secretaccesskey: ${{ secrets.TRACK_REPOSITORY_SECRET_ACCESS_KEY }}
           bucket: "lightrail"
           file: "./track-repository.jsonl"
-          destination: "/track-repository.jsonl"

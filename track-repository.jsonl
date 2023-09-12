@@ -1,2 +1,3 @@
 { "name": "sql", "url": "https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-sql-track.zip"}
 { "name": "files", "url": "https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-files-track.zip"}
+{ "name": "chrome", "url": "https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-chrome-track.zip"}
