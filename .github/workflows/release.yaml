@@ -6,7 +6,14 @@ on:
       - v*.*.*
 
 jobs:
+  create-release:
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: true
+
   release-tracks:
+    needs: create-release
     strategy:
       matrix:
         track: [sql, vscode, shell, files, chrome]
@@ -15,6 +22,7 @@ jobs:
       directory: ./tracks/${{ matrix.track }}
 
   release-starter-tracks:
+    needs: create-release
     runs-on: ubuntu-latest
 
     steps:
@@ -97,6 +105,7 @@ jobs:
             track-temp/starter-tracks.zip
 
   release-vscode:
+    needs: create-release
     runs-on: ubuntu-latest
 
     steps:
@@ -124,6 +133,7 @@ jobs:
             vscode/lightrail-vscode.vsix
 
   release-chrome:
+    needs: create-release
     runs-on: ubuntu-latest
 
     steps:
@@ -158,6 +168,7 @@ jobs:
             chrome/lightrail-chrome.zip
 
   release-electron:
+    needs: create-release
     runs-on: ${{ matrix.os }}
 
     strategy:
