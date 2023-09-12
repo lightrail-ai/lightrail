@@ -7,10 +7,11 @@ on:
 
 jobs:
   create-release:
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        draft: true
+    steps:
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
 
   release-tracks:
     needs: create-release
