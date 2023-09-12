@@ -5,7 +5,7 @@ on:
     branches:
       - "main"
     paths:
-      - "track-repository.jsonl"
+      - "track-repository.json"
 
 jobs:
   upload-repository:
@@ -22,4 +22,4 @@ jobs:
           accesskeyid: ${{ secrets.TRACK_REPOSITORY_ACCESS_KEY_ID }}
           secretaccesskey: ${{ secrets.TRACK_REPOSITORY_SECRET_ACCESS_KEY }}
           bucket: "lightrail"
-          file: "./track-repository.jsonl"
+          file: "./track-repository.json"

@@ -1,0 +1,13 @@
+{
+  "tracks": {
+    "sql": {
+      "url": "https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-sql-track.zip"
+    },
+    "files": {
+      "url": "https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-files-track.zip"
+    },
+    "chrome": {
+      "url": "https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-chrome-track.zip"
+    }
+  }
+}
