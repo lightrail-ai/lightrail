@@ -119,6 +119,13 @@ export const getRouter = (window: BrowserWindow) =>
         const paths = await loadTracks();
         return paths;
       }),
+      repository: t.procedure.query(async (req) => {
+        const r = await fetch(
+          "https://tracks.lightrail.ai/track-repository.json"
+        );
+        const json = await r.json();
+        return json;
+      }),
     }),
 
     startSocketServer: t.procedure.mutation(() => {

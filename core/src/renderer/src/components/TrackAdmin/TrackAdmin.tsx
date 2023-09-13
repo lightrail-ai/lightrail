@@ -31,8 +31,8 @@ function TrackAdmin({}: TrackAdminProps) {
   }, []);
 
   useEffect(() => {
-    fetch("https://tracks.lightrail.ai/track-repository.json")
-      .then((r) => r.json())
+    trpcClient.tracks.repository
+      .query()
       .then((r) => r.tracks && setTrackRepository(r.tracks));
   }, []);
 
