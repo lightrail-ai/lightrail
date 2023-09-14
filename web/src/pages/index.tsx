@@ -1,4 +1,4 @@
-import { faApple, faGithub, faLinux } from "@fortawesome/free-brands-svg-icons";
+import { faApple, faDiscord, faGithub, faLinux } from "@fortawesome/free-brands-svg-icons";
 import { faAnglesDown } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Manrope } from "next/font/google";
@@ -27,6 +27,9 @@ export default function Home() {
               </div>
             </span>
             <div className="flex space-x-4">
+              <a href="https://discord.gg/57bNyxgb7g">
+                <FontAwesomeIcon icon={faDiscord} size={"2x"} />
+              </a>
               <a href="https://github.com/lightrail-ai/lightrail">
                 <FontAwesomeIcon icon={faGithub} size={"2x"} />
               </a>
