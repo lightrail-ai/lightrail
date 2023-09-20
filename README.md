@@ -46,6 +46,17 @@ Lightrail is currently pre-release, so installation requires a few steps. For VS
 - `Cmd/Ctrl-Up` and `Cmd/Ctrl-Down` cycle through the prompt history
 - By default, the application uses a lightrail.ai-provided gateway to access OpenAI's LLMs. If you'd like to switch to using your own API key and accessing the OpenAI API directly, you can configure that in Settings (click the gear icon in the prompt input box).
 
+## Troubleshooting
+
+Some common issues, and how to fix them: 
+
+- **Q: I click on an action and I get `i is not iterable` as an error**
+- **A:** This occurs when the action expects a prompt but one isn't provided. Almost all actions currently available only work if the user has entered a prompt. For example, to use the VSCode Propose Changes action, first type "refactor /vscode.current-file" as the prompt _then_ click the action.
+- **Q: I'm on Linux and the keyboard shortcut to open Lightrail isn't working for me**
+- **A:** If you're using Wayland, this is a known bug, caused by [this issue](https://github.com/electron/electron/issues/15863). Currently, the only fix is using your system's settings to manually assign a keyboard shortcut to launching Lightrail. If you have any idea how to work-around this bug, I'd love to hear it!
+
+Any other issues? Let me know [on Discord](https://discord.gg/57bNyxgb7g) or [make an issue](https://github.com/lightrail-ai/lightrail/issues) and I'll address it ASAP!
+
 ## Writing Tracks
 
 The `lightrail-sdk` npm package makes it easy to create additional tracks and extend lightrail's functionality.
