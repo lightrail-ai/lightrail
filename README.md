@@ -18,7 +18,7 @@ Lightrail is an open-source AI command bar that seeks to simplifies software dev
 
 ## Installation
 
-**[Walkthrough for setting up Lightrail](https://app.arcade.software/share/YYPqRYXrPsr06Atzvcsk)**
+**[Walkthrough for setting up Lightrail (on OS X)](https://app.arcade.software/share/YYPqRYXrPsr06Atzvcsk)**
 
 Lightrail is currently pre-release, so installation requires a few steps. For VSCode and Chrome integration to function, the VSCode and Chrome extensions must be installed separately.
 
