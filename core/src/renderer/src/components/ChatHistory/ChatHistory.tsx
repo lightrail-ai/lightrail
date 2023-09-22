@@ -5,13 +5,15 @@ import { Node } from "prosemirror-model";
 import ReactMarkdown from "react-markdown";
 import CodeViewer from "../CodeViewer/CodeViewer";
 import type { ChatHistoryItem } from "lightrail-sdk";
+import Button from "../ui-elements/Button/Button";
 
 export interface ChatHistoryProps {
   items: ChatHistoryItem[];
   partialMessage: string | null;
+  onReset: () => void;
 }
 
-function ChatHistory({ items, partialMessage }: ChatHistoryProps) {
+function ChatHistory({ items, partialMessage, onReset }: ChatHistoryProps) {
   function renderChatHistoryItem(item: ChatHistoryItem, index: number) {
     switch (item.sender) {
       case "user":
@@ -58,19 +60,27 @@ function ChatHistory({ items, partialMessage }: ChatHistoryProps) {
   }
 
   return (
-    <div className="border-b border-b-neutral-800 flex-grow flex-shrink min-h-0 overflow-auto flex flex-col-reverse">
-      <div>
-        {items.map(renderChatHistoryItem)}
-        {partialMessage &&
-          renderChatHistoryItem(
-            {
-              sender: "ai",
-              content: partialMessage,
-            },
-            items.length
-          )}
+    <>
+      {items.length > 0 && (
+        <div className="flex-shrink-0 flex items-center text-sm border-b border-b-neutral-800">
+          <div className="flex-1 px-2 opacity-25 text-xs">Lightrail</div>
+          <Button onClick={onReset}>Reset Conversation</Button>
+        </div>
+      )}
+      <div className="flex-grow flex-shrink min-h-0 overflow-auto flex flex-col-reverse">
+        <div>
+          {items.map(renderChatHistoryItem)}
+          {partialMessage &&
+            renderChatHistoryItem(
+              {
+                sender: "ai",
+                content: partialMessage,
+              },
+              items.length
+            )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

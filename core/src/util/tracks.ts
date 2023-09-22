@@ -16,7 +16,7 @@ export type TokenOption = Token & { kind: "tokens"; track: string };
 export type Option =
   | ActionOption
   | TokenOption
-  | (TokenArgumentOption & { kind: "token-args" });
+  | (TokenArgumentOption & { kind: "token-args" | "action-args" });
 
 export class TracksManager {
   _tracks: {

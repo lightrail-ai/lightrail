@@ -85,12 +85,21 @@ export class Prompt {
   }
   async hydrate(
     mainHandle: LightrailMainProcessHandle,
-    tokenOverrides?: any
-  ): Promise<void> {
-    if (tokenOverrides) {
-      throw new Error("Token overrides not yet implemented");
+    tokenOverrides?: {
+      [track: string]: {
+        [name: string]: (
+          mainHandle: LightrailMainProcessHandle,
+          args: ArgsValues,
+          prompt: Prompt,
+          originalHydrate: (
+            mainHandle: LightrailMainProcessHandle,
+            args: ArgsValues,
+            prompt: Prompt
+          ) => Promise<void>
+        ) => Promise<void>;
+      };
     }
-
+  ): Promise<void> {
     const nodes = this._json["content"];
 
     for (const node of nodes) {
@@ -105,7 +114,17 @@ export class Prompt {
           mainHandle.logger.error("Couldn't find token.", node.attrs);
           throw new Error(`Unknown token ${node.attrs.name}`);
         }
-        await token.hydrate(mainHandle, node.attrs.args, this);
+
+        if (tokenOverrides?.[node.attrs.track]?.[node.attrs.name]) {
+          await tokenOverrides[node.attrs.track][node.attrs.name](
+            mainHandle,
+            node.attrs.args,
+            this,
+            token.hydrate.bind(token)
+          );
+        } else {
+          await token.hydrate(mainHandle, node.attrs.args, this);
+        }
       }
     }
 
@@ -152,6 +171,7 @@ export type Action = {
   color: string; // hex color
   description: string; // short description of the action
   args: ActionArgument[]; // a list of AUXILIARY arguments that the action expects (i.e. not including the initial prompt)
+  placeholder?: string; // placeholder text for the initial prompt
   handler: (
     mainHandle: LightrailMainProcessHandle,
     promptHandle: Prompt,
@@ -237,6 +257,20 @@ export interface LightrailUI {
   controls: {
     setControls: Dispatch<SetStateAction<LightrailControl[]>>;
   };
+  tasks: {
+    startTask: () => TaskHandle;
+    getTaskHandle: (id: string) => TaskHandle | undefined;
+  };
+  notify: (message: string) => void;
+}
+
+export type TaskProgress = number | [number, number] | undefined;
+
+export interface TaskHandle {
+  id: string;
+  setProgress(progress: TaskProgress): void;
+  setMessage(message: string): void;
+  finishTask(): void;
 }
 
 export interface LLMPromptOptions {}
@@ -265,10 +299,22 @@ export interface ListItemHandle {
 export type TokenHandle = Token & ListItemHandle;
 export type ActionHandle = Action & ListItemHandle;
 
+export interface LightrailKBItem {
+  title: string;
+  type: "code" | "text";
+  content: string;
+  metadata?: any;
+  tags: string[];
+}
+
 export interface LightrailDataStores {
   kv: {
     get(key: string): Promise<any>;
     set(key: string, value: any): Promise<void>;
+  };
+  kb: {
+    addItems(items: LightrailKBItem[]): Promise<void>;
+    query(query: string, tags?: string[]): Promise<LightrailKBItem[]>;
   };
 }
 

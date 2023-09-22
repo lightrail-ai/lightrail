@@ -14,6 +14,30 @@ export default <LightrailTrack>{
         mainHandle.llm.chat.reset();
         mainHandle.sendMessageToRenderer("reset-chat");
       },
+      placeholder: "Press Enter/Return to Reset",
+    },
+  ],
+  tokens: [
+    {
+      name: "clipboard",
+      description: "Clipboard Contents",
+      color: "#999999",
+      args: [],
+      async hydrate(mainHandle, args, prompt) {
+        const { clipboard } = require("electron");
+        const content = clipboard.readText();
+
+        prompt.appendContextItem({
+          title: "Clipboard Contents",
+          content,
+          type: "text",
+        });
+
+        prompt.appendText("the Clipboard Contents");
+      },
+      render(args) {
+        return [];
+      },
     },
   ],
   handlers: {

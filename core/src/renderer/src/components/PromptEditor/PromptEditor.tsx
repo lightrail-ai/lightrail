@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { EditorState, Plugin } from "prosemirror-state";
+import { EditorState, Plugin, PluginKey } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { Schema } from "prosemirror-model";
 import classNames from "classnames";
@@ -54,19 +54,37 @@ export const promptSchema = new Schema({
   },
 });
 
-export function placeholderPlugin(text: string) {
+const pk = new PluginKey("placeholder");
+
+export function placeholderPlugin() {
   const update = (view: EditorView) => {
     if (view.state.doc.content.size > 0) {
       view.dom.removeAttribute("data-placeholder");
     } else {
-      view.dom.setAttribute("data-placeholder", text);
+      console.log(pk.getState(view.state));
+      view.dom.setAttribute("data-placeholder", pk.getState(view.state));
     }
   };
 
   return new Plugin({
+    key: pk,
+    state: {
+      init() {
+        return "Enter a prompt...";
+      },
+      apply(tr, value) {
+        const newValue = tr.getMeta("placeholder");
+        if (newValue) {
+          return newValue;
+        }
+        return value;
+      },
+    },
     view(view) {
       update(view);
-      return { update };
+      return {
+        update,
+      };
     },
   });
 }
@@ -86,19 +104,22 @@ function PromptEditor({
   readonly,
   onViewReady,
 }: PromptEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLSpanElement>(null);
   const editorView = useRef<EditorView | null>(null);
 
   useEffect(() => {
     if (!editorRef.current) return;
-    editorView.current = new EditorView(editorRef.current, {
-      state,
-      dispatchTransaction(transaction) {
-        let newState = editorView.current!.state.apply(transaction);
-        onChange?.(newState);
-      },
-      editable: () => !readonly,
-    });
+    editorView.current = new EditorView(
+      { mount: editorRef.current },
+      {
+        state,
+        dispatchTransaction(transaction) {
+          let newState = editorView.current!.state.apply(transaction);
+          onChange?.(newState);
+        },
+        editable: () => !readonly,
+      }
+    );
 
     editorView.current.focus();
     onViewReady?.(editorView.current);
@@ -112,7 +133,7 @@ function PromptEditor({
     editorView.current?.updateState(state);
   }, [state]);
 
-  const editorDom = useMemo(() => <div ref={editorRef} />, []);
+  const editorDom = useMemo(() => <span className="" ref={editorRef} />, []);
 
   return <div className={classNames(className)}>{editorDom}</div>;
 }
