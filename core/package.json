@@ -47,7 +47,7 @@
     "jsdom": "^22.1.0",
     "json5": "^2.2.3",
     "langchain": "^0.0.149",
-    "lightrail-sdk": "file:../sdk",
+    "lightrail-sdk": "^0.0.9",
     "marked": "^7.0.3",
     "myers-diff": "^2.1.0",
     "nanoid": "^5.0.1",
@@ -70,7 +70,6 @@
     "update-electron-app": "^2.0.1",
     "weaviate-ts-embedded": "^1.2.0",
     "web-tree-sitter": "^0.20.8",
-    "workerpool": "^6.5.0",
     "ws": "^8.13.0"
   },
   "devDependencies": {
