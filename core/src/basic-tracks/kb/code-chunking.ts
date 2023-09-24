@@ -121,8 +121,10 @@ function chunker(
 
 function getGrammarPath(language: string) {
   const path = require("path");
+  const { is } = require("@electron-toolkit/utils");
+
   return path.join(
-    "/home/vishnumenon/Documents/lightrail/core", // TODO productionize this
+    is.dev ? path.join(__dirname, "../..") : process.resourcesPath,
     "lib",
     "tree-sitter-grammars",
     `tree-sitter-${language}.wasm`

@@ -142,17 +142,24 @@ export default <LightrailTrack>{
           }
         }
 
-        mainHandle.sendMessageToRenderer("update-progress", {
-          message: "Initializing vectorizer...",
-          progress: [0, items.length],
-        });
+        if (mainHandle.store.kb["_vectorizer"] === undefined) {
+          mainHandle.sendMessageToRenderer("update-progress", {
+            message: "Initializing vectorizer...",
+            progress: [0, items.length],
+          });
+        } else {
+          mainHandle.sendMessageToRenderer("update-progress", {
+            message: `Vectorizing content (${items.length} chunks)...`,
+            progress: [0, items.length],
+          });
+        }
 
         const batchSize = 30;
         for (let i = 0; i < items.length; i += batchSize) {
           const chunk = items.slice(i, i + batchSize);
           await mainHandle.store.kb.addItems(chunk);
           mainHandle.sendMessageToRenderer("update-progress", {
-            message: "Indexing content...",
+            message: `Vectorizing content (${items.length} chunks)...`,
             progress: [Math.min(i + batchSize, items.length), items.length],
           });
         }
@@ -197,6 +204,8 @@ export default <LightrailTrack>{
           str,
           args.tag ? [args.tag] : undefined
         );
+
+        console.log(results);
 
         for (const r of results) {
           prompt.appendContextItem(r);

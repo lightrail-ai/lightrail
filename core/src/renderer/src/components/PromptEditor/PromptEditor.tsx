@@ -130,6 +130,10 @@ function PromptEditor({
   }, []);
 
   useEffect(() => {
+    editorView.current?.setProps({ editable: () => !readonly });
+  }, [readonly]);
+
+  useEffect(() => {
     editorView.current?.updateState(state);
   }, [state]);
 

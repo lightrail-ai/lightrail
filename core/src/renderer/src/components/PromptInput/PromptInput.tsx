@@ -14,7 +14,7 @@ import OptionsList, {
 } from "../OptionsList/OptionsList";
 import { ActionOption, Option, TokenOption } from "../../../../util/tracks";
 import { useHotkeys } from "react-hotkeys-hook";
-import { faAt, faGear } from "@fortawesome/free-solid-svg-icons";
+import { faGear } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { promptHistoryAtom, viewAtom } from "@renderer/state";
@@ -68,18 +68,18 @@ function PromptInput({ onAction }: PromptInputProps) {
     string | undefined
   >(undefined);
   const editorRangeRef = useRef<FromTo>();
-  const [isFilteringActions, setIsFilteringActions] = useState(false);
   const [actionsFilter, setActionsFilter] = useState("");
 
   const [promptState, setPromptState, promptStateRef] =
     useStateWithRef<EditorState>(getNewPromptState());
   const editorViewRef = useRef<EditorView>();
+  const actionFilterInputRef = useRef<HTMLInputElement>(null);
 
   useHotkeys("up", handleUpArrow);
   useHotkeys("down", handleDownArrow);
   useHotkeys("enter", selectOption);
   useHotkeys("shift+2", () => {
-    setIsFilteringActions(true);
+    setCurrentAction(undefined);
     return true;
   });
   useHotkeys("mod+up", handleHistoryGoPrev);
@@ -122,7 +122,7 @@ function PromptInput({ onAction }: PromptInputProps) {
           "Mod-y": redo,
           "@": (_state, _dispatch, _view) => {
             if (optionsModeRef.current === null) {
-              setIsFilteringActions(true);
+              setCurrentAction(undefined);
               return true;
             }
             return false;
@@ -183,7 +183,7 @@ function PromptInput({ onAction }: PromptInputProps) {
   function updateOptionsList() {
     if (optionsMode === "actions") {
       const actionOptions = rendererTracksManager.getActionList(
-        isFilteringActions ? actionsFilter : undefined
+        actionsFilter ?? undefined
       );
 
       setOptions(actionOptions);
@@ -227,7 +227,6 @@ function PromptInput({ onAction }: PromptInputProps) {
   }, [
     optionsMode,
     actionsFilter,
-    isFilteringActions,
     currentFilter,
     currentToken,
     currentAction,
@@ -263,7 +262,19 @@ function PromptInput({ onAction }: PromptInputProps) {
       const historyOptions = await trpcClient.argHistory.get.query(
         getArgHistoryKey(arg, currentToken, currentAction, kind)!
       );
-      return historyOptions.map((option) => ({
+
+      return [
+        ...(argFilter.length > 0
+          ? [
+              {
+                name: argFilter,
+                value: argFilter + " ",
+                description: "",
+              },
+            ]
+          : []),
+        ...historyOptions,
+      ].map((option) => ({
         ...option,
         kind,
       }));
@@ -311,7 +322,7 @@ function PromptInput({ onAction }: PromptInputProps) {
           setCurrentAction(undefined);
         }
       } else {
-        setIsFilteringActions(true);
+        setOptionsMode("actions");
       }
       return true;
     }
@@ -319,8 +330,8 @@ function PromptInput({ onAction }: PromptInputProps) {
     const selectedOption = highlightedOptionRef.current;
     if (!selectedOption) return true;
 
-    if (isFilteringActions) {
-      setIsFilteringActions(false);
+    if (selectedOption.kind === "actions") {
+      setCurrentAction(selectedOption);
       return true;
     } else if (selectedOption.kind === "tokens") {
       setCurrentToken(selectedOption);
@@ -332,6 +343,7 @@ function PromptInput({ onAction }: PromptInputProps) {
         ...prev,
         [currentActionArg!.name]: selectedOption.value,
       }));
+      editorViewRef.current?.focus(); // TODO: this currently only supports single-argument actions, need to improve
     }
 
     return true;
@@ -357,13 +369,6 @@ function PromptInput({ onAction }: PromptInputProps) {
       setPromptState(getNewPromptState(promptHistory[promptHistoryIndex]));
     }
   }, [promptHistoryIndex]);
-
-  // Update Current Action when selected option changes and is an action
-  useEffect(() => {
-    if (highlightedOption?.kind === "actions") {
-      setCurrentAction(highlightedOption);
-    }
-  }, [highlightedOption]);
 
   // Insert completed tokens
   useEffect(() => {
@@ -458,14 +463,12 @@ function PromptInput({ onAction }: PromptInputProps) {
     }
   }
 
-  // Handle action filtering when filtering actions
   useEffect(() => {
-    if (isFilteringActions) {
+    setActionsFilter("");
+    if (!currentAction) {
       setOptionsMode("actions");
     } else {
-      setActionsFilter("");
-      const args = currentActionRef.current?.args ?? [];
-
+      const args = currentAction.args ?? [];
       if (args.length === 0) {
         editorViewRef.current?.focus();
         setOptionsMode(null);
@@ -474,12 +477,6 @@ function PromptInput({ onAction }: PromptInputProps) {
           Object.fromEntries(args.map((arg) => [arg.name, ""]))
         );
       }
-    }
-  }, [isFilteringActions]);
-
-  useEffect(() => {
-    if (!currentAction) {
-      setIsFilteringActions(true);
     }
   }, [currentAction]);
 
@@ -492,7 +489,7 @@ function PromptInput({ onAction }: PromptInputProps) {
 
   // Update placeholder on changed action
   useEffect(() => {
-    if (isFilteringActions || !currentAction) {
+    if (!currentAction) {
       setPromptState((oldState) =>
         oldState.apply(oldState.tr.setMeta("placeholder", "← Choose an action"))
       );
@@ -511,7 +508,7 @@ function PromptInput({ onAction }: PromptInputProps) {
         );
       }
     }
-  }, [currentAction, isFilteringActions]);
+  }, [currentAction]);
 
   return (
     <div className="min-w-[600px]">
@@ -528,32 +525,32 @@ function PromptInput({ onAction }: PromptInputProps) {
             if (e.target === e.currentTarget) {
               console.log(e.target, e.currentTarget);
               console.log("Focusing on input");
-              editorViewRef.current?.focus();
+              if (currentAction) {
+                editorViewRef.current?.focus();
+              } else {
+                actionFilterInputRef.current?.focus();
+              }
               e.stopPropagation();
             }
           }}
         >
-          {isFilteringActions ? (
+          {!currentAction ? (
             <div className="mr-2 px-1 py-0.5 rounded-sm font-semibold text-sm inline-flex flex-row border border-neutral-600 items-center justify-center">
               <div className=" pr-1">@</div>
 
               <AutowidthInput
                 type="text"
+                ref={actionFilterInputRef}
                 placeholder="Filter Actions..."
                 placeholderIsMinWidth
                 className="bg-transparent active:outline-none focus:outline-none w-24 placeholder:font-normal"
                 value={actionsFilter}
-                onBlur={() => setIsFilteringActions(false)}
                 onChange={(e) =>
                   setActionsFilter(e.target.value === "@" ? "" : e.target.value)
                 }
                 onKeyUpCapture={(e) => {
-                  if (
-                    e.key === "Escape" ||
-                    e.key === "Enter" ||
-                    e.key === "Tab"
-                  ) {
-                    setIsFilteringActions(false);
+                  if (e.key === "Enter" || e.key === "Tab") {
+                    selectOption();
                     e.preventDefault();
                     e.stopPropagation();
                   } else if (e.key === "ArrowUp") {
@@ -584,7 +581,7 @@ function PromptInput({ onAction }: PromptInputProps) {
                   onClick={(e) => {
                     if (e.target === e.currentTarget) {
                       console.log(e.target, e.currentTarget);
-                      setIsFilteringActions(true);
+                      setCurrentAction(undefined);
                       e.stopPropagation();
                     }
                     return false;
@@ -650,6 +647,7 @@ function PromptInput({ onAction }: PromptInputProps) {
             onChange={setPromptState}
             state={promptState}
             onViewReady={(view) => (editorViewRef.current = view)}
+            readonly={!currentAction}
           />
         </div>
       </div>

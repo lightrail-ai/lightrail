@@ -5,9 +5,10 @@ import {
 } from "lightrail-sdk";
 import jsonStorage from "electron-json-storage";
 import path from "path";
-import type { Pipeline } from "@xenova/transformers";
 import type { EmbeddedClient } from "weaviate-ts-embedded";
 import log from "./logger";
+import * as workers from "./worker-management";
+import { app } from "electron";
 
 /* monkeypatch fetch to allow weaviate port */
 
@@ -89,7 +90,18 @@ export class LightrailVectorStore {
       const { EmbeddedOptions, default: weaviate } = await import(
         "weaviate-ts-embedded"
       );
-      this._client = weaviate.client(new EmbeddedOptions());
+      const options = new EmbeddedOptions();
+      options.binaryPath = path.join(
+        app.getPath("appData"),
+        "weaviate",
+        "binary"
+      );
+      options.persistenceDataPath = path.join(
+        app.getPath("appData"),
+        "weaviate",
+        "data"
+      );
+      this._client = weaviate.client(options);
       await this._client.embedded.start();
     }
     return this._client;
@@ -162,7 +174,11 @@ export class LightrailVectorStore {
 export class LightrailKB {
   _vectorStore = new LightrailVectorStore({ name: "kb" });
   _className = "item";
-  _vectorizer: Pipeline | undefined;
+  _vectorizer:
+    | {
+        vectorize: (content: string[]) => Promise<number[][]>;
+      }
+    | undefined;
 
   async _setup() {
     await this._vectorStore.ensureClass({
@@ -195,16 +211,7 @@ export class LightrailKB {
 
   async _getVectorizer() {
     if (!this._vectorizer) {
-      log.silly("Initializing vectorizer...");
-      const { pipeline } = await import("@xenova/transformers");
-      this._vectorizer = await pipeline(
-        "feature-extraction",
-        "thenlper/gte-base",
-        {
-          quantized: false,
-        }
-      );
-      log.silly("Done initializing vectorizer");
+      this._vectorizer = await workers.getVectorizer();
     }
     return this._vectorizer;
   }
@@ -213,26 +220,30 @@ export class LightrailKB {
     log.silly(`Add a batch of ${items.length} items to KB...`);
     await this._setup();
     const vectorizer = await this._getVectorizer();
-    const vectorTensors: any[] = [];
+    const vectors: any[] = [];
     const itemsCount = items.length;
+
+    const sortedItems = [...items].sort((a, b) =>
+      a.content.length > b.content.length ? 1 : -1
+    );
+
+    const vectorizingBatchSize = 5;
+    for (let i = 0; i < sortedItems.length; i += vectorizingBatchSize) {
+      const batch = sortedItems.slice(i, i + vectorizingBatchSize);
+      const vecs = await vectorizer.vectorize(batch.map((i) => i.content));
+      vectors.push(...vecs);
+    }
+
     let curr = 1;
-    for (const item of items) {
+    for (const item of sortedItems) {
       log.silly("Vectorizing item " + curr + "/" + itemsCount);
       curr++;
-      const tensor = await vectorizer(item.content, {
-        pooling: "mean",
-        normalize: true,
-      });
-      vectorTensors.push(tensor);
     }
     log.silly("Done vectorizing items");
-
-    const vectors = vectorTensors.map((t) => Array.from(t["data"]));
-
     log.silly("Inserting items into vector store");
     await this._vectorStore.insertMany(
       this._className,
-      items.map((i) => ({
+      sortedItems.map((i) => ({
         ...i,
         metadata: JSON.stringify(i.metadata ?? {}),
       })) as VectorStoreItem[],
@@ -244,11 +255,7 @@ export class LightrailKB {
   async query(query: string, tags?: string[]): Promise<LightrailKBItem[]> {
     await this._setup();
     const vectorizer = await this._getVectorizer();
-    const vectorTensor = await vectorizer(query, {
-      pooling: "mean",
-      normalize: true,
-    });
-    const vector = Array.from(vectorTensor["data"]) as number[];
+    const [vector] = await vectorizer.vectorize([query]);
     let getter = await this._vectorStore.query(this._className);
     getter = getter
       .withNearVector({ vector: vector, distance: 0.2 })
