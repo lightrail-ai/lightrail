@@ -6,6 +6,7 @@ import {
 } from "./lightrail-renderer";
 import ChatTrack from "../../../basic-tracks/chat";
 import SystemTrack from "../../../basic-tracks/system";
+import KBTrack from "../../../basic-tracks/kb/kb";
 
 export async function loadTracks(paths: string[]) {
   for (const browserPath of paths) {
@@ -20,7 +21,7 @@ export async function loadTracks(paths: string[]) {
     }
   }
   log.silly("Loading built-in tracks...");
-  for (const track of [SystemTrack, ChatTrack]) {
+  for (const track of [KBTrack, SystemTrack, ChatTrack]) {
     rendererMessagingHub.registerTrack(track);
     rendererTracksManager.registerTrack(track);
   }

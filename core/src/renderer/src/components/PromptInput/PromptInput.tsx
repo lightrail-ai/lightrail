@@ -7,13 +7,12 @@ import { EditorState } from "prosemirror-state";
 import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap } from "prosemirror-commands";
-import autocomplete, {
-  ActionKind,
-  FromTo,
-  closeAutocomplete,
-} from "prosemirror-autocomplete";
-import OptionsList, { OptionsMode } from "../OptionsList/OptionsList";
-import { Option, TokenOption } from "../../../../util/tracks";
+import autocomplete, { ActionKind, FromTo } from "prosemirror-autocomplete";
+import OptionsList, {
+  OptionsMode,
+  getArgHistoryKey,
+} from "../OptionsList/OptionsList";
+import { ActionOption, Option, TokenOption } from "../../../../util/tracks";
 import { useHotkeys } from "react-hotkeys-hook";
 import { faGear } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -21,9 +20,9 @@ import { useRecoilValue, useSetRecoilState } from "recoil";
 import { promptHistoryAtom, viewAtom } from "@renderer/state";
 import type {
   Token,
-  Action,
   TokenArgument,
   TokenArgumentOption,
+  ActionArgument,
   ArgsValues,
 } from "lightrail-sdk";
 import { trpcClient } from "@renderer/util/trpc-client";
@@ -31,11 +30,14 @@ import { useStateWithRef } from "@renderer/util/custom-hooks";
 import { EditorView } from "prosemirror-view";
 import { Node } from "prosemirror-model";
 import { rendererTracksManager } from "@renderer/util/lightrail-renderer";
+import classNames from "classnames";
+import { shouldTextBeBlack } from "@renderer/util/util";
+import { AutowidthInput } from "react-autowidth-input";
 
 const PATH_SEPARATOR = "/";
 
 export interface PromptInputProps {
-  onAction: (action: Option, prompt: object) => void;
+  onAction: (action: Option, prompt: object, args?: ArgsValues) => void;
 }
 
 function PromptInput({ onAction }: PromptInputProps) {
@@ -44,7 +46,7 @@ function PromptInput({ onAction }: PromptInputProps) {
   const [promptHistoryIndex, setPromptHistoryIndex] = useState(-1);
 
   const [optionsMode, setOptionsMode, optionsModeRef] =
-    useStateWithRef<OptionsMode>("actions"); // TODO: can possibly refactor this out
+    useStateWithRef<OptionsMode>(null);
   const [options, setOptions, optionsRef] = useStateWithRef<Option[]>([]);
   const [highlightedOption, setHighlightedOption, highlightedOptionRef] =
     useStateWithRef<Option | undefined>(undefined);
@@ -55,24 +57,29 @@ function PromptInput({ onAction }: PromptInputProps) {
     TokenArgument | undefined
   >();
   const [currentAction, setCurrentAction, currentActionRef] = useStateWithRef<
-    Action | undefined
+    ActionOption | undefined
   >(undefined);
+  const [currentActionArg, setCurrentActionArg] = useState<
+    ActionArgument | undefined
+  >();
+  const [actionArgValues, setActionArgValues, actionArgValuesRef] =
+    useStateWithRef<ArgsValues>({});
   const [currentFilter, setCurrentFilter, currentFilterRef] = useStateWithRef<
     string | undefined
   >(undefined);
   const editorRangeRef = useRef<FromTo>();
-  const [isFilteringActions, setIsFilteringActions] = useState(false);
   const [actionsFilter, setActionsFilter] = useState("");
 
   const [promptState, setPromptState, promptStateRef] =
     useStateWithRef<EditorState>(getNewPromptState());
   const editorViewRef = useRef<EditorView>();
+  const actionFilterInputRef = useRef<HTMLInputElement>(null);
 
   useHotkeys("up", handleUpArrow);
   useHotkeys("down", handleDownArrow);
   useHotkeys("enter", selectOption);
   useHotkeys("shift+2", () => {
-    setIsFilteringActions(true);
+    setCurrentAction(undefined);
     return true;
   });
   useHotkeys("mod+up", handleHistoryGoPrev);
@@ -92,7 +99,9 @@ function PromptInput({ onAction }: PromptInputProps) {
                 editorRangeRef.current = action.range;
                 return true;
               case ActionKind.close:
-                setOptionsMode("actions");
+                setOptionsMode(null);
+                setCurrentToken(undefined);
+                setCurrentTokenArg(undefined);
                 return true;
               case ActionKind.filter:
                 editorRangeRef.current = action.range;
@@ -112,8 +121,8 @@ function PromptInput({ onAction }: PromptInputProps) {
           "Mod-z": undo,
           "Mod-y": redo,
           "@": (_state, _dispatch, _view) => {
-            if (optionsModeRef.current === "actions") {
-              setIsFilteringActions(true);
+            if (optionsModeRef.current === null) {
+              setCurrentAction(undefined);
               return true;
             }
             return false;
@@ -126,7 +135,7 @@ function PromptInput({ onAction }: PromptInputProps) {
         }),
 
         keymap(baseKeymap),
-        placeholderPlugin("Enter a prompt..."),
+        placeholderPlugin(),
       ],
     });
   }
@@ -171,25 +180,170 @@ function PromptInput({ onAction }: PromptInputProps) {
     return true;
   }
 
-  function selectOption() {
-    const selectedOption = highlightedOptionRef.current;
-    if (!selectedOption) return true;
+  function updateOptionsList() {
+    if (optionsMode === "actions") {
+      const actionOptions = rendererTracksManager.getActionList(
+        actionsFilter ?? undefined
+      );
 
-    // this is probably never gonna run, just a safeguard
-    if (isFilteringActions) {
-      setIsFilteringActions(false);
+      setOptions(actionOptions);
+      setHighlightedOption(
+        actionOptions.find(
+          (option) => option.name === currentActionRef?.current?.name
+        ) ?? actionOptions[0]
+      );
+    } else if (optionsMode === "tokens") {
+      const newOptions = rendererTracksManager.getTokenList(currentFilter);
+      setOptions(newOptions);
+    } else if (optionsMode === "token-args" && currentToken && currentFilter) {
+      const [_, ...tokenArgs] = getTokenAndArgsArray(currentFilter);
+      const currentArgIndex = tokenArgs.length - 1;
+      const tokenArg = currentToken.args[currentArgIndex];
+
+      if (!tokenArg) {
+        setOptions([]);
+        setCurrentTokenArg(undefined);
+        return;
+      }
+
+      setCurrentTokenArg(tokenArg);
+      getArgOptions(tokenArg, tokenArgs[currentArgIndex], "token-args").then(
+        (opts) => setOptions(opts)
+      );
+    } else if (optionsMode === "action-args" && currentActionArg) {
+      getArgOptions(
+        currentActionArg,
+        actionArgValues[currentActionArg.name],
+        "action-args"
+      ).then((opts) => setOptions(opts));
+    } else {
+      setOptions([]);
+    }
+  }
+
+  // Change options list whenever necessary
+  useEffect(() => {
+    updateOptionsList();
+  }, [
+    optionsMode,
+    actionsFilter,
+    currentFilter,
+    currentToken,
+    currentAction,
+    currentActionArg,
+    actionArgValues,
+  ]);
+
+  // get options for different token arg types
+  async function getArgOptions(
+    arg: TokenArgument | ActionArgument,
+    argFilter: string,
+    kind: "token-args" | "action-args"
+  ): Promise<(TokenArgumentOption & { kind: "token-args" | "action-args" })[]> {
+    if (arg.type === "path") {
+      const pathComponents = argFilter.split(PATH_SEPARATOR);
+      const dir = pathComponents.slice(0, -1).join(PATH_SEPARATOR);
+      const fileFilter = pathComponents[pathComponents.length - 1];
+
+      const files = await trpcClient.files.list.query(dir + PATH_SEPARATOR);
+      return files
+        .filter((f) => {
+          return f.name.startsWith(fileFilter);
+        })
+        .map((file) => ({
+          name: file.path.length > 20 ? ".../" + file.name : file.path,
+          value: file.isDirectory
+            ? file.path + PATH_SEPARATOR
+            : file.path + " ",
+          kind,
+          description: "",
+        }));
+    } else if (arg.type === "history") {
+      const historyOptions = await trpcClient.argHistory.get.query(
+        getArgHistoryKey(arg, currentToken, currentAction, kind)!
+      );
+
+      return [
+        ...(argFilter.length > 0
+          ? [
+              {
+                name: argFilter,
+                value: argFilter + " ",
+                description: "",
+              },
+            ]
+          : []),
+        ...historyOptions,
+      ].map((option) => ({
+        ...option,
+        kind,
+      }));
+    } else if (arg.type === "custom") {
+      const customOptions = await trpcClient.handlers.query(
+        kind === "action-args"
+          ? {
+              track: currentAction!.track,
+              action: currentAction!.name,
+              arg: arg.name,
+              input: actionArgValues,
+            }
+          : {
+              track: currentToken!.track,
+              token: currentToken!.name,
+              arg: arg.name,
+              input: createArgsValues(
+                currentFilterRef.current!,
+                currentToken!.args
+              ),
+            }
+      );
+      return customOptions.map((option) => ({
+        ...option,
+        kind,
+      }));
+    }
+    return [];
+  }
+
+  function selectOption() {
+    if (optionsModeRef.current === null) {
+      if (currentActionRef.current) {
+        onAction(
+          currentActionRef.current,
+          promptStateRef.current.doc.toJSON(),
+          actionArgValuesRef.current
+        );
+        setPromptHistoryIndex(-1);
+        setPromptState(getNewPromptState());
+        if (
+          currentActionRef.current.name === "Reset Conversation" &&
+          currentActionRef.current.track === "lightrail"
+        ) {
+          setCurrentAction(undefined);
+        }
+      } else {
+        setOptionsMode("actions");
+      }
       return true;
     }
 
+    const selectedOption = highlightedOptionRef.current;
+    if (!selectedOption) return true;
+
     if (selectedOption.kind === "actions") {
-      onAction(selectedOption, promptStateRef.current.doc.toJSON());
-      setPromptHistoryIndex(-1);
-      setPromptState(getNewPromptState());
+      setCurrentAction(selectedOption);
+      return true;
     } else if (selectedOption.kind === "tokens") {
       setCurrentToken(selectedOption);
       startTokenEntry(selectedOption);
     } else if (selectedOption.kind === "token-args") {
       insertTokenArg(selectedOption);
+    } else if (selectedOption.kind === "action-args") {
+      setActionArgValues((prev) => ({
+        ...prev,
+        [currentActionArg!.name]: selectedOption.value,
+      }));
+      editorViewRef.current?.focus(); // TODO: this currently only supports single-argument actions, need to improve
     }
 
     return true;
@@ -216,33 +370,7 @@ function PromptInput({ onAction }: PromptInputProps) {
     }
   }, [promptHistoryIndex]);
 
-  // Change Options list when options mode changes
-  useEffect(() => {
-    switch (optionsMode) {
-      case "actions":
-        const actionOptions = rendererTracksManager.getActionList();
-        setOptions(actionOptions);
-        setHighlightedOption(
-          actionOptions.find(
-            (option) => option.name === currentActionRef?.current?.name
-          ) ?? actionOptions[0]
-        );
-        break;
-      case "tokens":
-        const newOptions = rendererTracksManager.getTokenList();
-        setOptions(newOptions);
-        break;
-    }
-  }, [optionsMode]);
-
-  // Update Current Action when selected option changes and is an action
-  useEffect(() => {
-    if (highlightedOption?.kind === "actions") {
-      setCurrentAction(highlightedOption);
-    }
-  }, [highlightedOption]);
-
-  // handle filter changes for token args
+  // Insert completed tokens
   useEffect(() => {
     if (currentFilter && currentToken) {
       const [tokenName, ...tokenArgs] = getTokenAndArgsArray(currentFilter);
@@ -255,9 +383,7 @@ function PromptInput({ onAction }: PromptInputProps) {
         for (const arg of currentToken.args) {
           if (arg.type === "history") {
             trpcClient.argHistory.append.mutate({
-              track: currentToken.track,
-              token: arg.key ? `#key` : currentToken.name,
-              arg: arg.key ?? arg.name,
+              ...getArgHistoryKey(arg, currentToken, undefined, "token-args")!,
               option: {
                 value: namedArgs[arg.name] + " ",
                 name: namedArgs[arg.name],
@@ -267,22 +393,9 @@ function PromptInput({ onAction }: PromptInputProps) {
         }
 
         insertToken(currentToken.track, tokenName, namedArgs);
-      } else if (tokenName === currentToken.name) {
-        const currentArgIndex = tokenArgs.length - 1;
-        populateTokenArgOptions(
-          currentToken.args[currentArgIndex],
-          tokenArgs[currentArgIndex]
-        );
+      } else {
+        setOptionsMode("token-args");
       }
-    } else if (currentFilter) {
-      // Haven't selected a token yet, just filter tokens
-      const filteredTokens = rendererTracksManager.getTokenList(currentFilter);
-      // if (filteredTokens.length < 1) {
-      //   closeAutocomplete(editorViewRef.current!);
-      // } else {
-      setOptions(filteredTokens);
-      setHighlightedOption(filteredTokens[0]);
-      // }
     }
   }, [currentFilter, currentToken]);
 
@@ -295,62 +408,6 @@ function PromptInput({ onAction }: PromptInputProps) {
       setHighlightedOption(options[0]);
     }
   }, [options, highlightedOption]);
-
-  // get options for different token arg types
-  async function populateTokenArgOptions(
-    tokenArg: TokenArgument,
-    argFilter: string
-  ) {
-    if (!tokenArg) return;
-    setCurrentTokenArg(tokenArg);
-    if (tokenArg.type === "path") {
-      const pathComponents = argFilter.split(PATH_SEPARATOR);
-      const dir = pathComponents.slice(0, -1).join(PATH_SEPARATOR);
-      const fileFilter = pathComponents[pathComponents.length - 1];
-
-      trpcClient.files.list.query(dir + PATH_SEPARATOR).then((files) => {
-        setOptions(
-          files
-            .filter((f) => {
-              return f.name.startsWith(fileFilter);
-            })
-            .map((file) => ({
-              name: file.path.length > 20 ? ".../" + file.name : file.path,
-              value: file.isDirectory
-                ? file.path + PATH_SEPARATOR
-                : file.path + " ",
-              kind: "token-args",
-              description: "",
-            }))
-        );
-      });
-    } else if (tokenArg.type === "history") {
-      const historyOptions = await trpcClient.argHistory.get.query({
-        track: currentToken!.track,
-        token: tokenArg.key ? `#key` : currentToken!.name,
-        arg: tokenArg.key ?? tokenArg.name,
-      });
-      setOptions(
-        historyOptions.map((option) => ({
-          ...option,
-          kind: "token-args",
-        }))
-      );
-    } else if (tokenArg.type === "custom") {
-      const customOptions = await trpcClient.handlers.query({
-        track: currentToken!.track,
-        token: currentToken!.name,
-        arg: tokenArg.name,
-        input: createArgsValues(currentFilterRef.current!, currentToken!.args),
-      });
-      setOptions(
-        customOptions.map((option) => ({
-          ...option,
-          kind: "token-args",
-        }))
-      );
-    }
-  }
 
   function insertToken(trackName, tokenName, tokenArgs: ArgsValues) {
     let tokenType = promptSchema.nodes.token;
@@ -406,27 +463,22 @@ function PromptInput({ onAction }: PromptInputProps) {
     }
   }
 
-  // Handle action filtering when filtering actions
   useEffect(() => {
-    if (optionsMode !== "actions") return;
-    if (isFilteringActions) {
-      const filteredActions =
-        rendererTracksManager.getActionList(actionsFilter);
-      setOptions(filteredActions);
-      setHighlightedOption(filteredActions[0]);
+    setActionsFilter("");
+    if (!currentAction) {
+      setOptionsMode("actions");
     } else {
-      const actionOptions = rendererTracksManager.getActionList();
-      setOptions(actionOptions);
+      const args = currentAction.args ?? [];
+      if (args.length === 0) {
+        editorViewRef.current?.focus();
+        setOptionsMode(null);
+      } else {
+        setActionArgValues(
+          Object.fromEntries(args.map((arg) => [arg.name, ""]))
+        );
+      }
     }
-  }, [isFilteringActions, actionsFilter]);
-
-  // handle focus when done filtering actions
-  useEffect(() => {
-    if (!isFilteringActions) {
-      setActionsFilter("");
-      editorViewRef.current?.focus();
-    }
-  }, [isFilteringActions]);
+  }, [currentAction]);
 
   // Unset current token when in actions mode
   useEffect(() => {
@@ -434,6 +486,29 @@ function PromptInput({ onAction }: PromptInputProps) {
       setCurrentToken(undefined);
     }
   }, [optionsMode]);
+
+  // Update placeholder on changed action
+  useEffect(() => {
+    if (!currentAction) {
+      setPromptState((oldState) =>
+        oldState.apply(oldState.tr.setMeta("placeholder", "← Choose an action"))
+      );
+    } else if (currentAction) {
+      if (currentAction.placeholder) {
+        setPromptState((oldState) =>
+          oldState.apply(
+            oldState.tr.setMeta("placeholder", currentAction.placeholder)
+          )
+        );
+      } else {
+        setPromptState((oldState) =>
+          oldState.apply(
+            oldState.tr.setMeta("placeholder", "Enter a prompt...")
+          )
+        );
+      }
+    }
+  }, [currentAction]);
 
   return (
     <div className="min-w-[600px]">
@@ -444,66 +519,144 @@ function PromptInput({ onAction }: PromptInputProps) {
         >
           <FontAwesomeIcon icon={faGear} size={"xs"} />
         </button>
-        <div className="p-4">
-          <PromptEditor
-            onChange={setPromptState}
-            state={promptState}
-            onViewReady={(view) => (editorViewRef.current = view)}
-          />
-        </div>
-      </div>
-      {currentAction && (
         <div
-          className="text-xs px-1 py-0.5 font-light flex flex-row items-center transition-colors border-y"
-          style={{
-            backgroundColor: currentAction.color + "20",
-            borderColor: currentAction.color + "50",
+          className="p-4 cursor-text"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              console.log(e.target, e.currentTarget);
+              console.log("Focusing on input");
+              if (currentAction) {
+                editorViewRef.current?.focus();
+              } else {
+                actionFilterInputRef.current?.focus();
+              }
+              e.stopPropagation();
+            }
           }}
         >
-          {isFilteringActions ? (
-            <>
-              {">"}{" "}
-              <input
+          {!currentAction ? (
+            <div className="mr-2 px-1 py-0.5 rounded-sm font-semibold text-sm inline-flex flex-row border border-neutral-600 items-center justify-center">
+              <div className=" pr-1">@</div>
+
+              <AutowidthInput
                 type="text"
-                className="bg-neutral-50 bg-opacity-10 px-1 active:outline-none focus:outline-none"
+                ref={actionFilterInputRef}
+                placeholder="Filter Actions..."
+                placeholderIsMinWidth
+                className="bg-transparent active:outline-none focus:outline-none w-24 placeholder:font-normal"
                 value={actionsFilter}
-                onBlur={() => setIsFilteringActions(false)}
                 onChange={(e) =>
                   setActionsFilter(e.target.value === "@" ? "" : e.target.value)
                 }
                 onKeyUpCapture={(e) => {
-                  if (
-                    e.key === "Escape" ||
-                    e.key === "Enter" ||
-                    e.key === "Tab"
-                  ) {
-                    setIsFilteringActions(false);
+                  if (e.key === "Enter" || e.key === "Tab") {
+                    selectOption();
+                    e.preventDefault();
+                    e.stopPropagation();
+                  } else if (e.key === "ArrowUp") {
+                    handleUpArrow();
+                  } else if (e.key === "ArrowDown") {
+                    handleDownArrow();
                   }
-                  e.preventDefault();
-                  e.stopPropagation();
-                  return false;
                 }}
                 autoFocus
               />
-              <div className="flex-1" />
-              <div className="opacity-50 italic">
-                Press 'Esc' to stop filtering
-              </div>
-            </>
+            </div>
           ) : (
-            <>
-              {currentAction.name}
-              <div className="flex-1" />
-              <div className="opacity-50 italic">
-                Press '@' to filter actions
-              </div>
-            </>
+            currentAction && (
+              <>
+                {" "}
+                <div
+                  className={classNames(
+                    "mr-2 px-1 py-0 rounded-sm font-semibold text-sm inline-flex flex-row items-center justify-center transition-all",
+                    {
+                      "text-neutral-950": shouldTextBeBlack(
+                        currentAction?.color
+                      ),
+                    }
+                  )}
+                  style={{
+                    backgroundColor: currentAction?.color,
+                  }}
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      console.log(e.target, e.currentTarget);
+                      setCurrentAction(undefined);
+                      e.stopPropagation();
+                    }
+                    return false;
+                  }}
+                >
+                  <div className="opacity-50 pr-1">@</div>
+                  {currentAction?.name}
+                  {currentAction?.args.map((arg) => (
+                    <AutowidthInput
+                      autoFocus
+                      onFocus={() => {
+                        setCurrentActionArg(arg);
+                        setOptionsMode("action-args");
+                      }}
+                      onBlur={() => {
+                        // Delay to prevent the input from being removed before the click event on the option is registered
+                        // TODO: Find a better way to do this
+                        setTimeout(() => {
+                          setOptionsMode(null);
+                          setCurrentActionArg(undefined);
+                        }, 100);
+                      }}
+                      onKeyUpCapture={(e) => {
+                        if (e.key === "Escape" || e.key === "Tab") {
+                          editorViewRef.current?.focus();
+                          e.preventDefault();
+                          e.stopPropagation();
+                        } else if (e.key === "Enter") {
+                          selectOption();
+                          editorViewRef.current?.focus();
+                        } else if (e.key === "ArrowUp") {
+                          handleUpArrow();
+                        } else if (e.key === "ArrowDown") {
+                          handleDownArrow();
+                        }
+                      }}
+                      className={classNames(
+                        "mx-2 px-1 h-full rounded-sm font-semibold text-sm bg-neutral-950 bg-opacity-30 focus:outline-none  placeholder:opacity-50",
+                        {
+                          "text-neutral-950 placeholder:text-neutral-950":
+                            shouldTextBeBlack(currentAction?.color),
+                        }
+                      )}
+                      key={currentAction.name + arg.name}
+                      value={actionArgValues[arg.name]}
+                      onChange={(e) => {
+                        setActionArgValues((prev) => ({
+                          ...prev,
+                          [arg.name]: e.target.value,
+                        }));
+                      }}
+                      placeholder={arg.name}
+                      placeholderIsMinWidth
+                    />
+                  ))}
+                  <div className="opacity-50">:</div>
+                </div>
+              </>
+            )
           )}
+          <PromptEditor
+            className="inline"
+            onChange={setPromptState}
+            state={promptState}
+            onViewReady={(view) => (editorViewRef.current = view)}
+            readonly={!currentAction}
+          />
         </div>
-      )}
+      </div>
+
       <OptionsList
         currentToken={currentToken}
         currentTokenArg={currentTokenArg}
+        currentAction={currentAction}
+        currentActionArg={currentActionArg}
         options={options}
         mode={optionsMode}
         highlightedOption={highlightedOption}
@@ -513,10 +666,7 @@ function PromptInput({ onAction }: PromptInputProps) {
           selectOption();
         }}
         onRefreshOptions={() => {
-          if (currentTokenArg && currentFilter) {
-            populateTokenArgOptions(currentTokenArg, currentFilter);
-          }
-          // Add other cases here as needed?
+          updateOptionsList();
         }}
       />
     </div>

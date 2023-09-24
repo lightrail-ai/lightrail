@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import classNames from "classnames";
-import type { Token, TokenArgument } from "lightrail-sdk";
+import type { ActionArgument, Token, TokenArgument } from "lightrail-sdk";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Option } from "src/util/tracks";
@@ -9,12 +9,14 @@ import { faEdit } from "@fortawesome/free-regular-svg-icons";
 import TextInput from "../ui-elements/TextInput/TextInput";
 import { faCheck, faUndo } from "@fortawesome/free-solid-svg-icons";
 import { trpcClient } from "@renderer/util/trpc-client";
-import type { TokenOption } from "../../../../util/tracks";
+import type { ActionOption, TokenOption } from "../../../../util/tracks";
 
 export interface OptionsListProps {
   highlightedOption: Option | undefined;
   currentToken: TokenOption | undefined;
   currentTokenArg: TokenArgument | undefined;
+  currentAction: ActionOption | undefined;
+  currentActionArg: ActionArgument | undefined;
   onHighlightedOptionChange: (option: Option) => void;
   options: Option[];
   mode: OptionsMode;
@@ -22,7 +24,28 @@ export interface OptionsListProps {
   onRefreshOptions: () => void;
 }
 
-export type OptionsMode = Option["kind"];
+export type OptionsMode = Option["kind"] | null;
+
+export function getArgHistoryKey(
+  arg: TokenArgument | ActionArgument,
+  currentToken: TokenOption | undefined,
+  currentAction: ActionOption | undefined,
+  kind: "token-args" | "action-args"
+) {
+  if (arg.type !== "history") return undefined;
+  return {
+    track:
+      kind == "token-args"
+        ? currentToken!.track.replace(/\W/g, "")
+        : currentAction!.track.replace(/\W/g, ""),
+    path: arg.key
+      ? `#key`
+      : kind === "token-args"
+      ? currentToken!.name.replace(/\W/g, "")
+      : currentAction!.name.replace(/\W/g, ""),
+    arg: arg.key ?? arg.name,
+  };
+}
 
 function OptionsListItem({
   option,
@@ -30,7 +53,7 @@ function OptionsListItem({
   currentTokenArg,
   highlighted,
   mode,
-  onMouseEnter,
+  onMouseMove,
   onClick,
   onRefreshOptions,
 }: {
@@ -39,7 +62,7 @@ function OptionsListItem({
   currentToken: TokenOption | undefined;
   currentTokenArg: TokenArgument | undefined;
   mode: OptionsMode;
-  onMouseEnter: () => void;
+  onMouseMove: () => void;
   onClick: () => void;
   onRefreshOptions: () => void;
 }) {
@@ -70,7 +93,7 @@ function OptionsListItem({
   function renderEditableHistoryEntry() {
     return (
       <div
-        onMouseEnter={onMouseEnter}
+        onMouseMove={onMouseMove}
         onClick={isEditing ? undefined : onClick}
         ref={ref}
         className={classNames(
@@ -105,9 +128,12 @@ function OptionsListItem({
                   ) {
                     trpcClient.argHistory.append
                       .mutate({
-                        track: currentToken.track,
-                        token: currentTokenArg.key ? `#key` : currentToken.name,
-                        arg: currentTokenArg.key ?? currentTokenArg.name,
+                        ...getArgHistoryKey(
+                          currentTokenArg,
+                          currentToken,
+                          undefined,
+                          "token-args"
+                        )!,
                         option: {
                           ...option,
                           description: editedDescription,
@@ -228,11 +254,11 @@ function OptionsListItem({
     }
   }
 
-  return currentTokenArg?.type === "history" && option.kind === "token-args" ? (
+  return currentTokenArg?.type === "history" && option.kind === "token-args" ? ( // TODO: add support for action-args here
     renderEditableHistoryEntry()
   ) : (
     <div
-      onMouseEnter={onMouseEnter}
+      onMouseMove={onMouseMove}
       onClick={onClick}
       ref={ref}
       className={classNames(
@@ -287,6 +313,8 @@ function OptionsList({
   highlightedOption,
   currentToken,
   currentTokenArg,
+  currentAction,
+  currentActionArg,
   options,
   mode,
   onHighlightedOptionChange,
@@ -297,30 +325,34 @@ function OptionsList({
     duration: 100,
   });
 
+  console.log(currentToken, currentTokenArg, currentAction, currentActionArg);
+  const currentArgSource = currentToken ?? currentAction;
+  const currentArg = currentTokenArg ?? currentActionArg;
+
   return (
     <>
-      {currentToken && currentTokenArg && (
+      {currentArgSource && currentArg && (
         <div className="px-6 py-2 flex flex-row">
           <div
             className="pr-6 font-semibold"
             style={{
-              color: currentToken.color,
+              color: currentArgSource.color,
             }}
           >
-            {currentToken.name}
+            {currentArgSource.name}
           </div>
           <div className="flex flex-row gap-4">
-            {currentToken.args.map((t) => (
+            {currentArgSource.args.map((t) => (
               <div
                 className={classNames({
-                  "opacity-100": t === currentTokenArg,
-                  "opacity-30": t !== currentTokenArg,
+                  "opacity-100": t === currentArg,
+                  "opacity-30": t !== currentArg,
                 })}
               >
                 <div>{t.name}</div>
                 <div>
-                  {t === currentTokenArg && (
-                    <div className="text-sm">{currentTokenArg.description}</div>
+                  {t === currentArg && (
+                    <div className="text-sm">{currentArg.description}</div>
                   )}
                 </div>
               </div>
@@ -330,16 +362,19 @@ function OptionsList({
       )}
       <div
         className={classNames(
-          "overflow-y-auto overflow-x-hidden max-h-52 border-t border-t-neutral-800 cursor-pointer",
+          "overflow-y-auto overflow-x-hidden max-h-52 cursor-pointer",
           {
             "bg-neutral-800": mode === "tokens" || mode === "token-args",
+            "border-t border-t-neutral-800": options.length > 0,
           }
         )}
         ref={parent}
       >
         {options.map((option, index) => (
           <OptionsListItem
-            onMouseEnter={() => onHighlightedOptionChange(option)}
+            onMouseMove={() =>
+              highlightedOption !== option && onHighlightedOptionChange(option)
+            }
             onClick={() => onOptionClick(option)}
             currentToken={currentToken}
             currentTokenArg={currentTokenArg}

@@ -6,7 +6,12 @@ import { promptHistoryAtom, viewAtom } from "./state";
 import ChatHistory from "./components/ChatHistory/ChatHistory";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { far } from "@fortawesome/free-regular-svg-icons";
-import { LightrailControl, type ChatHistoryItem } from "lightrail-sdk";
+import {
+  LightrailControl,
+  type ChatHistoryItem,
+  ArgsValues,
+  TaskProgress,
+} from "lightrail-sdk";
 import Loading from "./components/Loading"; // Import the Loading component
 import Controls from "./components/Controls/Controls";
 import log from "./util/logger";
@@ -19,6 +24,14 @@ import { Option } from "../../util/tracks";
 import ErrorDisplay from "./components/Error/Error";
 import Configuration from "./components/Configuration/Configuration";
 import { loadTracks } from "./util/track-admin";
+import { getArgHistoryKey } from "./components/OptionsList";
+import { nanoid } from "nanoid";
+import TasksDisplay, {
+  TaskStatus,
+} from "./components/TasksDisplay/TasksDisplay";
+import NotificationsDisplay, {
+  NotificationsDisplayRef,
+} from "./components/NotificationsDisplay/NotificationsDisplay";
 
 library.add(far);
 
@@ -63,9 +76,46 @@ function App(): JSX.Element {
 
   const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
   const [controls, setControls] = useState<LightrailControl[]>([]);
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const notificationsDisplayRef = useRef<NotificationsDisplayRef>(null);
 
   const [partialMessage, setPartialMessage] = useState<string | null>(null);
+
+  const getTaskHandle = (id: string) => ({
+    id: id,
+    finishTask: () => {
+      setTaskStatuses((statuses) =>
+        statuses.filter((status) => status.id !== id)
+      );
+    },
+    setMessage(message) {
+      setTaskStatuses((statuses) =>
+        statuses.map((status) => {
+          if (status.id === id) {
+            return {
+              ...status,
+              message,
+            };
+          }
+          return status;
+        })
+      );
+    },
+    setProgress(progress) {
+      setTaskStatuses((statuses) =>
+        statuses.map((status) => {
+          if (status.id === id) {
+            return {
+              ...status,
+              progress,
+            };
+          }
+          return status;
+        })
+      );
+    },
+  });
 
   useEffect(() => {
     rendererTracksManager.processHandleFactory = (track) =>
@@ -76,6 +126,27 @@ function App(): JSX.Element {
         },
         controls: {
           setControls: setControls,
+        },
+        notify(message) {
+          notificationsDisplayRef.current?.addNotification({
+            id: nanoid(),
+            message,
+          });
+        },
+        tasks: {
+          startTask: () => {
+            const id = nanoid();
+            setTaskStatuses((statuses) => [
+              ...statuses,
+              {
+                id,
+                progress: undefined,
+                message: "",
+              },
+            ]);
+            return getTaskHandle(id);
+          },
+          getTaskHandle,
         },
         reset: () => {
           setChatHistory([]);
@@ -125,7 +196,11 @@ function App(): JSX.Element {
     setPromptHistory((history) => [prompt, ...history]);
   }
 
-  async function executePromptAction(action: Option, prompt: object) {
+  async function executePromptAction(
+    action: Option,
+    prompt: object,
+    args: ArgsValues | undefined
+  ) {
     setError(null);
     log.silly("Executing action: ", action.name);
     if (!action.name) {
@@ -135,14 +210,32 @@ function App(): JSX.Element {
       throw new Error("Cannot execute action that is not an action");
     }
 
-    appendToHistory(prompt);
+    if (prompt?.["content"]?.length > 0) {
+      appendToHistory(prompt);
+    }
 
     try {
+      for (const arg of action.args) {
+        if (args?.[arg.name]) {
+          // Remove whitespace as needed
+          args[arg.name] = args[arg.name].trim();
+
+          if (arg.type === "history") {
+            await trpcClient.argHistory.append.mutate({
+              ...getArgHistoryKey(arg, undefined, action, "action-args")!,
+              option: {
+                value: args[arg.name] + " ",
+                name: args[arg.name],
+              },
+            });
+          }
+        }
+      }
       await trpcClient.action.mutate({
         track: action.track,
         name: action.name,
         prompt,
-        args: {}, // TODO: add support for additional args
+        args: args ?? {},
       });
     } catch (e: any) {
       log.error("Error executing action: ", e);
@@ -157,10 +250,23 @@ function App(): JSX.Element {
       case "prompt":
         return (
           <>
-            <ChatHistory items={chatHistory} partialMessage={partialMessage} />
+            <ChatHistory
+              items={chatHistory}
+              partialMessage={partialMessage}
+              onReset={() => {
+                trpcClient.action.mutate({
+                  track: "lightrail",
+                  name: "Reset Conversation",
+                  prompt: null,
+                  args: {},
+                });
+              }}
+            />
             <Controls controls={controls} />
             <ErrorDisplay error={error} />
+            <NotificationsDisplay ref={notificationsDisplayRef} />
             <PromptInput onAction={executePromptAction} />
+            <TasksDisplay statuses={taskStatuses} />
           </>
         );
     }
@@ -172,14 +278,14 @@ function App(): JSX.Element {
       style={{
         transitionProperty: "height, width",
         transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
-        transitionDuration: "300ms",
+        transitionDuration: "150ms",
         width: `${targetWidth}px`,
         height: `${targetHeight}px`,
       }}
     >
       <div
         ref={resizeObserverRef}
-        className="w-fit h-fit flex flex-col overflow-hidden "
+        className="w-fit h-fit flex flex-col overflow-hidden"
         style={{
           maxHeight: `${maxHeight}px`,
           maxWidth: `${maxWidth}px`,

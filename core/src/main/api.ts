@@ -15,9 +15,11 @@ import {
   mainTracksManager,
 } from "./lightrail-main";
 import {
+  ActionHandle,
   LightrailMainProcessHandle,
   Prompt,
   TokenArgumentOption,
+  TokenHandle,
 } from "lightrail-sdk";
 import { TRACKS_DIR, installTrack, loadTracks } from "./track-admin";
 import { LightrailKVStore } from "./storage";
@@ -238,18 +240,18 @@ export const getRouter = (window: BrowserWindow) =>
         .input(
           z.object({
             track: z.string(),
-            token: z.string(),
+            path: z.string(),
             arg: z.string(),
           })
         )
         .query(async (req) => {
           log.silly("tRPC Call: argHistory.get");
-          const { track, token, arg } = req.input;
+          const { track, path, arg } = req.input;
           const trackKVStore = new LightrailKVStore(
             mainTracksManager.getTrack(track)!
           );
           const res = await trackKVStore.get<TokenArgumentOption[]>(
-            `argHistory-${token}-${arg}`
+            `argHistory-${path}-${arg}`
           );
           return res?.map((o) => ({ ...o, value: o.value as object })) ?? [];
         }),
@@ -257,7 +259,7 @@ export const getRouter = (window: BrowserWindow) =>
         .input(
           z.object({
             track: z.string(),
-            token: z.string(),
+            path: z.string(),
             arg: z.string(),
             option: z.object({
               value: z.any(),
@@ -268,14 +270,14 @@ export const getRouter = (window: BrowserWindow) =>
         )
         .mutation(async (req) => {
           log.silly("tRPC Call: argHistory.append", req.input);
-          const { track, token, arg, option } = req.input;
+          const { track, path, arg, option } = req.input;
 
           const trackKVStore = new LightrailKVStore(
             mainTracksManager.getTrack(track)!
           );
           const history =
             (await trackKVStore.get<TokenArgumentOption[]>(
-              `argHistory-${token}-${arg}`
+              `argHistory-${path}-${arg}`
             )) ?? [];
 
           option.description =
@@ -283,7 +285,7 @@ export const getRouter = (window: BrowserWindow) =>
             history.find((o) => o.value === option.value)?.description ??
             "";
 
-          return trackKVStore.set(`argHistory-${token}-${arg}`, [
+          return trackKVStore.set(`argHistory-${path}-${arg}`, [
             option,
             ...history.filter((o) => o.value !== option.value),
           ]);
@@ -294,16 +296,22 @@ export const getRouter = (window: BrowserWindow) =>
       .input(
         z.object({
           track: z.string(),
-          token: z.string(),
+          token: z.string().optional(),
+          action: z.string().optional(),
           arg: z.string(),
           input: z.any(),
         })
       )
       .query(async (req) => {
         log.silly("tRPC Call: handlers");
-        const { track, token, arg: argName, input } = req.input;
-        const tokenHandle = mainTracksManager.getTokenHandle(track, token);
-        const arg = tokenHandle?.args.find((a) => a.name === argName);
+        const { track, token, action, arg: argName, input } = req.input;
+        let handle: TokenHandle | ActionHandle | undefined;
+        if (token) {
+          handle = mainTracksManager.getTokenHandle(track, token);
+        } else if (action) {
+          handle = mainTracksManager.getActionHandle(track, action);
+        }
+        const arg = handle?.args.find((a) => a.name === argName);
         if (!arg || arg.type !== "custom") {
           throw new Error("Handler not found");
         }
