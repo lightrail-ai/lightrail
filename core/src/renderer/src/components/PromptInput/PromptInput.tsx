@@ -73,7 +73,7 @@ function PromptInput({ onAction }: PromptInputProps) {
   const [promptState, setPromptState, promptStateRef] =
     useStateWithRef<EditorState>(getNewPromptState());
   const editorViewRef = useRef<EditorView>();
-  const actionFilterInputRef = useRef<HTMLInputElement>(null);
+  const actionsFilterInputRef = useRef<HTMLInputElement>(null);
 
   useHotkeys("up", handleUpArrow);
   useHotkeys("down", handleDownArrow);
@@ -399,6 +399,13 @@ function PromptInput({ onAction }: PromptInputProps) {
     }
   }, [currentFilter, currentToken]);
 
+  // Make sure filtering triggers action completions. This is a hack, it shouldn't be necessary bc switching to filtering should auto-set the options mode
+  useEffect(() => {
+    if (actionsFilter.length > 0) {
+      setOptionsMode("actions");
+    }
+  }, [actionsFilter]);
+
   // Make highlighted option the first option when options change (if its not currently in options)
   useEffect(() => {
     if (
@@ -503,7 +510,10 @@ function PromptInput({ onAction }: PromptInputProps) {
       } else {
         setPromptState((oldState) =>
           oldState.apply(
-            oldState.tr.setMeta("placeholder", "Enter a prompt...")
+            oldState.tr.setMeta(
+              "placeholder",
+              "Enter a prompt (type '/' to add context)"
+            )
           )
         );
       }
@@ -528,19 +538,19 @@ function PromptInput({ onAction }: PromptInputProps) {
               if (currentAction) {
                 editorViewRef.current?.focus();
               } else {
-                actionFilterInputRef.current?.focus();
+                actionsFilterInputRef.current?.focus();
               }
               e.stopPropagation();
             }
           }}
         >
           {!currentAction ? (
-            <div className="mr-2 px-1 py-0.5 rounded-sm font-semibold text-sm inline-flex flex-row border border-neutral-600 items-center justify-center">
-              <div className=" pr-1">@</div>
+            <div className="mr-2 px-1 py-0.5 rounded-sm font-semibold text-sm inline-flex flex-row border border-neutral-700 items-center justify-center">
+              <div className="pr-1 opacity-80">@</div>
 
               <AutowidthInput
                 type="text"
-                ref={actionFilterInputRef}
+                ref={actionsFilterInputRef}
                 placeholder="Filter Actions..."
                 placeholderIsMinWidth
                 className="bg-transparent active:outline-none focus:outline-none w-24 placeholder:font-normal"

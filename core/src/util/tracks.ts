@@ -157,10 +157,10 @@ export class TracksManager {
       return tokenList;
     } else {
       const query = queryInput.toLowerCase();
-      return tokenList.filter(
-        (token) =>
-          token.name.toLowerCase().includes(query) ||
-          token.description.toLowerCase().includes(query)
+      return tokenList.filter((token) =>
+        `${token.track.toLowerCase()}.${token.name.toLowerCase()} ${token.description.toLowerCase()}`.includes(
+          query
+        )
       );
     }
   }
@@ -173,10 +173,10 @@ export class TracksManager {
       return actionList;
     } else {
       const query = queryInput.toLowerCase();
-      return actionList.filter(
-        (action) =>
-          action.name.toLowerCase().includes(query) ||
-          action.description.toLowerCase().includes(query)
+      return actionList.filter((action) =>
+        `${action.track.toLowerCase()}.${action.name.toLowerCase()} ${action.description.toLowerCase()}`.includes(
+          query
+        )
       );
     }
   }
