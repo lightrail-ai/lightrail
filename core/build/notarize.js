@@ -25,10 +25,12 @@ module.exports = async (context) => {
 
   try {
     await notarize({
+      tool: "notarytool",
       appBundleId: appId,
       appPath: `${appOutDir}/${appName}.app`,
       appleId: process.env.APPLEID,
       appleIdPassword: process.env.APPLEIDPASS,
+      teamId: process.env.APPLETEAMID,
     });
   } catch (error) {
     console.error(error);

@@ -280,7 +280,10 @@ function PromptInput({ onAction }: PromptInputProps) {
               },
             ]
           : []),
-        ...historyOptions,
+        ...historyOptions.filter(
+          (option) =>
+            argFilter.length > 0 && option.name.trim() !== argFilter.trim()
+        ),
       ].map((option) => ({
         ...option,
         kind,

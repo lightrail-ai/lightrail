@@ -1,6 +1,6 @@
 {
   "name": "lightrail-core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A universal AI command bar for developers",
   "main": "./out/main/index.js",
   "author": "lightrail.ai",
@@ -76,7 +76,7 @@
   },
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^1.0.1",
-    "@electron/notarize": "^1.2.3",
+    "@electron/notarize": "^2.1.0",
     "@tailwindcss/typography": "^0.5.9",
     "@types/adm-zip": "^0.5.0",
     "@types/node": "^18.16.19",

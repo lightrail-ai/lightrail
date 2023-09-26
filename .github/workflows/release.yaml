@@ -211,6 +211,7 @@ jobs:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           APPLEID: ${{ secrets.APPLEID }}
           APPLEIDPASS: ${{ secrets.APPLEIDPASS }}
+          APPLETEAMID: ${{ secrets.APPLETEAMID }}
         if: matrix.os == 'macos-latest'
         run: npm --prefix ./core run build:mac
 
