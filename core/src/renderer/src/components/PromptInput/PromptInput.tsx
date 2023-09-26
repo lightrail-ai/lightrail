@@ -130,6 +130,13 @@ function PromptInput({ onAction }: PromptInputProps) {
           ArrowUp: handleUpArrow,
           ArrowDown: handleDownArrow,
           Enter: selectOption,
+          Escape: () => {
+            if (optionsModeRef.current === null) {
+              setCurrentAction(undefined);
+              return true;
+            }
+            return false;
+          },
           "Mod-ArrowUp": handleHistoryGoPrev,
           "Mod-ArrowDown": handleHistoryGoNext,
         }),

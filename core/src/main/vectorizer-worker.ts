@@ -1,8 +1,9 @@
-import { pipeline } from "@xenova/transformers";
+import workerpool from "workerpool";
 
 let vectorizer: any = null;
 
 async function initialize() {
+  const { pipeline } = await import("@xenova/transformers");
   vectorizer = await pipeline("feature-extraction", "thenlper/gte-base", {
     quantized: false,
   });
@@ -19,5 +20,7 @@ async function vectorize(
   return tensor.tolist();
 }
 
-(window as any).initialize = initialize;
-(window as any).vectorize = vectorize;
+workerpool.worker({
+  initialize,
+  vectorize,
+});

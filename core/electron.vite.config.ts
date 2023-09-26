@@ -1,7 +1,6 @@
 import { resolve } from "path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import react from "@vitejs/plugin-react";
-
 export default defineConfig({
   main: {
     plugins: [
@@ -9,6 +8,14 @@ export default defineConfig({
         exclude: ["weaviate-ts-embedded"],
       }),
     ],
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, "src/main/index.ts"),
+          vectorizer: resolve(__dirname, "src/main/vectorizer-worker.ts"),
+        },
+      },
+    },
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
@@ -20,13 +27,5 @@ export default defineConfig({
       },
     },
     plugins: [react()],
-    build: {
-      rollupOptions: {
-        input: {
-          index: resolve("src/renderer/index.html"),
-          worker: resolve("src/renderer/worker.html"),
-        },
-      },
-    },
   },
 });

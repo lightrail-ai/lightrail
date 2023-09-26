@@ -11,6 +11,7 @@ files:
   - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
 extraResources:
   - lib
+asar: false
 asarUnpack:
   - resources/**
 afterSign: build/notarize.js

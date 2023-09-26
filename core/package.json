@@ -35,6 +35,7 @@
     "@trpc/server": "^10.36.0",
     "@types/electron-json-storage": "^4.5.0",
     "@types/marked": "^5.0.1",
+    "@types/workerpool": "^6.4.4",
     "@xenova/transformers": "^2.6.0",
     "adm-zip": "^0.5.10",
     "classnames": "^2.3.2",
@@ -70,6 +71,7 @@
     "update-electron-app": "^2.0.1",
     "weaviate-ts-embedded": "^1.2.0",
     "web-tree-sitter": "^0.20.8",
+    "workerpool": "^6.5.0",
     "ws": "^8.13.0"
   },
   "devDependencies": {

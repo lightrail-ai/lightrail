@@ -1,49 +1,27 @@
-import { BrowserWindow } from "electron";
 import { join } from "path";
 import log from "./logger";
-import { is } from "@electron-toolkit/utils";
+import workerpool from "workerpool";
 
-let workerWin: BrowserWindow | null = null;
+let pool;
 
-async function getWorker(): Promise<BrowserWindow> {
-  if (!workerWin) {
-    workerWin = new BrowserWindow({
-      show: false,
-    });
-
-    if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-      const url = process.env["ELECTRON_RENDERER_URL"] + "/worker.html";
-      log.silly("Loading worker from " + url);
-      workerWin.loadURL(url);
+async function getWorker() {
+  if (!pool) {
+    pool = workerpool.pool(join(__dirname, "vectorizer.js"));
+    const initialized = await pool.exec("initialize");
+    if (!initialized) {
+      throw new Error("Failed to initialize vectorizer worker");
     } else {
-      log.silly(
-        "Loading worker from " + join(__dirname, "../renderer/worker.html")
-      );
-      workerWin.loadFile(join(__dirname, "../renderer/worker.html"));
+      log.silly("Initialized vectorizer worker");
     }
-
-    return new Promise((resolve) => {
-      workerWin?.webContents.on("did-finish-load", async () => {
-        const initialized = await workerWin?.webContents.executeJavaScript(
-          "initialize()"
-        );
-        if (!initialized) {
-          throw new Error("Failed to initialize vectorizer worker");
-        }
-        resolve(workerWin!);
-      });
-    });
   }
-  return workerWin;
+  return pool;
 }
 
 export async function getVectorizer() {
   const worker = await getWorker();
   return {
     vectorize: async (content: string[]) => {
-      return await worker.webContents.executeJavaScript(
-        `vectorize(${JSON.stringify(content)})`
-      );
+      return await worker.exec("vectorize", [content]);
     },
   };
 }

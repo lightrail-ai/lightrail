@@ -187,11 +187,16 @@ export const getRouter = (window: BrowserWindow) =>
         const handler = mainTracksManager.getActionHandle(track, name)?.handler;
 
         if (handler && processHandle?.env === "main") {
-          return await handler(
-            processHandle,
-            new Prompt(prompt, mainTracksManager),
-            args
-          );
+          try {
+            return await handler(
+              processHandle,
+              new Prompt(prompt, mainTracksManager),
+              args
+            );
+          } catch (e) {
+            log.error(e);
+            throw e;
+          }
         } else {
           throw new Error(`Unknown/un-handled action: ${track} ${name}`);
         }
