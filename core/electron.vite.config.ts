@@ -4,7 +4,11 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [
+      externalizeDepsPlugin({
+        exclude: ["weaviate-ts-embedded"],
+      }),
+    ],
   },
   preload: {
     plugins: [externalizeDepsPlugin()],

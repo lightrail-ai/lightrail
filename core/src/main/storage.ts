@@ -6,10 +6,9 @@ import {
 import jsonStorage from "electron-json-storage";
 import path from "path";
 import type { EmbeddedClient } from "weaviate-ts-embedded";
+import weaviate, { EmbeddedOptions } from "weaviate-ts-embedded";
 import log from "./logger";
 import * as workers from "./worker-management";
-import { app } from "electron";
-
 /* monkeypatch fetch to allow weaviate port */
 
 // Get the badPorts list from the original undici module.
@@ -87,24 +86,11 @@ export class LightrailVectorStore {
 
   async _getClient() {
     if (!this._client) {
-      const { EmbeddedOptions, default: weaviate } = await import(
-        "weaviate-ts-embedded"
-      );
       const options = new EmbeddedOptions();
-      options.binaryPath = path.join(
-        app.getPath("appData"),
-        "weaviate",
-        "binary"
-      );
-      options.persistenceDataPath = path.join(
-        app.getPath("appData"),
-        "weaviate",
-        "data"
-      );
       this._client = weaviate.client(options);
-      await this._client.embedded.start();
+      await this._client?.embedded.start();
     }
-    return this._client;
+    return this._client!;
   }
 
   async ensureClass(
