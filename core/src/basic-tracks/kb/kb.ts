@@ -29,146 +29,160 @@ export default <LightrailTrack>{
       icon: "lightbulb",
       async handler(mainHandle: LightrailMainProcessHandle, prompt, args) {
         const fs = require("fs/promises");
+        const pdf2md = require("@opendocsg/pdf2md");
         const { join } = require("path");
         const { glob } = require("glob");
         let context: PromptContextItem[] = [];
 
         mainHandle.sendMessageToRenderer("start-task");
 
-        mainHandle.sendMessageToRenderer(
-          "new-notification",
-          "Your content is being added to the knowledge base. This may take a while, depending on the number & size of new items - see the progress indicator below for more information."
-        );
+        try {
+          mainHandle.sendMessageToRenderer(
+            "new-notification",
+            "Your content is being added to the knowledge base. This may take a while, depending on the number & size of new items - see the progress indicator below for more information."
+          );
 
-        const addFileToContext = async (path: string) => {
-          const ext = path.split(".").pop();
-          if (!ext) return;
-          if (VALID_CODE_EXTENSIONS.includes(ext)) {
-            context.push({
-              title: path,
-              type: "code",
-              content: "",
-              metadata: {
-                path,
+          const addFileToContext = (path: string) => {
+            const ext = path.split(".").pop();
+            if (!ext) return;
+            if (VALID_CODE_EXTENSIONS.includes(ext)) {
+              context.push({
+                title: path,
+                type: "code",
+                content: "",
+                metadata: {
+                  path,
+                },
+              });
+            } else {
+              context.push({
+                title: path,
+                type: "text",
+                content: "",
+                metadata: {
+                  path,
+                },
+              });
+            }
+          };
+
+          await prompt.hydrate(mainHandle, {
+            files: {
+              path: async (handle, args, prompt, origHydrate) => {
+                const pathString = args.path;
+
+                const isDirectory = (await fs.lstat(pathString)).isDirectory();
+                if (isDirectory) {
+                  (
+                    await glob(
+                      `**/*.{${[
+                        ...VALID_CODE_EXTENSIONS,
+                        "md",
+                        "txt",
+                        "pdf",
+                      ].join(",")}}`,
+                      {
+                        ignore: [
+                          "**/node_modules/**",
+                          "**/dist/**",
+                          "**/track-dist/**",
+                          "**/out/**",
+                          "**/build/**",
+                          "**/builds/**",
+                          "**/package-lock.json",
+                          "**/*.min.*",
+                        ],
+                        dot: false,
+                        nodir: true,
+                        cwd: pathString,
+                      }
+                    )
+                  ).forEach((p) => {
+                    addFileToContext(join(pathString, p));
+                  });
+                } else {
+                  addFileToContext(pathString);
+                }
+
+                await origHydrate(handle, args, prompt);
               },
-            });
-          } else {
-            context.push({
-              title: path,
-              type: "text",
-              content: "",
-              metadata: {
-                path,
-              },
-            });
-          }
-        };
-
-        await prompt.hydrate(mainHandle, {
-          files: {
-            path: async (handle, args, prompt, origHydrate) => {
-              const pathString = args.path;
-
-              const isDirectory = (await fs.lstat(pathString)).isDirectory();
-              if (isDirectory) {
-                (
-                  await glob(
-                    `**/*.{${[...VALID_CODE_EXTENSIONS, "md", "txt"].join(
-                      ","
-                    )}}`,
-                    {
-                      ignore: [
-                        "**/node_modules/**",
-                        "**/dist/**",
-                        "**/track-dist/**",
-                        "**/out/**",
-                        "**/build/**",
-                        "**/builds/**",
-                        "**/package-lock.json",
-                        "**/*.min.*",
-                      ],
-                      dot: false,
-                      nodir: true,
-                      cwd: pathString,
-                    }
-                  )
-                ).forEach((p) => {
-                  addFileToContext(join(pathString, p));
-                });
-              } else {
-                await addFileToContext(pathString);
-              }
-
-              await origHydrate(handle, args, prompt);
             },
-          },
-        });
+          });
 
-        context.push(...prompt._context);
+          context.push(...prompt._context);
 
-        const splitter = RecursiveCharacterTextSplitter.fromLanguage(
-          "markdown",
-          {
-            chunkSize: 512 * 3,
-            chunkOverlap: 0,
+          const splitter = RecursiveCharacterTextSplitter.fromLanguage(
+            "markdown",
+            {
+              chunkSize: 512 * 3,
+              chunkOverlap: 0,
+            }
+          );
+
+          const items: LightrailKBItem[] = [];
+
+          for (const c of context) {
+            if (c.content === "" && c.metadata?.path) {
+              if (c.metadata.path.endsWith(".pdf")) {
+                const pdfBuffer = await fs.readFile(c.metadata.path);
+                c.content = await pdf2md(pdfBuffer);
+              } else {
+                c.content = await fs.readFile(c.metadata.path, "utf-8");
+              }
+            }
+            if (c.type === "code") {
+              const chunks = await chunkCode(c.content, c.title);
+              items.push(
+                ...chunks.map((chunk) => ({
+                  ...c,
+                  content: chunk.extractLines(c.content).join("\n"),
+                  tags: args.tag ? [args.tag] : [],
+                }))
+              );
+            } else {
+              const docs = await splitter.createDocuments([c.content]);
+              items.push(
+                ...docs.map((d) => ({
+                  ...c,
+                  content: d.pageContent,
+                  metadata: { ...(c.metadata ?? {}), ...d.metadata },
+                  tags: args.tag ? [args.tag] : [],
+                }))
+              );
+            }
           }
-        );
 
-        const items: LightrailKBItem[] = [];
-
-        for (const c of context) {
-          if (c.content === "" && c.metadata?.path) {
-            c.content = await fs.readFile(c.metadata.path, "utf-8");
-          }
-          if (c.type === "code") {
-            const chunks = await chunkCode(c.content, c.title);
-            items.push(
-              ...chunks.map((chunk) => ({
-                ...c,
-                content: chunk.extractLines(c.content).join("\n"),
-                tags: args.tag ? [args.tag] : [],
-              }))
-            );
+          if (mainHandle.store.kb["_vectorizer"] === undefined) {
+            mainHandle.sendMessageToRenderer("update-progress", {
+              message: "Initializing vectorizer...",
+              progress: [0, items.length],
+            });
           } else {
-            const docs = await splitter.createDocuments([c.content]);
-            items.push(
-              ...docs.map((d) => ({
-                ...c,
-                content: d.pageContent,
-                metadata: { ...(c.metadata ?? {}), ...d.metadata },
-                tags: args.tag ? [args.tag] : [],
-              }))
-            );
+            mainHandle.sendMessageToRenderer("update-progress", {
+              message: `Vectorizing content (${items.length} chunks)...`,
+              progress: [0, items.length],
+            });
           }
-        }
 
-        if (mainHandle.store.kb["_vectorizer"] === undefined) {
-          mainHandle.sendMessageToRenderer("update-progress", {
-            message: "Initializing vectorizer...",
-            progress: [0, items.length],
-          });
-        } else {
-          mainHandle.sendMessageToRenderer("update-progress", {
-            message: `Vectorizing content (${items.length} chunks)...`,
-            progress: [0, items.length],
-          });
-        }
+          const batchSize = 30;
+          for (let i = 0; i < items.length; i += batchSize) {
+            const chunk = items.slice(i, i + batchSize);
+            await mainHandle.store.kb.addItems(chunk);
+            mainHandle.sendMessageToRenderer("update-progress", {
+              message: `Vectorizing content (${items.length} chunks)...`,
+              progress: [Math.min(i + batchSize, items.length), items.length],
+            });
+          }
 
-        const batchSize = 30;
-        for (let i = 0; i < items.length; i += batchSize) {
-          const chunk = items.slice(i, i + batchSize);
-          await mainHandle.store.kb.addItems(chunk);
-          mainHandle.sendMessageToRenderer("update-progress", {
-            message: `Vectorizing content (${items.length} chunks)...`,
-            progress: [Math.min(i + batchSize, items.length), items.length],
-          });
+          mainHandle.sendMessageToRenderer("end-task");
+          mainHandle.sendMessageToRenderer(
+            "new-notification",
+            "Your content has successfully been added to the knowledge base!"
+          );
+        } catch (e) {
+          mainHandle.sendMessageToRenderer("end-task");
+          throw e;
         }
-
-        mainHandle.sendMessageToRenderer("end-task");
-        mainHandle.sendMessageToRenderer(
-          "new-notification",
-          "Your content has successfully been added to the knowledge base!"
-        );
       },
     },
     {

@@ -30,6 +30,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@mozilla/readability": "^0.4.4",
+    "@opendocsg/pdf2md": "^0.1.27",
     "@trpc/client": "^10.36.0",
     "@trpc/react-query": "^10.36.0",
     "@trpc/server": "^10.36.0",

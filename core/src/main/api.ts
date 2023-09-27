@@ -333,13 +333,15 @@ export const getRouter = (window: BrowserWindow) =>
       list: t.procedure.input(z.string()).query(async (req) => {
         log.silly("tRPC Call: files.list");
         const { input } = req;
-        const contents = await fs.readdir(input.replace(/^~/, os.homedir()), {
+        const canonicalPath = input.replace(/^~/, os.homedir());
+
+        const contents = await fs.readdir(canonicalPath, {
           withFileTypes: true,
         });
         return contents.map((f) => ({
           name: f.name,
           isDirectory: f.isDirectory(),
-          path: path.join(input, f.name),
+          path: path.join(canonicalPath, f.name),
         }));
       }),
     }),
