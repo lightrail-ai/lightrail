@@ -23,6 +23,7 @@ import {
 } from "lightrail-sdk";
 import { TRACKS_DIR, installTrack, loadTracks } from "./track-admin";
 import { LightrailKVStore } from "./storage";
+import os from "os";
 
 const t = initTRPC.create({
   isServer: true,
@@ -332,7 +333,7 @@ export const getRouter = (window: BrowserWindow) =>
       list: t.procedure.input(z.string()).query(async (req) => {
         log.silly("tRPC Call: files.list");
         const { input } = req;
-        const contents = await fs.readdir(input, {
+        const contents = await fs.readdir(input.replace(/^~/, os.homedir()), {
           withFileTypes: true,
         });
         return contents.map((f) => ({
