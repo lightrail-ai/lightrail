@@ -3,7 +3,7 @@
   "displayName": "Lightrail Bridge",
   "publisher": "lightrail",
   "description": "Integrate VSCode with the Lightrail command bar",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "icon": "./media/icon-circle-128_x_128.png",
   "repository": {
     "type": "git",
