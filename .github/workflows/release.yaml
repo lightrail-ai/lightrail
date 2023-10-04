@@ -134,6 +134,11 @@ jobs:
           files: |
             vscode/lightrail-vscode.vsix
 
+      - name: Deploy to Markeplace
+        run: npm --prefix ./vscode run deploy
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
   release-chrome:
     needs: create-release
     runs-on: ubuntu-latest

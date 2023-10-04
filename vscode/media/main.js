@@ -70,4 +70,6 @@
       }
     }
   });
+
+  vscode.postMessage({ type: "ready" });
 })();

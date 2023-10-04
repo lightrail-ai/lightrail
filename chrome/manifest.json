@@ -1,8 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Lightrail for Chrome",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "action": { "default_popup": "index.html" },
+  "description": "Integrate Chrome with Lightrail AI",
+  "icons": {
+    "16": "assets/icon-circle-16_x_16.png",
+    "32": "assets/icon-circle-32_x_32.png",
+    "48": "assets/icon-circle-48_x_48.png",
+    "128": "assets/icon-circle-128_x_128.png"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

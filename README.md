@@ -6,7 +6,6 @@
     <img src="./assets/screenshot5-with-bg.jpeg" height="280" />
 </div>
 
-
 [**Demo**](https://vimeo.com/861792302?share=copy)
 
 ## Description
@@ -15,22 +14,17 @@
 
 Lightrail is an open-source AI command bar that seeks to simplifies software development. It is designed to be a general-purpose, extensible platform for integrating LLM-based tooling into engineering/development workflows. It does this by focusing on three components of working with LLMs: Providing sources of context, constructing effective prompts, and interfacing with external services. Lightrail accomplishes these goals through an extension framework called Tracks. Tracks can provide `Tokens`, which are sources of dynamically generated context for a prompt, as well as `Actions`, which are functions that can modify a prompt, send it to an LLM, and use the LLM's response to execute functionality. All Lightrail functionality is delivered via the Tracks system, so a plain install of the Lightrail Core is essentially nonfunctional. Therefore, Lightrail's default installation includes a few commonly used tracks (Chat, VSCode, Chrome). More tracks are in development and will be installable through the Lightrail application.
 
-
 ## Installation
 
-**[Walkthrough for setting up Lightrail (on OS X)](https://app.arcade.software/share/YYPqRYXrPsr06Atzvcsk)**
-
-Lightrail is currently pre-release, so installation requires a few steps. For VSCode and Chrome integration to function, the VSCode and Chrome extensions must be installed separately.
+Lightrail depends on bridge extensions to interact with other software on your machine. To use the built-in VSCode and Chrome integrations, the VSCode and Chrome extensions must be installed separately.
 
 1. **Download & install the appropriate Lightrail Core package for your operating system:**
    - OS X: [lightrail-core.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.dmg)
    - Ubuntu: [lightrail-core.deb](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.deb)
    - Fedora: [lightrail-core.rpm](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.rpm)
 2. **Install the VSCode Extension:**
-   1. Download this file: [lightrail-vscode.vsix](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-vscode.vsix)
-   2. In VSCode, open the Extensions pane and click the More Actions button in the upper-right (`…`) and select `Install from VSIX...`
-   3. Select the file you just downloaded to install the Lightrail integration
-   4. Done! For more details / an alternative way to install from a VSIX file, see: [https://code.visualstudio.com/docs/editor/extension-marketplace#\_install-from-a-vsix](https://code.visualstudio.com/docs/editor/extension-marketplace#_install-from-a-vsix)
+   1. Install this extension in VSCode: [https://marketplace.visualstudio.com/items?itemName=lightrail.lightrail-vscode](https://marketplace.visualstudio.com/items?itemName=lightrail.lightrail-vscode)
+      - To do this, press ⌘/ctrl-p to open the VSCode Quick Open UI, then paste in the following command and hit Enter/Return: `ext install lightrail.lightrail-vscode`
 3. **Install the Chrome Extension:**
    1. Download this file: [lightrail-chrome.zip](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-chrome.zip)
    2. Unzip `lightrail-chrome.zip`. It should contain a folder called `dist`.
@@ -50,7 +44,7 @@ Lightrail is currently pre-release, so installation requires a few steps. For VS
 
 ## Troubleshooting
 
-Some common issues, and how to fix them: 
+Some common issues, and how to fix them:
 
 - **Q: I click on an action and I get `i is not iterable` as an error**
 - **A:** This occurs when the action expects a prompt but one isn't provided. Almost all actions currently available only work if the user has entered a prompt. For example, to use the VSCode Propose Changes action, first type "refactor /vscode.current-file" as the prompt _then_ click the action.

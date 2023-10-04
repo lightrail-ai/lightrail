@@ -7,7 +7,7 @@ import type {
 import type { LightrailKBItem } from "lightrail-sdk";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { HumanMessage } from "langchain/schema";
-import { chunkCode, VALID_CODE_EXTENSIONS } from "./code-chunking";
+import { CHUNKABLE_CODE_EXTENSIONS, chunkCode } from "../main/transforms";
 
 let currentTask: TaskHandle | undefined;
 
@@ -45,7 +45,7 @@ export default <LightrailTrack>{
           const addFileToContext = (path: string) => {
             const ext = path.split(".").pop();
             if (!ext) return;
-            if (VALID_CODE_EXTENSIONS.includes(ext)) {
+            if (CHUNKABLE_CODE_EXTENSIONS.includes(ext)) {
               context.push({
                 title: path,
                 type: "code",
@@ -76,7 +76,7 @@ export default <LightrailTrack>{
                   (
                     await glob(
                       `**/*.{${[
-                        ...VALID_CODE_EXTENSIONS,
+                        ...CHUNKABLE_CODE_EXTENSIONS,
                         "md",
                         "txt",
                         "pdf",

@@ -1,6 +1,6 @@
 {
   "name": "lightrail-sdk",
-  "version": "0.0.9",
+  "version": "0.0.11",
   "type": "module",
   "main": "./dist/lightrail-sdk.umd.cjs",
   "module": "./dist/lightrail-sdk.js",
@@ -35,8 +35,8 @@
     "@types/react": "^18.2.19",
     "@types/websocket": "^1.0.5",
     "@types/ws": "^8.5.5",
-    "socket.io-client": "4.7.1",
     "electron-log": "^5.0.0-beta.28",
-    "langchain": "^0.0.136"
+    "langchain": "^0.0.154",
+    "socket.io-client": "4.7.1"
   }
 }

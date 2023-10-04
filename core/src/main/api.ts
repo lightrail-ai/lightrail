@@ -89,7 +89,7 @@ export const getRouter = (window: BrowserWindow) =>
         log.silly("No valid settings found, (re)initializing settings");
         await promisify(jsonStorage.set)("settings", {
           provider: "lightrail",
-          model: "gpt-3.5-turbo-16k",
+          model: "gpt-4",
           apiKeys: {},
         } as SettingsObject);
         chatManager.model = LightrailChatLLMInterface.initializeModel();

@@ -4,7 +4,7 @@ import log from "./logger";
 import { mainMessagingHub, mainTracksManager } from "./lightrail-main";
 import ChatTrack from "../basic-tracks/chat";
 import SystemTrack from "../basic-tracks/system";
-import KBTrack from "../basic-tracks/kb/kb";
+import KBTrack from "../basic-tracks/kb";
 import * as fs from "fs/promises";
 import type { LightrailTrack } from "lightrail-sdk";
 import AdmZip from "adm-zip";

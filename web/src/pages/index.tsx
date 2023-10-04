@@ -1,4 +1,9 @@
-import { faApple, faDiscord, faGithub, faLinux } from "@fortawesome/free-brands-svg-icons";
+import {
+  faApple,
+  faDiscord,
+  faGithub,
+  faLinux,
+} from "@fortawesome/free-brands-svg-icons";
 import { faAnglesDown } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Manrope } from "next/font/google";
@@ -41,10 +46,10 @@ export default function Home() {
       <div className="w-full h-screen absolute top-0 left-0 bg-gradient-to-b from-transparent to-neutral-950"></div>
       <div className="container m-auto max-w-6xl min-h-screen mb-8 flex flex-col items-center px-4 py-24 relative gap-8">
         <div className="text-center text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-slate-100 to-slate-500">
-          The Universal <br /> AI Command Bar
+          The Ultimate <br /> AI Command Center
         </div>
         <div className="rounded-full border text-xs md:text-base border-neutral-600 px-4 py-2 opacity-40 text-center">
-          Software Development, Simplified
+          Simplifying Software Development
         </div>
         <img
           src={"/screenshot5.png"}
@@ -87,10 +92,10 @@ export default function Home() {
           </div>
           <div className="flex-1 flex-shrink flex justify-center items-center min-w-0 px-24 py-12">
             <div className="max-w-md">
-              <div className="text-4xl font-extrabold pb-4">Contextual</div>
+              <div className="text-4xl font-extrabold pb-4">Context-Aware</div>
               <div className="opacity-60">
-                Pull data from running applications like code editors and web
-                browsers and use them to get better results out of AI commands.
+                Leverage data from active applications like code editors and web
+                browsers to refine AI command outputs.
               </div>
             </div>
           </div>
@@ -125,11 +130,13 @@ export default function Home() {
           </div>{" "}
           <div className="flex-1 flex-shrink flex justify-center items-center min-w-0 px-24 py-12">
             <div className="max-w-md">
-              <div className="text-4xl font-extrabold pb-4">Extensible</div>
+              <div className="text-4xl font-extrabold pb-4">
+                Broadly Extensible
+              </div>
               <div className="opacity-60">
-                Install Lightrail Tracks to add new commands and sources of
-                context to your Lightrail instance (or use our incredibly simple
-                API to build your own!)
+                Add new commands and context sources to your Lightrail instance
+                with the Lightrail Tracks or develop your own using our
+                straightforward API!
               </div>
             </div>
           </div>

@@ -1,10 +1,21 @@
 {
   "name": "lightrail-vscode",
-  "displayName": "Lightrail",
-  "description": "Integrate with the Lightrail command bar",
-  "version": "0.0.1",
+  "displayName": "Lightrail Bridge",
+  "publisher": "lightrail",
+  "description": "Integrate VSCode with the Lightrail command bar",
+  "version": "0.0.4",
+  "icon": "./media/icon-circle-128_x_128.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lightrail-ai/lightrail"
+  },
+  "keywords": [
+    "lightrail",
+    "AI",
+    "LLM"
+  ],
   "engines": {
-    "vscode": "^1.81.0"
+    "vscode": "^1.70.0"
   },
   "categories": [
     "Other"
@@ -12,7 +23,7 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./out/extension.js",
+  "main": "./out/main.js",
   "contributes": {
     "viewsContainers": {
       "panel": [
@@ -34,24 +45,30 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "test-compile": "tsc -p ./",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "package": "vsce package"
+    "package": "vsce package",
+    "deploy": "vsce publish --skip-duplicate"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "20.2.5",
-    "@types/vscode": "^1.81.0",
+    "@types/vscode": "^1.70.0",
     "@types/ws": "^8.5.5",
     "@typescript-eslint/eslint-plugin": "^5.59.8",
     "@typescript-eslint/parser": "^5.59.8",
     "@vscode/test-electron": "^2.3.2",
-    "@vscode/vsce": "^2.20.1",
+    "@vscode/vsce": "^2.21.1",
+    "esbuild": "^0.19.4",
     "eslint": "^8.41.0",
     "glob": "^8.1.0",
     "mocha": "^10.2.0",
