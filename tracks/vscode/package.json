@@ -17,8 +17,9 @@
     "esbuild": "^0.19.2"
   },
   "dependencies": {
-    "langchain": "^0.0.139",
-    "lightrail-sdk": "^0.0.5",
+    "@jupyterlab/nbformat": "^4.0.6",
+    "langchain": "^0.0.154",
+    "lightrail-sdk": "file:../../sdk",
     "marked": "^7.0.5"
   }
 }

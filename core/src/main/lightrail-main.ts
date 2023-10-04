@@ -5,6 +5,7 @@ import {
   LightrailMainProcessHandle,
   LightrailTrack,
   Token,
+  TransformSourceOptions,
 } from "lightrail-sdk";
 import log from "./logger";
 import path from "path";
@@ -18,13 +19,28 @@ import { TracksManager } from "../util/tracks";
 import jsonStorage from "electron-json-storage";
 import type { SettingsObject } from "./api";
 import { LightrailDataStoresInterface } from "./storage";
+import transforms from "./transforms";
+import { Tiktoken, getEncoding } from "js-tiktoken";
+
+const tokenLimits = {
+  "gpt-4": 8192,
+  "gpt-3.5-turbo-16k": 16385,
+  "gpt-3.5-turbo": 4097,
+};
 
 export class LightrailChatLLMInterface {
   _history: BaseMessage[] = [];
   model: ChatOpenAI;
+  tokenizer: Tiktoken;
+  _modelName: SettingsObject["model"] = "gpt-4";
+
+  _countTokens(text: string) {
+    return this.tokenizer.encode(text).length;
+  }
 
   constructor() {
     this.model = LightrailChatLLMInterface.initializeModel();
+    this.tokenizer = getEncoding("cl100k_base");
   }
 
   static initializeModel() {
@@ -48,9 +64,21 @@ export class LightrailChatLLMInterface {
     this._history = [];
   }
   async converse(messages, options) {
+    const settings = jsonStorage.getSync("settings") as SettingsObject;
+    const model = settings?.model ?? "gpt-4";
+
     log.silly("Sending messages to current chat model (converse): ", messages);
     this._history.push(...messages);
-    const response = await this.model.call(this._history, options);
+    let requestMessages = [...this._history];
+    while (
+      this._countTokens(
+        requestMessages.map((m) => m.toDict().data.content).join("\n")
+      ) > tokenLimits[model] &&
+      requestMessages.length > 1
+    ) {
+      requestMessages.shift();
+    }
+    const response = await this.model.call(requestMessages, options);
     this._history.push(response);
     log.silly("Response received from current chat model: ", response);
     return response;
@@ -67,6 +95,7 @@ export class MainHandle implements LightrailMainProcessHandle {
   _window: BrowserWindow;
   env: "main" = "main";
   store;
+  transform = transforms;
 
   constructor(track: LightrailTrack, window: BrowserWindow) {
     this._track = track;

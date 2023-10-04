@@ -9,6 +9,8 @@ export function startWSServer() {
     cors: {
       origin: "*",
     },
+    // Added maxHttpBufferSize to increase the limit for large messages
+    maxHttpBufferSize: 1e8, // Increase this number as needed
   });
 
   // Handle incoming WebSocket connections

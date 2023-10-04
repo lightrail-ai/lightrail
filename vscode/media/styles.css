@@ -80,6 +80,15 @@ button.secondary:hover {
   background: var(--vscode-button-secondaryHoverBackground);
 }
 
+.buttons-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  margin: 1rem;
+  margin-left: 0;
+  gap: 1rem;
+}
+
 input:not([type="checkbox"]),
 textarea {
   display: block;

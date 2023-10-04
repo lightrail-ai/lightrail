@@ -1,101 +1,89 @@
-// import { distance } from "fastest-levenshtein";
-import { marked } from "marked";
+import { Tokens, marked } from "marked";
 
 declare function require(module: string): any;
 
-function isRoughlyEqual(original: string, proposed: string) {
-  // Compare the two strings, ignoring whitespace and case
-  const originalTrimmed = original.trim().toLowerCase();
-  const proposedTrimmed = proposed.trim().toLowerCase();
-  return originalTrimmed === proposedTrimmed;
+interface ListNode {
+  // the line text
+  value: string;
+  // reference to next line in linked list
+  next: ListNode | null;
 }
 
-function chunkedDistance(original: string[], proposed: string[]) {
-  if (original.length !== proposed.length) {
-    return Infinity;
-  }
-  let total = 0;
-  for (let i = 0; i < original.length; i++) {
-    if (proposed[i] !== "...unchanged...") {
-      // total += distance(original[i], proposed[i]);
-    }
-  }
-  return total;
+interface FileStorage {
+  // array to hold line references by their indices
+  lineArray: ListNode[];
+  // linked list to hold lines in their natural order
+  lineLinkedList: ListNode;
 }
 
-function _partition(remainingText: string, proposalChunks: string[]): string[] {
-  if (proposalChunks.length === 1) {
-    return [remainingText];
+class FileAsLinkedListArray {
+  // the FileStorage attribute for the class
+  private storage: FileStorage;
+
+  constructor(fileContents: string) {
+    // Split lines by newline and map them to the list node
+    let lines = fileContents.split(/\r?\n/);
+    let nodeList = lines.map((line) => {
+      return { value: line, next: null } as ListNode;
+    });
+    nodeList.forEach((node, index) => {
+      node.next = index < nodeList.length - 1 ? nodeList[index + 1] : null;
+    });
+
+    this.storage = {
+      lineArray: nodeList,
+      lineLinkedList: nodeList[0],
+    };
   }
 
-  const textAsLines = remainingText.split("\n");
+  // method to replace sections of lines with other lines
+  replaceLines(start: number, _end: number, newContent: string): void {
+    let end = _end + 1;
+    let newLines = newContent.split(/\r?\n/);
+    let newNodes = newLines.map((line) => {
+      return { value: line, next: null } as ListNode;
+    });
+    newNodes.forEach((node, index) => {
+      node.next = index < newNodes.length - 1 ? newNodes[index + 1] : null;
+    });
 
-  const [first, ...rest] = proposalChunks;
-  if (first === "...unchanged...") {
-    const targetChunkAsLines = rest[0].split("\n");
-    let bestScore = Infinity;
-    let bestPartition: string[] = [];
-
-    for (let i = 0; i < textAsLines.length; i++) {
-      if (isRoughlyEqual(targetChunkAsLines[0], textAsLines[i])) {
-        const partition = [textAsLines.slice(0, i).join("\n")].concat(
-          _partition(textAsLines.slice(i).join("\n"), rest)
-        );
-        const score = chunkedDistance(partition, proposalChunks);
-        if (score < bestScore) {
-          bestScore = score;
-          bestPartition = partition;
-        }
-      }
+    if (start > 0) {
+      this.storage.lineArray[start - 1].next = newNodes[0];
+      this.storage.lineArray[start] = newNodes[0];
+    } else {
+      this.storage.lineArray[0] = newNodes[0];
     }
 
-    return bestPartition;
-  } else {
-    const targetChunkAsLines = first.split("\n");
-    let bestScore = Infinity;
-    let bestPartition: string[] = [];
-
-    for (let i = 0; i < textAsLines.length; i++) {
-      if (
-        isRoughlyEqual(
-          targetChunkAsLines[targetChunkAsLines.length - 1],
-          textAsLines[i]
-        )
-      ) {
-        const partition = [textAsLines.slice(0, i).join("\n")].concat(
-          _partition(textAsLines.slice(i).join("\n"), rest)
-        );
-        const score = chunkedDistance(partition, proposalChunks);
-        if (score < bestScore) {
-          bestScore = score;
-          bestPartition = partition;
-        }
-      }
+    if (end < this.storage.lineArray.length) {
+      newNodes[newNodes.length - 1].next = this.storage.lineArray[end];
+      this.storage.lineArray[end - 1] = newNodes[newNodes.length - 1];
     }
 
-    return bestPartition;
+    let headPart = this.storage.lineArray.slice(0, start);
+    let tailPart = this.storage.lineArray.slice(end);
+
+    const newLineArray = [...headPart, ...newNodes, ...tailPart];
+    this.storage.lineLinkedList = newLineArray[0];
   }
-}
 
-function naiveChangeMerge(original: string, proposed: string): string {
-  const chunks = proposed.split(/^.*\.\.\.unchanged\.\.\..*$/m);
-  const targetSections = chunks
-    .map((e) => ["...unchanged...", e])
-    .reduce((prev, curr) => [...prev, ...curr])
-    .slice(1);
-  const optimalPartitions = _partition(original, targetSections);
-  const output = targetSections
-    .map((t, i) => (t === "...unchanged..." ? optimalPartitions[i] : t))
-    .join("");
-  return output;
+  // method to render the file to a string using the linked list
+  renderToString(): string {
+    let output: string[] = [];
+    let node: ListNode | null = this.storage.lineLinkedList;
+    while (node) {
+      output.push(node.value);
+      node = node.next;
+    }
+    return output.join("\n");
+  }
 }
 
 export function getChangeProposal(llmOutput: string): Array<[string, string]> {
   // Tokenize the llmOutput using the marked package
   const tokens = marked.lexer(llmOutput);
   console.log(tokens);
-  // Initialize an empty array to store the filePath and fileContent pairs
-  const pairs: Array<[string, string]> = [];
+
+  const pairs: { [path: string]: FileAsLinkedListArray } = {};
 
   // Iterate through the tokens
   for (let i = 0; i < tokens.length - 1; i++) {
@@ -120,47 +108,85 @@ export function getChangeProposal(llmOutput: string): Array<[string, string]> {
         // Get the fileContent from the nextToken
         let fileContent = nextToken.text.trim();
         // If a lineNumberRange is provided, replace the corresponding lines in the original fileContent
+
         if (lineNumberRange) {
           // Read the original content of the file
           const fs = require("fs");
           const original = fs.readFileSync(filePath, "utf8");
+          if (!pairs[filePath]) {
+            pairs[filePath] = new FileAsLinkedListArray(original);
+          }
           // Replace the content within the lineNumberRange with the updated content
-          fileContent = replaceContentInRange(
-            original,
-            fileContent,
+          fileContent = pairs[filePath].replaceLines(
             lineNumberRange[0],
-            lineNumberRange[1]
+            lineNumberRange[1],
+            fileContent
           );
+        } else {
+          pairs[filePath] = new FileAsLinkedListArray(fileContent);
         }
-
-        // if (fileContent.includes("...unchanged...")) {
-        //   const fs = require("fs");
-        //   const original = fs.readFileSync(filePath, "utf8");
-        //   fileContent = naiveChangeMerge(original, fileContent);
-        // }
-
-        // Push the filePath and fileContent pair to the pairs array
-        pairs.push([filePath, fileContent]);
       }
     }
   }
 
   // Return the pairs array containing the filePath and fileContent pairs
-  return pairs;
+  return Object.entries(pairs).map(([path, file]) => [
+    path,
+    file.renderToString(),
+  ]);
 }
-function replaceContentInRange(
-  originalContent: string,
-  updatedContent: string,
-  startLineNumber: number,
-  endLineNumber: number
-): string {
-  const lines = originalContent.split("\n");
-  lines.splice(
-    startLineNumber,
-    endLineNumber - startLineNumber + 1,
-    updatedContent
+
+export function getCodeBlocks(llmOutput: string): string[] {
+  // Tokenize the llmOutput using the marked package
+  const tokens = marked.lexer(llmOutput);
+  console.log(tokens);
+
+  return (tokens.filter((token) => token.type === "code") as Tokens.Code[]).map(
+    (token) => token.text.trim()
   );
-  return lines.join("\n");
+}
+
+export function getNotebookChangeProposal(
+  llmOutput: string
+): [cell: number, value: { cellType: "code" | "markdown"; content: string }][] {
+  // Tokenize the llmOutput using the marked package
+  const tokens = marked.lexer(llmOutput);
+  console.log(tokens);
+
+  const proposal: [
+    number,
+    { cellType: "code" | "markdown"; content: string }
+  ][] = [];
+
+  // Iterate through the tokens
+  for (let i = 0; i < tokens.length - 1; i++) {
+    const token = tokens[i];
+
+    // Check if the token is of type 'paragraph'
+    if (token.type === "paragraph") {
+      const trimmedText = token.text.trim();
+      const nextToken = tokens.slice(i + 1).find((t) => t.type !== "space");
+      // Check if the trimmed text starts and ends with backticks (`) and does not contain newline characters
+      if (
+        /^\[[0-9]+(\.[0-9])*\]$/.test(trimmedText) &&
+        nextToken?.type === "code"
+      ) {
+        let cellNumber = Number(trimmedText.slice(1, -1));
+        // Get the fileContent from the nextToken
+        let fileContent = nextToken.text.trim();
+        // If a lineNumberRange is provided, replace the corresponding lines in the original fileContent
+        proposal.push([
+          cellNumber,
+          {
+            cellType: nextToken.lang === "markdown" ? "markdown" : "code",
+            content: fileContent,
+          },
+        ]);
+      }
+    }
+  }
+
+  return proposal;
 }
 
 function extractFilePathAndRange(

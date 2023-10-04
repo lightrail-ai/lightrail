@@ -1,54 +1,19 @@
+import { TransformSourceOptions } from "lightrail-sdk";
+
 import Parser, { SyntaxNode } from "web-tree-sitter";
 
 class Span {
-  start: number;
-  end: number;
+  start: number; // line number, 0-indexed, inclusive
+  end: number; // line number, 0-indexed, inclusive
 
   constructor(start: number = 0, end: number = 0) {
     this.start = start;
     this.end = end;
-
-    if (this.end === null) {
-      this.end = this.start;
-    }
-  }
-
-  extract(s: string): string {
-    return s.slice(this.start, this.end);
   }
 
   extractLines(s: string): string[] {
-    return s.split("\n").slice(this.start, this.end);
+    return s.split("\n").slice(this.start, this.end + 1);
   }
-
-  add(other: Span | number): Span {
-    if (typeof other === "number") {
-      return new Span(this.start + other, this.end + other);
-    } else if (other instanceof Span) {
-      return new Span(this.start, other.end);
-    } else {
-      throw Error("Not implemented");
-    }
-  }
-
-  len(): number {
-    return this.end - this.start;
-  }
-}
-
-function charLen(s: string): number {
-  return s.length;
-}
-
-function nonWhitespaceLen(s: string): number {
-  return s.replace(/\s/g, "").length;
-}
-
-function getLineNumber(byteIndex: number, lineData: string[]): number {
-  const lineBreakCount = lineData
-    .slice(0, byteIndex)
-    .reduce((sum, currentChar) => sum + (currentChar === "\n" ? 1 : 0), 0);
-  return lineBreakCount;
 }
 
 function chunker(
@@ -57,66 +22,70 @@ function chunker(
   maxChars,
   coalesce
 ): Span[] {
+  const lines = sourceCode.split("\n");
+  function charCount(start, end) {
+    return lines.slice(start, end + 1).join("\n").length;
+  }
+
   function chunkNode(node: SyntaxNode): Span[] {
     let chunks: Span[] = [];
-    let currentChunk: Span = new Span(node.startIndex, node.startIndex);
+    let currentChunk: Span | null = null;
 
     for (let child of node.children) {
-      if (child.endIndex - child.startIndex > maxChars) {
-        chunks.push(currentChunk);
-        currentChunk = new Span(child.endIndex, child.endIndex);
+      if (
+        charCount(child.startPosition.row, child.endPosition.row) > maxChars
+      ) {
+        if (currentChunk) {
+          chunks.push(currentChunk);
+          currentChunk = null;
+        }
         chunks.push(...chunkNode(child));
       } else if (
-        child.endIndex - child.startIndex + currentChunk.len() >
-        maxChars
+        currentChunk &&
+        charCount(currentChunk.start, child.endPosition.row) > maxChars
       ) {
         chunks.push(currentChunk);
-        currentChunk = new Span(child.startIndex, child.endIndex);
+        currentChunk = new Span(child.startPosition.row, child.endPosition.row);
+      } else if (currentChunk) {
+        currentChunk.end = child.endPosition.row;
       } else {
-        currentChunk = currentChunk.add(
-          new Span(child.startIndex, child.endIndex)
-        );
+        currentChunk = new Span(child.startPosition.row, child.endPosition.row);
       }
     }
-    chunks.push(currentChunk);
+    if (currentChunk) {
+      chunks.push(currentChunk);
+    }
 
     return chunks;
   }
 
   let chunks = chunkNode(tree);
 
+  let cleanedChunks: Span[] = [];
+
   for (let i = 0; i < chunks.length - 1; i++) {
-    chunks[i].end = chunks[i + 1].start;
-  }
-  chunks[chunks.length - 1].start = tree.endIndex;
-
-  const newChunks: Span[] = [];
-  let currentChunk: Span = new Span(0, 0);
-  for (const chunk of chunks) {
-    currentChunk = currentChunk.add(chunk);
-    if (
-      nonWhitespaceLen(currentChunk.extract(sourceCode)) > coalesce &&
-      currentChunk.extract(sourceCode).includes("\n")
-    ) {
-      newChunks.push(currentChunk);
-      currentChunk = new Span(chunk.end, chunk.end);
+    if (chunks[i].end + 1 < chunks[i + 1].start) {
+      chunks[i + 1].start = chunks[i].end + 1;
     }
+    if (
+      chunks[i].start === chunks[i].end &&
+      (chunks[i].end === chunks[i + 1].start ||
+        (i > 0 && chunks[i].start === chunks[i - 1].end))
+    ) {
+      continue; // skip single-line chunks that are included in other chunks
+    } else if (charCount(chunks[i].start, chunks[i].end) < coalesce) {
+      chunks[i + 1].start = chunks[i].start;
+      continue; // coalesce small chunks
+    }
+    cleanedChunks.push(chunks[i]);
   }
-  if (currentChunk.len() > 0) {
-    newChunks.push(currentChunk);
-  }
 
-  const lineData = sourceCode.split("");
+  chunks[chunks.length - 1].end = lines.length - 1;
+  cleanedChunks.push(chunks[chunks.length - 1]);
 
-  const lineChunks: Span[] = newChunks.map(
-    (chunk) =>
-      new Span(
-        getLineNumber(chunk.start, lineData),
-        getLineNumber(chunk.end, lineData)
-      )
-  );
+  console.log(cleanedChunks);
 
-  return lineChunks.filter((chunk) => chunk.len() > 0);
+  return cleanedChunks;
 }
 
 function getGrammarPath(language: string) {
@@ -173,7 +142,7 @@ function getLanguageFromExtension(extension: string): string {
   }
 }
 
-export const VALID_CODE_EXTENSIONS = [
+export const CHUNKABLE_CODE_EXTENSIONS = [
   "js",
   "jsx",
   "ts",
@@ -204,7 +173,6 @@ export async function chunkCode(
   maxChars = 512 * 3,
   coalesce = 50
 ): Promise<Span[]> {
-  const path = require("path");
   await Parser.init();
   const parser = new Parser();
   let extension: string | undefined;
@@ -226,3 +194,26 @@ export async function chunkCode(
   const chunks = chunker(tree.rootNode, sourceCode, maxChars, coalesce);
   return chunks;
 }
+
+export default {
+  async toChunks(text: string, sourceOptions: TransformSourceOptions) {
+    if (sourceOptions.path) {
+      const extension = sourceOptions.path.split(".").pop();
+      if (extension && CHUNKABLE_CODE_EXTENSIONS.includes(extension)) {
+        const chunks = await chunkCode(text, sourceOptions.path);
+        return chunks.map((chunk) => ({
+          content: chunk.extractLines(text).join("\n"),
+          from: {
+            line: chunk.start,
+            char: undefined,
+          },
+          to: {
+            line: chunk.end,
+            char: undefined,
+          },
+        }));
+      }
+    }
+    return [];
+  },
+};

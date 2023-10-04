@@ -6,7 +6,7 @@ import {
 } from "./lightrail-renderer";
 import ChatTrack from "../../../basic-tracks/chat";
 import SystemTrack from "../../../basic-tracks/system";
-import KBTrack from "../../../basic-tracks/kb/kb";
+import KBTrack from "../../../basic-tracks/kb";
 
 export async function loadTracks(paths: string[]) {
   for (const browserPath of paths) {

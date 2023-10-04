@@ -318,6 +318,16 @@ export interface LightrailDataStores {
   };
 }
 
+export interface TransformSourceOptions {
+  path?: string;
+}
+
+interface DocumentChunk {
+  content: string;
+  from: { line: number; char: number | undefined };
+  to: { line: number; char: number | undefined };
+}
+
 export interface LightrailMainProcessHandle {
   env: "main";
   sendMessageToRenderer(
@@ -338,6 +348,14 @@ export interface LightrailMainProcessHandle {
   fs: LightrailFS;
   logger: MainLogger;
   store: LightrailDataStores;
+  transform: {
+    toChunks(
+      text: string,
+      sourceOptions: TransformSourceOptions
+    ): Promise<DocumentChunk[]>;
+    // toMarkdown(text: string, sourceOptions: TransformSourceOptions): Promise<string>;
+    // toSummary(text: string, , sourceOptions: TransformSourceOptions): Promise<string>;
+  };
 }
 
 export interface LightrailRendererProcessHandle {
