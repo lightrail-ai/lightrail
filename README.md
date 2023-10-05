@@ -6,7 +6,7 @@
     <img src="./assets/screenshot5-with-bg.jpeg" height="280" />
 </div>
 
-[**Demo**](https://vimeo.com/861792302?share=copy)
+[**Demo Screencast**](https://vimeo.com/861792302?share=copy) | [**Documentation**](https://docs.lightrail.ai)
 
 ## Description
 
@@ -34,12 +34,14 @@ Lightrail depends on bridge extensions to interact with other software on your m
 
 ## Usage
 
-- Launch Lightrail initially as you would normally start an application on your platform. Consider adding it to your startup items, so that it automatically starts on boot.
+- Launch Lightrail initially as you would normally start an application on your platform (i.e. from your application launcher). Consider adding it to your startup items ([OS X](https://support.apple.com/guide/mac-help/open-items-automatically-when-you-log-in-mh15189/mac), [Gnome](https://help.gnome.org/users/gnome-help/stable/shell-apps-auto-start.html.en)), so that it automatically starts on boot.
 - When Lightrail is running on your system, it can be activated at any time by pressing the keyboard combination `Cmd/Ctrl-Shift-Space`.
-- Enter text in the prompt, use the up- and down-arrow keys to select an action, and hit `enter/return` to send the prompt to the action.
-- Type the forward-slash at any point in a prompt (`/`) to open the Tokens menu. Use the arrow keys to select a token and hit enter to insert that token into your prompt.
-  - Tokens make it easy to pull in additional sources of context for your prompt. In general, try to be explicit about what sources of content you'd like to include for best results.
-- `Cmd/Ctrl-Up` and `Cmd/Ctrl-Down` cycle through the prompt history
+- Use the up- and down-arrow keys to browse actions, and hit `enter/return` to select one (while in 'Choose an action' mode).
+- To change the action afterwards, press `esc` or `@`, or click on the current action
+- After selecting an action, enter the prompt (or any other required arguments). Your prompt can include tokens, which pull in additional context from external sources:
+  - Type the forward-slash at any point in a prompt (`/`) to open the Tokens menu. Use the arrow keys to select a token and hit enter to insert that token into your prompt.
+  - In general, try to be explicit about what sources of content you'd like to include for best results.
+- `Cmd/Ctrl-Up` and `Cmd/Ctrl-Down` cycle through the prompt history.
 - By default, the application uses a lightrail.ai-provided gateway to access OpenAI's LLMs. If you'd like to switch to using your own API key and accessing the OpenAI API directly, you can configure that in Settings (click the gear icon in the prompt input box).
 
 ## Troubleshooting
