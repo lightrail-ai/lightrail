@@ -4,7 +4,7 @@ import {
   faGithub,
   faLinux,
 } from "@fortawesome/free-brands-svg-icons";
-import { faAnglesDown } from "@fortawesome/free-solid-svg-icons";
+import { faAnglesDown, faBook } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Manrope } from "next/font/google";
 import Image from "next/image";
@@ -26,12 +26,15 @@ export default function Home() {
                 src={"/logo.png"}
                 alt="Lightrail Logo"
               />
-              Lightrail{" "}
-              <div className="text-xs px-2 py-0.5 rounded-full bg-neutral-50 text-neutral-950">
-                alpha
-              </div>
+              Lightrail
             </span>
-            <div className="flex space-x-4">
+            <div className="flex space-x-4 items-center">
+              <a
+                href="https://docs.lightrail.ai"
+                className="inline-flex flex-col gap-1 items-center bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-full px-4 py-2 hover:bg-opacity-20"
+              >
+                <span className="text-sm font-extrabold uppercase ">guide</span>
+              </a>
               <a href="https://discord.gg/57bNyxgb7g">
                 <FontAwesomeIcon icon={faDiscord} size={"2x"} />
               </a>
