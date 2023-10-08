@@ -1,6 +1,6 @@
 # Lightrail - The Universal AI Command Bar
 
-[![](https://dcbadge.vercel.app/api/server/57bNyxgb7g)](https://discord.gg/57bNyxgb7g)
+[![Discord](https://img.shields.io/discord/1126247706789167264?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/57bNyxgb7g)
 
 <div style="text-align: center; padding: 24px 0">
     <img src="./assets/screenshot5-with-bg.jpeg" height="280" />
