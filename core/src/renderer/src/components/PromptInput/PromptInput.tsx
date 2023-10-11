@@ -74,6 +74,10 @@ function PromptInput({ onAction }: PromptInputProps) {
     useStateWithRef<EditorState>(getNewPromptState());
   const editorViewRef = useRef<EditorView>();
   const actionsFilterInputRef = useRef<HTMLInputElement>(null);
+  const actionArgInputRef = useRef<HTMLInputElement>(null);
+
+  type Timeout = ReturnType<typeof setTimeout>;
+  const refocusMainInputTimeoutRef = useRef<Timeout>();
 
   useHotkeys("up", handleUpArrow);
   useHotkeys("down", handleDownArrow);
@@ -188,10 +192,13 @@ function PromptInput({ onAction }: PromptInputProps) {
   }
 
   function updateOptionsList() {
+    console.log(optionsMode);
     if (optionsMode === "actions") {
       const actionOptions = rendererTracksManager.getActionList(
         actionsFilter ?? undefined
       );
+
+      console.log(actionOptions);
 
       setOptions(actionOptions);
       setHighlightedOption(
@@ -215,14 +222,20 @@ function PromptInput({ onAction }: PromptInputProps) {
 
       setCurrentTokenArg(tokenArg);
       getArgOptions(tokenArg, tokenArgs[currentArgIndex], "token-args").then(
-        (opts) => setOptions(opts)
+        (opts) => {
+          if (optionsModeRef.current !== "token-args") return;
+          setOptions(opts);
+        }
       );
     } else if (optionsMode === "action-args" && currentActionArg) {
       getArgOptions(
         currentActionArg,
         actionArgValues[currentActionArg.name],
         "action-args"
-      ).then((opts) => setOptions(opts));
+      ).then((opts) => {
+        if (optionsModeRef.current !== "action-args") return;
+        setOptions(opts);
+      });
     } else {
       setOptions([]);
     }
@@ -338,7 +351,10 @@ function PromptInput({ onAction }: PromptInputProps) {
     }
 
     const selectedOption = highlightedOptionRef.current;
-    if (!selectedOption) return true;
+    if (!selectedOption) {
+      editorViewRef.current?.focus();
+      return true;
+    }
 
     if (selectedOption.kind === "actions") {
       setCurrentAction(selectedOption);
@@ -353,7 +369,13 @@ function PromptInput({ onAction }: PromptInputProps) {
         ...prev,
         [currentActionArg!.name]: selectedOption.value,
       }));
-      editorViewRef.current?.focus(); // TODO: this currently only supports single-argument actions, need to improve
+      if (selectedOption.value.endsWith(" ")) {
+        setOptionsMode(null);
+        setCurrentActionArg(undefined);
+        editorViewRef.current?.focus(); // TODO: this currently only supports single-argument actions, need to improve
+      } else {
+        actionArgInputRef.current?.focus();
+      }
     }
 
     return true;
@@ -532,32 +554,17 @@ function PromptInput({ onAction }: PromptInputProps) {
 
   return (
     <div className="min-w-[600px]">
-      <div className="relative">
+      <div className="relative my-0.5">
         <button
           className="absolute right-1 top-1 opacity-50 hover:opacity-100"
           onClick={() => setView("settings")}
         >
           <FontAwesomeIcon icon={faGear} size={"xs"} />
         </button>
-        <div
-          className="p-4 cursor-text"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              console.log(e.target, e.currentTarget);
-              console.log("Focusing on input");
-              if (currentAction) {
-                editorViewRef.current?.focus();
-              } else {
-                actionsFilterInputRef.current?.focus();
-              }
-              e.stopPropagation();
-            }
-          }}
-        >
+        <div className="relative p-4 cursor-text z-10">
           {!currentAction ? (
             <div className="mr-2 px-1 py-0.5 rounded-sm font-semibold text-sm inline-flex flex-row border border-neutral-700 items-center justify-center">
               <div className="pr-1 opacity-80">@</div>
-
               <AutowidthInput
                 type="text"
                 ref={actionsFilterInputRef}
@@ -568,6 +575,11 @@ function PromptInput({ onAction }: PromptInputProps) {
                 onChange={(e) =>
                   setActionsFilter(e.target.value === "@" ? "" : e.target.value)
                 }
+                onFocus={() => {
+                  clearTimeout(refocusMainInputTimeoutRef.current);
+                  setOptionsMode("actions");
+                  setCurrentActionArg(undefined);
+                }}
                 onKeyUpCapture={(e) => {
                   if (e.key === "Enter" || e.key === "Tab") {
                     selectOption();
@@ -584,86 +596,90 @@ function PromptInput({ onAction }: PromptInputProps) {
             </div>
           ) : (
             currentAction && (
-              <>
-                {" "}
+              <div
+                className={classNames(
+                  "rounded-sm font-semibold text-sm inline-flex flex-row items-center justify-center transition-all mr-2 pr-2",
+                  {
+                    "text-neutral-950": shouldTextBeBlack(currentAction?.color),
+                  }
+                )}
+                style={{
+                  backgroundColor: currentAction?.color,
+                }}
+              >
                 <div
                   className={classNames(
-                    "mr-2 px-1 py-0 rounded-sm font-semibold text-sm inline-flex flex-row items-center justify-center transition-all",
-                    {
-                      "text-neutral-950": shouldTextBeBlack(
-                        currentAction?.color
-                      ),
-                    }
+                    "pl-1 py-0 cursor-pointer inline-flex flex-row items-center flex-shrink-0"
                   )}
-                  style={{
-                    backgroundColor: currentAction?.color,
-                  }}
                   onClick={(e) => {
-                    if (e.target === e.currentTarget) {
-                      console.log(e.target, e.currentTarget);
-                      setCurrentAction(undefined);
-                      e.stopPropagation();
-                    }
+                    setCurrentAction(undefined);
+                    e.stopPropagation();
                     return false;
                   }}
                 >
-                  <div className="opacity-50 pr-1">@</div>
-                  {currentAction?.name}
-                  {currentAction?.args.map((arg) => (
-                    <AutowidthInput
-                      autoFocus
-                      onFocus={() => {
-                        setCurrentActionArg(arg);
-                        setOptionsMode("action-args");
-                      }}
-                      onBlur={() => {
-                        // Delay to prevent the input from being removed before the click event on the option is registered
-                        // TODO: Find a better way to do this
-                        setTimeout(() => {
-                          setOptionsMode(null);
-                          setCurrentActionArg(undefined);
-                        }, 100);
-                      }}
-                      onKeyUpCapture={(e) => {
-                        if (e.key === "Escape" || e.key === "Tab") {
-                          editorViewRef.current?.focus();
-                          e.preventDefault();
-                          e.stopPropagation();
-                        } else if (e.key === "Enter") {
-                          selectOption();
-                          editorViewRef.current?.focus();
-                        } else if (e.key === "ArrowUp") {
-                          handleUpArrow();
-                        } else if (e.key === "ArrowDown") {
-                          handleDownArrow();
-                        }
-                      }}
-                      className={classNames(
-                        "mx-2 px-1 h-full rounded-sm font-semibold text-sm bg-neutral-950 bg-opacity-30 focus:outline-none  placeholder:opacity-50",
-                        {
-                          "text-neutral-950 placeholder:text-neutral-950":
-                            shouldTextBeBlack(currentAction?.color),
-                        }
-                      )}
-                      key={currentAction.name + arg.name}
-                      value={actionArgValues[arg.name]}
-                      onChange={(e) => {
-                        setActionArgValues((prev) => ({
-                          ...prev,
-                          [arg.name]: e.target.value,
-                        }));
-                      }}
-                      placeholder={arg.name}
-                      placeholderIsMinWidth
-                    />
-                  ))}
-                  <div className="opacity-50">:</div>
+                  <div className="opacity-50 pr-1 flex-shrink-0">@</div>
+                  <div className="flex-shrink-0">{currentAction?.name}</div>
                 </div>
-              </>
+                {currentAction?.args.map((arg) => (
+                  <AutowidthInput
+                    autoFocus
+                    ref={actionArgInputRef}
+                    onBlur={() => {
+                      refocusMainInputTimeoutRef.current = setTimeout(() => {
+                        setCurrentActionArg(undefined);
+                        setOptionsMode(null);
+                        editorViewRef.current?.focus();
+                      }, 500);
+                    }}
+                    onFocus={() => {
+                      clearTimeout(refocusMainInputTimeoutRef.current);
+                      setCurrentActionArg(arg);
+                      setOptionsMode("action-args");
+                    }}
+                    onKeyUpCapture={(e) => {
+                      if (e.key === "Escape" || e.key === "Tab") {
+                        editorViewRef.current?.focus();
+                        e.preventDefault();
+                        e.stopPropagation();
+                      } else if (e.key === "Enter") {
+                        selectOption();
+                      } else if (e.key === "ArrowUp") {
+                        handleUpArrow();
+                      } else if (e.key === "ArrowDown") {
+                        handleDownArrow();
+                      }
+                    }}
+                    className={classNames(
+                      "mx-2 px-1 h-full rounded-sm font-semibold text-sm bg-neutral-950 bg-opacity-30 focus:outline-none  placeholder:opacity-50",
+                      {
+                        "text-neutral-950 placeholder:text-neutral-950":
+                          shouldTextBeBlack(currentAction?.color),
+                      }
+                    )}
+                    key={currentAction.name + arg.name}
+                    value={actionArgValues[arg.name]}
+                    onChange={(e) => {
+                      setActionArgValues((prev) => ({
+                        ...prev,
+                        [arg.name]: e.target.value,
+                      }));
+                    }}
+                    placeholder={arg.name}
+                    placeholderIsMinWidth
+                  />
+                ))}
+              </div>
             )
           )}
           <PromptEditor
-            className="inline"
+            className="inline-block min-w-[300px] my-0.5"
+            onClick={() => {
+              if (currentAction) {
+                editorViewRef.current?.focus();
+              } else {
+                actionsFilterInputRef.current?.focus();
+              }
+            }}
             onChange={setPromptState}
             state={promptState}
             onViewReady={(view) => (editorViewRef.current = view)}

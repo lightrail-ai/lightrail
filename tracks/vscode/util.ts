@@ -146,49 +146,6 @@ export function getCodeBlocks(llmOutput: string): string[] {
   );
 }
 
-export function getNotebookChangeProposal(
-  llmOutput: string
-): [cell: number, value: { cellType: "code" | "markdown"; content: string }][] {
-  // Tokenize the llmOutput using the marked package
-  const tokens = marked.lexer(llmOutput);
-  console.log(tokens);
-
-  const proposal: [
-    number,
-    { cellType: "code" | "markdown"; content: string }
-  ][] = [];
-
-  // Iterate through the tokens
-  for (let i = 0; i < tokens.length - 1; i++) {
-    const token = tokens[i];
-
-    // Check if the token is of type 'paragraph'
-    if (token.type === "paragraph") {
-      const trimmedText = token.text.trim();
-      const nextToken = tokens.slice(i + 1).find((t) => t.type !== "space");
-      // Check if the trimmed text starts and ends with backticks (`) and does not contain newline characters
-      if (
-        /^\[[0-9]+(\.[0-9])*\]$/.test(trimmedText) &&
-        nextToken?.type === "code"
-      ) {
-        let cellNumber = Number(trimmedText.slice(1, -1));
-        // Get the fileContent from the nextToken
-        let fileContent = nextToken.text.trim();
-        // If a lineNumberRange is provided, replace the corresponding lines in the original fileContent
-        proposal.push([
-          cellNumber,
-          {
-            cellType: nextToken.lang === "markdown" ? "markdown" : "code",
-            content: fileContent,
-          },
-        ]);
-      }
-    }
-  }
-
-  return proposal;
-}
-
 function extractFilePathAndRange(
   filePath: string
 ): [string, [number, number] | undefined] {

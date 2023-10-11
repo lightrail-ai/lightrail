@@ -42,9 +42,6 @@ function CodeViewer({ language, code, ...props }: CodeViewerProps) {
         language={language}
         PreTag="div"
         className="rounded-b-sm"
-        customStyle={{
-          margin: 0,
-        }}
       />
     </div>
   );
