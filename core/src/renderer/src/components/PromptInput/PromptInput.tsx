@@ -192,13 +192,10 @@ function PromptInput({ onAction }: PromptInputProps) {
   }
 
   function updateOptionsList() {
-    console.log(optionsMode);
     if (optionsMode === "actions") {
       const actionOptions = rendererTracksManager.getActionList(
         actionsFilter ?? undefined
       );
-
-      console.log(actionOptions);
 
       setOptions(actionOptions);
       setHighlightedOption(

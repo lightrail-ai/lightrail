@@ -328,8 +328,6 @@ function OptionsList({
   const currentArgSource = currentToken ?? currentAction;
   const currentArg = currentTokenArg ?? currentActionArg;
 
-  console.log(options);
-
   return (
     <>
       {currentArgSource && currentArg && (
