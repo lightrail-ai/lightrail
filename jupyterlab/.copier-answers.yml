@@ -1,0 +1,19 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.2.1
+_src_path: https://github.com/jupyterlab/extension-template
+author_email: me@vishnumenon.com
+author_name: Lightrail
+data_format: string
+file_extension: ''
+has_binder: false
+has_settings: false
+kind: frontend
+labextension_name: lightrail-jupyterlab
+mimetype: ''
+mimetype_name: ''
+project_short_description: Connect JupyterLab to Lightrail AI
+python_name: lightrail_jupyterlab
+repository: https://github.com/lightrail-ai/lightrail
+test: false
+viewer_name: ''
+

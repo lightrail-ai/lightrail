@@ -18,7 +18,7 @@ jobs:
     needs: create-release
     strategy:
       matrix:
-        track: [sql, vscode, shell, files, chrome]
+        track: [sql, vscode, shell, files, chrome, datasci]
     uses: lightrail-ai/lightrail/.github/workflows/release-track.yaml@main
     with:
       directory: ./tracks/${{ matrix.track }}

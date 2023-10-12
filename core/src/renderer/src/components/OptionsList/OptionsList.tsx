@@ -325,7 +325,6 @@ function OptionsList({
     duration: 100,
   });
 
-  console.log(currentToken, currentTokenArg, currentAction, currentActionArg);
   const currentArgSource = currentToken ?? currentAction;
   const currentArg = currentTokenArg ?? currentActionArg;
 
@@ -365,7 +364,7 @@ function OptionsList({
           "overflow-y-auto overflow-x-hidden max-h-52 cursor-pointer",
           {
             "bg-neutral-800": mode === "tokens" || mode === "token-args",
-            "border-t border-t-neutral-800": options.length > 0,
+            "border-t border-t-neutral-800 h-52": options.length > 0,
           }
         )}
         ref={parent}

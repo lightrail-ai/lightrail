@@ -2674,30 +2674,6 @@ function getCodeBlocks(llmOutput) {
     (token) => token.text.trim()
   );
 }
-function getNotebookChangeProposal(llmOutput) {
-  const tokens = marked.lexer(llmOutput);
-  console.log(tokens);
-  const proposal = [];
-  for (let i = 0; i < tokens.length - 1; i++) {
-    const token = tokens[i];
-    if (token.type === "paragraph") {
-      const trimmedText = token.text.trim();
-      const nextToken = tokens.slice(i + 1).find((t) => t.type !== "space");
-      if (/^\[[0-9]+(\.[0-9])*\]$/.test(trimmedText) && nextToken?.type === "code") {
-        let cellNumber = Number(trimmedText.slice(1, -1));
-        let fileContent = nextToken.text.trim();
-        proposal.push([
-          cellNumber,
-          {
-            cellType: nextToken.lang === "markdown" ? "markdown" : "code",
-            content: fileContent
-          }
-        ]);
-      }
-    }
-  }
-  return proposal;
-}
 function extractFilePathAndRange(filePath) {
   const lastColonIndex = filePath.lastIndexOf(":");
   if (lastColonIndex !== -1 && lastColonIndex < filePath.length - 1) {
@@ -2712,24 +2688,6 @@ function extractFilePathAndRange(filePath) {
 }
 
 // index.ts
-function isCode(cell) {
-  return cell.cell_type === "code";
-}
-function isExecuteResult(output) {
-  return output.output_type === "execute_result";
-}
-function isDisplayData(output) {
-  return output.output_type === "display_data";
-}
-function isDisplayUpdate(output) {
-  return output.output_type === "update_display_data";
-}
-function isStream(output) {
-  return output.output_type === "stream";
-}
-function isError(output) {
-  return output.output_type === "error";
-}
 var FAILED_TO_RESPOND = "VSCode failed to respond, please make sure VSCode is currently running with the Lightrail Bridge extension installed & up-to-date!";
 var timeout = (prom, time) => Promise.race([
   prom,
@@ -2737,24 +2695,6 @@ var timeout = (prom, time) => Promise.race([
     (_r, rej) => setTimeout(() => rej(new Error(FAILED_TO_RESPOND)), time)
   )
 ]);
-var multilineToString = (str) => typeof str === "string" ? str : str.join("\n");
-function renderNotebookOutputs(outputs) {
-  for (const o of outputs) {
-    if (isStream(o)) {
-      return multilineToString(o.text);
-    } else if (isError(o)) {
-      return "ERROR: " + o.ename + "\n" + o.evalue + "\n" + o.traceback.join("\n");
-    } else if (isExecuteResult(o) || isDisplayData(o)) {
-      if (o.data["text/plain"]) {
-        return multilineToString(o.data["text/plain"]);
-      } else if (o.data["text/html"]) {
-        return multilineToString(o.data["text/html"]);
-      } else if (o.data["text/markdown"]) {
-        return multilineToString(o.data["text/markdown"]);
-      }
-    }
-  }
-}
 var vscode_default = {
   name: "vscode",
   tokens: [
@@ -2870,153 +2810,6 @@ var vscode_default = {
     }
   ],
   actions: [
-    {
-      name: "Edit Current Notebook",
-      description: "Edit a Jupyter Notebook in VSCode",
-      args: [],
-      color: "#007ACC",
-      icon: "newspaper",
-      placeholder: "Describe the change(s) you'd like to make",
-      async handler(handle, prompt) {
-        let currentFile;
-        handle.sendMessageToRenderer("new-message", {
-          sender: "user",
-          content: prompt._json
-        });
-        prompt.appendText(
-          `
-
-Please edit The Current Notebook (see context above) to comply with the following request:
-
-`
-        );
-        await prompt.hydrate(handle, {
-          vscode: {
-            "current-file": async () => {
-            }
-            // Ignore if token is used
-          }
-        });
-        try {
-          currentFile = await timeout(
-            handle.sendMessageToExternalClient(
-              "vscode-client",
-              "get-active-notebook"
-            ),
-            3e3
-          );
-        } catch (e) {
-          throw new Error(FAILED_TO_RESPOND);
-        }
-        if (!currentFile || !currentFile.endsWith(".ipynb")) {
-          throw new Error(
-            "This action only supports editing Jupyter Notebooks. Make sure a Notebook is open in VSCode (with the latest version of Lighrail Bridge installed) and try again."
-          );
-        }
-        const fs = __require("fs/promises");
-        const data = await fs.readFile(currentFile, "utf8");
-        const notebook = JSON.parse(data);
-        let cellIndexMap = {};
-        let editableCells = [];
-        for (let i = 0; i < notebook.cells.length; i++) {
-          const cell = notebook.cells[i];
-          if (isCode(cell) || cell.cell_type === "markdown") {
-            cellIndexMap[editableCells.length] = i;
-            editableCells.push(cell);
-          }
-        }
-        console.log(editableCells.map((cell) => JSON.stringify(cell.outputs)));
-        prompt.appendContextItem({
-          type: "text",
-          title: "The Current Notebook",
-          content: editableCells.map((cell, i) => {
-            const output = isCode(cell) ? renderNotebookOutputs(cell.outputs) : null;
-            return `
-            [${i}]
-            \`\`\`${isCode(cell) ? "python" : "markdown"}
-            ${multilineToString(cell.source)}
-            \`\`\`${output ? "\n[Output]:\n```\n" + output + "\n```" : ""}`;
-          }).join("\n\n")
-        });
-        prompt.appendText(
-          `
-
-To propose changes to the notebook, output a series of pairs of cell number (in brackets) followed by a code block of the updated cell contents you'd like to propose, like this: 
-
-[1]
-\`\`\`markdown
-# Print out result
-\`\`\`
-
-[3]
-\`\`\`python
-print(table)
-\`\`\`
-
-Do not output any other content in your response outside of the code blocks. Any explanation should be provided as comments only. Only output codeblocks for cells that you want to change. To propose creation of a new cell, just output the (proposed) cell number and contents as above. To insert a cell between two existing cells, use the cell number of the preceding cell plus 0.5, e.g. to insert between 2 and 3, output a cell with cell number [2.5]. Multiple cells with an x.5 cell number will be inserted in the order you propose them. Make sure that the codeblocks for markdown cells use the language hint 'markdown' and that the codeblocks for code cells use the language hint 'python' as appropriate. Try to make sure each cell is a logical unit, and separate cells cleanly as required for good structure. ONLY output cell numbers followed by cells, nothing else!`
-        );
-        const response = await handle.llm.chat.converse(
-          [new HumanMessage(prompt.toString())],
-          {
-            callbacks: [
-              {
-                handleLLMNewToken: (token) => handle.sendMessageToRenderer("new-token", token),
-                handleLLMError: (error) => {
-                  throw new Error(error.message);
-                }
-              }
-            ]
-          }
-        );
-        handle.sendMessageToRenderer("new-message", {
-          sender: "ai",
-          content: response.content
-        });
-        const proposal = getNotebookChangeProposal(response.content);
-        const newCells = {};
-        notebook.cells.forEach((cell, i) => newCells[i] = cell);
-        for (const [cellIndex, { cellType, content }] of proposal) {
-          let mappedIndex = cellIndexMap[cellIndex];
-          if (mappedIndex) {
-            newCells[mappedIndex] = {
-              cell_type: cellType,
-              source: content.split("\n"),
-              metadata: {},
-              outputs: []
-            };
-          } else if (cellIndexMap[Math.floor(cellIndex)]) {
-            mappedIndex = cellIndexMap[Math.floor(cellIndex)] + cellIndex % 1;
-            newCells[mappedIndex] = {
-              cell_type: cellType,
-              source: content.split("\n"),
-              metadata: {},
-              outputs: []
-            };
-          } else {
-            newCells[cellIndex + notebook.cells.length] = {
-              cell_type: cellType,
-              source: content.split("\n"),
-              metadata: {},
-              outputs: []
-            };
-          }
-        }
-        notebook.cells = Object.entries(newCells).sort(([indexA, _a], [indexB, _b]) => Number(indexA) - Number(indexB)).map(([_, cell]) => cell);
-        await fs.writeFile(currentFile, JSON.stringify(notebook));
-        try {
-          await timeout(
-            handle.sendMessageToExternalClient(
-              "vscode-client",
-              "refresh-notebook-from-disk",
-              currentFile
-            ),
-            3e3
-          );
-        } catch (e) {
-          throw new Error(FAILED_TO_RESPOND);
-        }
-      }
-    },
     {
       name: "Insert at Cursor",
       description: "Generate code at the current cursor position in VSCode",
@@ -3180,10 +2973,5 @@ Do not output any other content in your response outside of the code blocks. Any
   }
 };
 export {
-  vscode_default as default,
-  isDisplayData,
-  isDisplayUpdate,
-  isError,
-  isExecuteResult,
-  isStream
+  vscode_default as default
 };

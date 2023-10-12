@@ -27,6 +27,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { BaseLanguageModelCallOptions } from "langchain/base_language";
 import type { BaseMessage } from "langchain/schema";
 import type { BaseChatModel } from "langchain/chat_models/base";
+import type { TokensList } from "marked";
 
 export type TokenArgument = {
   name: string;
@@ -353,7 +354,11 @@ export interface LightrailMainProcessHandle {
       text: string,
       sourceOptions: TransformSourceOptions
     ): Promise<DocumentChunk[]>;
-    // toMarkdown(text: string, sourceOptions: TransformSourceOptions): Promise<string>;
+    toMarkdown(
+      text: string,
+      sourceOptions: TransformSourceOptions
+    ): Promise<string>;
+    tokenizeMarkdown(markdown: string): TokensList;
     // toSummary(text: string, , sourceOptions: TransformSourceOptions): Promise<string>;
   };
 }

@@ -55,7 +55,6 @@ export const promptSchema = new Schema({
 });
 
 const pk = new PluginKey("placeholder");
-
 export function placeholderPlugin() {
   const update = (view: EditorView) => {
     if (view.state.doc.content.size > 0) {
@@ -92,17 +91,20 @@ export function placeholderPlugin() {
 export interface PromptEditorProps {
   className?: string;
   onChange: (value: EditorState) => void;
+  onClick?: () => void;
   state: EditorState;
   readonly?: boolean;
   onViewReady?: (view: EditorView) => void;
+  editorDomClassName?: string;
 }
-
 function PromptEditor({
   className,
+  editorDomClassName,
   onChange,
   state,
   readonly,
   onViewReady,
+  onClick,
 }: PromptEditorProps) {
   const editorRef = useRef<HTMLSpanElement>(null);
   const editorView = useRef<EditorView | null>(null);
@@ -137,9 +139,16 @@ function PromptEditor({
     editorView.current?.updateState(state);
   }, [state]);
 
-  const editorDom = useMemo(() => <span className="" ref={editorRef} />, []);
+  const editorDom = useMemo(
+    () => <span className={editorDomClassName} ref={editorRef} />,
+    []
+  );
 
-  return <div className={classNames(className)}>{editorDom}</div>;
+  return (
+    <div className={classNames(className)} onClick={onClick}>
+      {editorDom}
+    </div>
+  );
 }
 
 export default PromptEditor;

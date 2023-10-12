@@ -1,4 +1,5 @@
 import { TransformSourceOptions } from "lightrail-sdk";
+import { marked } from "marked";
 
 import Parser, { SyntaxNode } from "web-tree-sitter";
 
@@ -215,5 +216,11 @@ export default {
       }
     }
     return [];
+  },
+  async toMarkdown(text: string, sourceOptions: TransformSourceOptions) {
+    return text;
+  },
+  tokenizeMarkdown(md: string) {
+    return marked.lexer(md);
   },
 };

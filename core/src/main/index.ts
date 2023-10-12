@@ -15,6 +15,8 @@ import log from "./logger";
 import { MainHandle, mainTracksManager } from "./lightrail-main";
 import { TRACKS_DIR } from "./track-admin";
 import setUpUpdates from "update-electron-app";
+import { fetchTrackUpdates } from "./updates";
+import { debounce } from "throttle-debounce";
 
 setUpUpdates();
 
@@ -33,6 +35,24 @@ protocol.registerSchemesAsPrivileged([
 
 let mainWindow: BrowserWindow;
 
+const toggleWindow = debounce(
+  500,
+  () => {
+    if (!mainWindow) {
+      createWindow();
+    } else if (mainWindow.isVisible()) {
+      mainWindow.hide();
+      log.silly("Window hidden");
+    } else {
+      mainWindow.show();
+      log.silly("Window shown");
+    }
+  },
+  {
+    atBegin: true,
+  }
+);
+
 function postConfigure(window: BrowserWindow) {
   window.webContents.on(
     "will-navigate",
@@ -45,6 +65,10 @@ function postConfigure(window: BrowserWindow) {
       }
     }
   );
+
+  window.on("show", () => {
+    fetchTrackUpdates();
+  });
 }
 
 function createWindow(): void {
@@ -113,17 +137,7 @@ function createWindow(): void {
 app.whenReady().then(() => {
   log.silly("App ready");
   log.silly("Registering global shortcut");
-  globalShortcut.register("CommandOrControl+Shift+Space", () => {
-    if (!mainWindow) {
-      createWindow();
-    } else if (mainWindow.isVisible()) {
-      mainWindow.hide();
-      log.silly("Window hidden");
-    } else {
-      mainWindow.show();
-      log.silly("Window shown");
-    }
-  });
+  globalShortcut.register("CommandOrControl+Shift+Space", toggleWindow);
   // Set app user model id for windows
   log.silly("Setting app user model id");
   electronApp.setAppUserModelId("com.lightrail");

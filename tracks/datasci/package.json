@@ -1,5 +1,5 @@
 {
-  "name": "lightrail-vscode-track",
+  "name": "lightrail-datasci-track",
   "version": "1.0.0",
   "description": "",
   "main": "track-dist/index.js",
@@ -17,8 +17,9 @@
     "esbuild": "^0.19.2"
   },
   "dependencies": {
-    "langchain": "^0.0.154",
-    "lightrail-sdk": "^0.0.12",
-    "marked": "^7.0.5"
+    "@jupyterlab/nbformat": "^4.0.6",
+    "diff": "^5.1.0",
+    "langchain": "^0.0.160",
+    "lightrail-sdk": "^0.0.12"
   }
 }
