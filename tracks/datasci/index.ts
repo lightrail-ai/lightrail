@@ -386,7 +386,7 @@ let mainProcessState: {
 };
 
 export default {
-  name: "data-sci",
+  name: "datasci",
   tokens: [
     // {
     //   name: "csv",

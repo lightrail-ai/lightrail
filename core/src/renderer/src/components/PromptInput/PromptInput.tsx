@@ -558,7 +558,7 @@ function PromptInput({ onAction }: PromptInputProps) {
         >
           <FontAwesomeIcon icon={faGear} size={"xs"} />
         </button>
-        <div className="relative p-4 cursor-text z-10">
+        <div className="p-4 cursor-text">
           {!currentAction ? (
             <div className="mr-2 px-1 py-0.5 rounded-sm font-semibold text-sm inline-flex flex-row border border-neutral-700 items-center justify-center">
               <div className="pr-1 opacity-80">@</div>
