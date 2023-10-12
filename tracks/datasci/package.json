@@ -20,6 +20,6 @@
     "@jupyterlab/nbformat": "^4.0.6",
     "diff": "^5.1.0",
     "langchain": "^0.0.160",
-    "lightrail-sdk": "file:../../sdk"
+    "lightrail-sdk": "^0.0.12"
   }
 }
