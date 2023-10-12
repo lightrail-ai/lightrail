@@ -32,7 +32,7 @@ jobs:
         python -m pip install .[test]
 
         jupyter labextension list
-        jupyter labextension list 2>&1 | grep -ie "lightrail.*OK"
+        jupyter labextension list 2>&1 | grep -ie "lightrail-jupyterlab.*OK"
         python -m jupyterlab.browser_check
 
     - name: Package the extension
@@ -41,13 +41,13 @@ jobs:
 
         pip install build
         python -m build
-        pip uninstall -y "lightrail" jupyterlab
+        pip uninstall -y "lightrail_jupyterlab" jupyterlab
 
     - name: Upload extension packages
       uses: actions/upload-artifact@v3
       with:
         name: extension-artifacts
-        path: dist/lightrail*
+        path: dist/lightrail_jupyterlab*
         if-no-files-found: error
 
   test_isolated:
@@ -70,11 +70,11 @@ jobs:
         sudo rm -rf $(which node)
         sudo rm -rf $(which node)
 
-        pip install "jupyterlab>=4.0.0,<5" lightrail*.whl
+        pip install "jupyterlab>=4.0.0,<5" lightrail_jupyterlab*.whl
 
 
         jupyter labextension list
-        jupyter labextension list 2>&1 | grep -ie "lightrail.*OK"
+        jupyter labextension list 2>&1 | grep -ie "lightrail-jupyterlab.*OK"
         python -m jupyterlab.browser_check --no-browser-test
 
 

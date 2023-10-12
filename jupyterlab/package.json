@@ -1,6 +1,6 @@
 {
-    "name": "lightrail",
-    "version": "0.1.0",
+    "name": "lightrail-jupyterlab",
+    "version": "0.1.1",
     "description": "Connect JupyterLab to Lightrail AI",
     "keywords": [
         "jupyter",
@@ -37,7 +37,7 @@
         "clean": "jlpm clean:lib",
         "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
         "clean:lintcache": "rimraf .eslintcache .stylelintcache",
-        "clean:labextension": "rimraf lightrail/labextension lightrail/_version.py",
+        "clean:labextension": "rimraf lightrail_jupyterlab/labextension lightrail_jupyterlab/_version.py",
         "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
         "eslint": "jlpm eslint:check --fix",
         "eslint:check": "eslint . --cache --ext .ts,.tsx",
@@ -54,7 +54,10 @@
         "watch:labextension": "jupyter labextension watch ."
     },
     "dependencies": {
-        "@jupyterlab/application": "^4.0.0"
+        "@jupyterlab/application": "^4.0.0",
+        "@jupyterlab/notebook": "^4.0.7",
+        "lightrail-sdk": "^0.0.12",
+        "socket.io-client": "^4.7.2"
     },
     "devDependencies": {
         "@jupyterlab/builder": "^4.0.0",
@@ -90,7 +93,7 @@
     },
     "jupyterlab": {
         "extension": true,
-        "outputDir": "lightrail/labextension"
+        "outputDir": "lightrail_jupyterlab/labextension"
     },
     "eslintIgnore": [
         "node_modules",

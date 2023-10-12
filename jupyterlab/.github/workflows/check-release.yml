@@ -22,5 +22,5 @@ jobs:
       - name: Upload Distributions
         uses: actions/upload-artifact@v3
         with:
-          name: lightrail-releaser-dist-${{ github.run_number }}
+          name: lightrail_jupyterlab-releaser-dist-${{ github.run_number }}
           path: .jupyter_releaser_checkout/dist

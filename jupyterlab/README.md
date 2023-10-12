@@ -1,4 +1,4 @@
-# lightrail
+# lightrail_jupyterlab
 
 [![Github Actions Status](https://github.com/lightrail-ai/lightrail/workflows/Build/badge.svg)](https://github.com/lightrail-ai/lightrail/actions/workflows/build.yml)
 Connect JupyterLab to Lightrail AI
@@ -12,7 +12,7 @@ Connect JupyterLab to Lightrail AI
 To install the extension, execute:
 
 ```bash
-pip install lightrail
+pip install lightrail_jupyterlab
 ```
 
 ## Uninstall
@@ -20,7 +20,7 @@ pip install lightrail
 To remove the extension, execute:
 
 ```bash
-pip uninstall lightrail
+pip uninstall lightrail_jupyterlab
 ```
 
 ## Contributing
@@ -35,7 +35,7 @@ The `jlpm` command is JupyterLab's pinned version of
 
 ```bash
 # Clone the repo to your local environment
-# Change directory to the lightrail directory
+# Change directory to the lightrail_jupyterlab directory
 # Install package in development mode
 pip install -e "."
 # Link your development version of the extension with JupyterLab
@@ -64,12 +64,12 @@ jupyter lab build --minimize=False
 ### Development uninstall
 
 ```bash
-pip uninstall lightrail
+pip uninstall lightrail_jupyterlab
 ```
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
 command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `lightrail` within that folder.
+folder is located. Then you can remove the symlink named `lightrail-jupyterlab` within that folder.
 
 ### Packaging the extension
 

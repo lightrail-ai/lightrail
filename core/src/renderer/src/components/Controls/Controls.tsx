@@ -14,7 +14,7 @@ function Controls({ controls }: ControlsProps) {
   });
 
   return (
-    <div className="flex-grow flex-shrink min-h-0 overflow-auto" ref={parent}>
+    <div className="" ref={parent}>
       {controls.map((control, index) => (
         <div key={index} className="px-4 py-2">
           {(control.type === "button-group" || control.type === "buttons") && (

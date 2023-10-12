@@ -290,7 +290,7 @@ async function editNotebookWithLLM(
       }
       newCells[mappedIndex] = {
         cell_type: cellType,
-        source: content.split("\n"),
+        source: content,
         raw,
         metadata: {},
         outputs: [],
@@ -304,7 +304,7 @@ async function editNotebookWithLLM(
       });
       newCells[mappedIndex] = {
         cell_type: cellType,
-        source: content.split("\n"),
+        source: content,
         raw,
         metadata: {},
         outputs: [],
@@ -317,7 +317,7 @@ async function editNotebookWithLLM(
       });
       newCells[cellIndex + cells.length] = {
         cell_type: cellType,
-        source: content.split("\n"),
+        source: content,
         raw,
         metadata: {},
         outputs: [],
@@ -331,7 +331,7 @@ async function editNotebookWithLLM(
   if (format === "ipynb" && notebook) {
     notebook.cells = Object.entries(newCells)
       .sort(([indexA, _a], [indexB, _b]) => Number(indexA) - Number(indexB))
-      .map(([_, cell]) => cell);
+      .map(([_, { raw, ...cell }]) => cell);
 
     await fs.writeFile(path, JSON.stringify(notebook));
   } else if (format === "rmd") {
@@ -378,9 +378,11 @@ async function editNotebookWithLLM(
 let mainProcessState: {
   previousContents: string | undefined;
   previousContentsPath: string | undefined;
+  notebookClient: string | undefined;
 } = {
   previousContents: undefined,
   previousContentsPath: undefined,
+  notebookClient: undefined,
 };
 
 export default {
@@ -507,6 +509,7 @@ ${multilineToString(cell.source)}
 
         await editNotebookWithLLM(handle, prompt, currentFile);
         if (mainProcessState.previousContents !== undefined) {
+          mainProcessState.notebookClient = "vscode-client";
           handle.sendMessageToRenderer("show-revert-button");
           try {
             await timeout(
@@ -529,8 +532,78 @@ ${multilineToString(cell.source)}
       },
     },
     {
+      name: "Edit Current JupyterLab Notebook",
+      description: "Edit a Notebook in JupyterLab",
+      args: [],
+      color: "#ad0836",
+      icon: "newspaper",
+      placeholder: "Describe the change(s) you'd like to make",
+      async handler(handle, prompt) {
+        const os = require("os");
+
+        const JUPYTER_FAILED_TO_RESPOND =
+          "JupyterLab failed to respond, please make sure JupyterLab is currently running with the Lightrail extension installed & up-to-date!";
+
+        let currentFile: string;
+
+        handle.sendMessageToRenderer("new-message", {
+          sender: "user",
+          content: prompt._json,
+        });
+
+        prompt.appendText(
+          `\n\nPlease edit The Current Notebook (see context above) to comply with the following request:\n\n`
+        );
+
+        await prompt.hydrate(handle);
+
+        try {
+          currentFile = await timeout(
+            handle.sendMessageToExternalClient(
+              "jupyterlab-client",
+              "get-active-notebook"
+            ),
+            3000
+          );
+        } catch (e) {
+          throw new Error(JUPYTER_FAILED_TO_RESPOND);
+        }
+
+        if (!currentFile || !currentFile.endsWith(".ipynb")) {
+          throw new Error(
+            "This action only supports editing Jupyter Notebooks in JupyterLab. Make sure a Notebook is open in JupyterLab (with the latest version of Lighrail installed) and try again."
+          );
+        }
+
+        currentFile = currentFile.replace(/^~/, os.homedir());
+
+        await editNotebookWithLLM(handle, prompt, currentFile);
+        if (mainProcessState.previousContents !== undefined) {
+          mainProcessState.notebookClient = "jupyterlab-client";
+          handle.sendMessageToRenderer("show-revert-button");
+          try {
+            await timeout(
+              handle.sendMessageToExternalClient(
+                "jupyterlab-client",
+                "refresh-notebook-from-disk",
+                currentFile
+              ),
+              3000
+            );
+
+            handle.sendMessageToRenderer(
+              "new-notification",
+              "Check JupyterLab to see the proposed changes!"
+            );
+          } catch (e) {
+            throw new Error(JUPYTER_FAILED_TO_RESPOND);
+          }
+        }
+      },
+    },
+    {
       name: "Edit Notebook",
-      description: "Edit a Jupyter Notebook in VSCode",
+      description: "Edit a Jupyter or RMarkdown notebook file",
       args: [
         {
           type: "path",
@@ -580,9 +653,24 @@ ${multilineToString(cell.source)}
               mainProcessState.previousContentsPath,
               mainProcessState.previousContents
             );
+
+            if (mainProcessState.notebookClient) {
+              try {
+                await timeout(
+                  handle.sendMessageToExternalClient(
+                    mainProcessState.notebookClient,
+                    "refresh-notebook-from-disk",
+                    mainProcessState.previousContentsPath
+                  ),
+                  3000
+                );
+              } catch (e) {}
+            }
+
             handle.sendMessageToRenderer("new-notification", "File reverted!");
             mainProcessState.previousContents = undefined;
             mainProcessState.previousContentsPath = undefined;
+            mainProcessState.notebookClient = undefined;
           } catch (e) {
             handle.sendMessageToRenderer(
               "new-notification",

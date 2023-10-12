@@ -3,7 +3,7 @@ requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5", "hatch-nodejs-version>=0
 build-backend = "hatchling.build"
 
 [project]
-name = "lightrail"
+name = "lightrail_jupyterlab"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
@@ -32,24 +32,24 @@ source = "nodejs"
 fields = ["description", "authors", "urls"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["lightrail/labextension"]
+artifacts = ["lightrail_jupyterlab/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"lightrail/labextension" = "share/jupyter/labextensions/lightrail"
-"install.json" = "share/jupyter/labextensions/lightrail/install.json"
+"lightrail_jupyterlab/labextension" = "share/jupyter/labextensions/lightrail-jupyterlab"
+"install.json" = "share/jupyter/labextensions/lightrail-jupyterlab/install.json"
 
 [tool.hatch.build.hooks.version]
-path = "lightrail/_version.py"
+path = "lightrail_jupyterlab/_version.py"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "lightrail/labextension/static/style.js",
-    "lightrail/labextension/package.json",
+    "lightrail_jupyterlab/labextension/static/style.js",
+    "lightrail_jupyterlab/labextension/package.json",
 ]
-skip-if-exists = ["lightrail/labextension/static/style.js"]
+skip-if-exists = ["lightrail_jupyterlab/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -59,7 +59,7 @@ npm = ["jlpm"]
 build_cmd = "install:extension"
 npm = ["jlpm"]
 source_dir = "src"
-build_dir = "lightrail/labextension"
+build_dir = "lightrail_jupyterlab/labextension"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"

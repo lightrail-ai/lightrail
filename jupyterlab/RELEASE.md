@@ -1,4 +1,4 @@
-# Making a new release of lightrail
+# Making a new release of lightrail_jupyterlab
 
 The extension can be published to `PyPI` and `npm` manually or using the [Jupyter Releaser](https://github.com/jupyter-server/jupyter_releaser).
 
