@@ -31,6 +31,14 @@ Lightrail depends on bridge extensions to interact with other software on your m
    3. In Chrome, go to `chrome://extensions`. There should be a toggle in the upper-right labelled `Developer Mode`. Toggle it so that `Developer Mode` is enabled.
    4. Click the `Load unpacked` button, and select the `dist` folder (from step 2).
    5. Done! For more details / pictures, see: [https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked)
+4. (Optional) **Install the Jupyter Extension for automating data analysis:**
+    1. Open JupyterLab
+    2. Go to the `Extensions` pane, search for `lightrail-jupyterlab`, click `Install` and refresh the page
+    3. Open up the Lightrail Desktop app
+    4. Go to the `Settings` pane
+    5. Copy this url [https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-datasci-track.zip](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-datasci-track.zip), paste it in the `Install from URL` input box, and click `Fetch Tracks`
+    6. You should be all set-up!    
+
 
 ## Usage
 
