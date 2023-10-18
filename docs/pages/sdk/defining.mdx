@@ -1,0 +1,250 @@
+import { Callout } from "nextra/components";
+
+# Defining Tracks, Tokens, Actions, and Handlers
+
+## Track Definition
+
+Inside `index.ts`, you'll see a data structure that looks like this:
+
+```ts
+export default {
+  name: "CHANGE ME",
+  tokens: [],
+  actions: [],
+  handlers: {
+    main: {},
+    renderer: {},
+  },
+} satisfies LightrailTrack;
+```
+
+This data structure is a Lightrail Track. Let's go through each key, from top to bottom.
+
+#### `name`
+
+Lightrail Tracks are identified by their name throughout the Lightrail system. In addition, if you choose to include your track in the [Lightrail Track Repository](/sdk/publishing), it _must_ have a unique name (i.e. no conflicts across the entire repository). By convention, names should be all lowercase, kebab-case, and short.
+
+#### `tokens`
+
+This (optional) key should map to an array of `Token` definitions, defining all tokens provided by your track. See the [Concepts Section](/sdk/intro#tokens--actions) for a definition of what `Tokens` are in lightrail. The structure of an individual token definition is explained later on this page.
+
+#### `actions`
+
+This (optional) key should map to an array of `Action` definitions, defining all actions provided by your track. See the [Concepts Section](/sdk/intro#tokens--actions) for a definition of what `Actions` are in lightrail. The structure of an individual action definition is explained later on this page.
+
+#### `handlers`
+
+This key maps to an object containing two (optional) top-level keys, `main` and `renderer`. Each of these maps to an object containing the message handlers that your track will have in the corresponding process (see [The Main and Renderer Processes](/sdk/intro#the-main--renderer-processes)). In these objects, the keys are the handler names (akin to RPC names, and by convention lowercase & kebab-case) and the values are functions with the following type:
+
+```ts
+(handle: LightrailMainProcessHandle, messageBody?: any) => Promise<any>;
+```
+
+for `main` process handlers, and
+
+```ts
+(handle: LightrailRendererProcessHandle, messageBody?: any) => Promise<void>;
+```
+
+for the `renderer` process handlers. The APIs of `LightrailMainProcessHandle` and `LightrailRendererProcessHandle` are elaborated on the next page, and are the primary way to interact with Lightrail's functionality.
+
+<Callout type="warning" emoji="⚠️">
+ Note that the `main` process handlers can return values while the `renderer` process handlers cannot.
+
+</Callout>
+
+Here's an example of handlers that are used by many tracks (the APIs used here are described in the next section):
+
+```ts
+// ...
+handlers: {
+    main: {
+        "revert-change": async (handle) => {
+        const fs = require("fs/promises");
+        // ... handle reversion logic ...
+        },
+    },
+    renderer: {
+        "new-token": async (rendererHandle, token) =>
+        rendererHandle.ui?.chat.setPartialMessage((prev) =>
+            prev ? prev + token : token
+        ),
+        "new-message": async (rendererHandle, message) => {
+        rendererHandle.ui?.chat.setPartialMessage(null);
+        rendererHandle.ui?.chat.setHistory((prev) => [...prev, message]);
+        },
+        "new-notification": async (rendererHandle, notification) => {
+        rendererHandle.ui?.notify(notification);
+        },
+    },
+},
+// ...
+```
+
+Note that these handler names are all chosen arbitrarily and used within actions / tokens; they do not have any special meaning in the Lightrail system.
+
+## Token Definitions
+
+The `Token` items described above should all conform to the following type definition:
+
+```ts
+type LightrailToken = {
+  name: string; // A name that is unique _within_ your track, conventionally lowercase & kebab-case.
+  color: string; // A hex-code (e.g. "#ad0836") that will be usewd as the accent color for this token in the Lightrail UX. Typically, tracks make all their tokens and actions use the same accent color, but this is not required.
+  description: string; // A *brief* description of the token's functionality, ideally able to fit on one line in the Lightrail UX.
+  args: TokenArgument[]; // A list of arguments that the Token will accept (see below)
+  render: (args: { [key: string]: string }) => string | string[]; // A function that controls how the token is displayed as part of the user's prompt, once the user has supplied all arguments (see below)
+  hydrate: (
+    mainHandle: LightrailMainProcessHandle,
+    args: { [key: string]: string },
+    prompt: Prompt
+  ) => Promise<void>; // This function is called when the user sends a prompt to a given Action, and it should transform the prompt appropriately to include any context / content entailed by the token (see below)
+};
+```
+
+The comments in the snippet above explain the first few fields adequately, but lets dive in to the last 3 in some additional detail:
+
+#### `args`
+
+Tokens can take 0+ arguments. For example, the `/vscode.current-file` token takes no arguments, while the `/sql.table` token (which references a table in a db) takes both a connection string as well as a table name as 2 separate arguments. Each argument in this array should conform to the following type:
+
+```ts
+type TokenArgument = {
+  name: string;
+  description: string;
+} & (
+  | { type: "string" }
+  | {
+      type: "choice";
+      choices: TokenArgumentOption[];
+    }
+  | { type: "path" }
+  | {
+      type: "history";
+      key?: string; // Optional key to use for storing history, defaults to arg name
+    }
+  | {
+      type: "custom";
+      handler: (
+        mainHandle: LightrailMainProcessHandle,
+        args: { [key: string]: string }
+      ) => Promise<TokenArgumentOption[]>;
+    }
+);
+
+type TokenArgumentOption = {
+  value: any;
+  description: string;
+  name: string;
+};
+```
+
+In other words, `args` should map to an array of objects, each with a name and description and type (`"string"`, `"choice"`, `"path"`, `"history"`, or `"custom"`). Some types also require additional configuration. Ultimately, all arguments are entered as strings (as in a CLI); the types just change the UX presented to the user for entering the string. The available types (more coming soon) are described here:
+
+- `"string"`: A plain string argument, with no suggestions / autocomplete.
+- `"choice"`: the user will be provided with a pre-defined list of choices that they can select from. Each choice should have a `value`, `description`, and `name`. The `name` and `description` are shown in the autocomplete, while the `value` is what gets inserted when that value is selected. If `value` ends with a space, selecting that choice will also switch the input to the next arg (or conclude token entry if this is the final arg). If it does not, then selecting a choice will just update the current argument value.
+- `"path"`: the suggestions / autocomplete will help the user enter a path to a file or directory on their filesystem
+- `"history"`: similar to `"choice"`, except that the choices are the previous values entered by the user. The Lightrail UI also allows the user to set nicknames for different previous values. Useful for e.g. database connection strings.
+- `"custom"`: similar to `"choice"`, except that the choices are dynamically generated based on previous args (and the current arg's partial value). The function provided to `handler` should return the choices. `args` will be a mapping from argument-names to their values (so far). The current argument will also be included, with a partial value if one has been provided. For info on the API provided by `mainHandle`, see the next section of the documentation. This handler runs in the `main` process (see [The Main and Renderer Processes](/sdk/intro#the-main--renderer-processes))
+
+#### `render`
+
+This function should return the string that the user will see in their prompt when they're finished entering all the args (if any) for your token. If it returns a string, this string will be displayed exactly (using the Token's accent color). It can also return an array of strings (representing some or all of the argument values of the token); if it does, these values will be displayed (in pill-shaped containers) after the name of the token, all in the token's accent color.
+
+#### `hydrate`
+
+This function defines how the token transforms a prompt. It runs in the `main` process (see [The Main and Renderer Processes](/sdk/intro#the-main--renderer-processes)) and has access to the `LightrailMainProcessHandle` (see the next page of the documentation). It also receives an object containing the arguments passed to the token. It also receives a `Prompt` object, which is discussed in more detail in the next page of the documentation. In the context of token hydration, the relavent Prompt methods are typically `appendText(text: string)` and `appendContextItem(item: PromptContextItem)`. Append text that represents what should go in the prompt **at the location** where the user entered the token (often a reference to the title of something that you're adding to the context). Do not add spaces around the text that you're appending. The API documentation in the next page containts full method specifications, but this example demonstrates a fairly archetypal `hydrate` function (from the builtin `clipboard` token, which incorporates the user's clipboard contents into the current prompt):
+
+```ts
+// ...
+async hydrate(mainHandle, args, prompt) {
+    const { clipboard } = require("electron");
+    const content = clipboard.readText();
+
+    prompt.appendContextItem({
+        title: "Clipboard Contents",
+        content,
+        type: "text",
+    });
+
+    prompt.appendText("the Clipboard Contents");
+},
+// ...
+```
+
+## Action Definitions
+
+The `Action` items defined in your track should all conform to the following type definition:
+
+```ts
+type Action = {
+  name: string; // The action's name, typically a few (2-4) title-case words separated by spaces (e.g. "Find Related Content")
+  icon: string; // An icon name for the action, from the free subset of fontawesome-regular (e.g. "fa-file")
+  color: string; // A hex-code (e.g. "#ad0836") that will be usewd as the accent color for this action in the Lightrail UX. Typically, tracks make all their tokens and actions use the same accent color, but this is not required.
+  description: string; // short description of the action
+  placeholder?: string; // Optional placeholder text for the main prompt when this action is selected
+  args: ActionArgument[]; // identical to Token's args (ActionArgument and TokenArgument are also identical), see the Token Definitions section above.
+  handler: (
+    mainHandle: LightrailMainProcessHandle,
+    prompt: Prompt,
+    args: { [key: string]: string }
+  ) => Promise<void>; // the function that handles the action (see below)
+};
+```
+
+Once again, the comments in the snippet above explain the first few fields adequately, but lets dive in to the last couple in some additional detail:
+
+#### `args`
+
+This works identically to args for Tokens, so read [the relevant bit above](/sdk/defining#args) for more details.
+
+#### `handler`
+
+For most tracks, this `handler` contains the majority of the track's functionality. It is called when the user, having selected an action and supplied its required arguments and prompt, hits enter in the main prompt input. It runs in the `main` process (see [The Main and Renderer Processes](/sdk/intro#the-main--renderer-processes)) and has access to the `LightrailMainProcessHandle` (see the next page of the documentation), which it can use to interact with the functionality provided by Lightrail. It also receives a `Prompt` object, which is discussed in more detail in the next section of the documentation. Finally, it receives a map of argument names to argument values, corresponding to the arguments specified above.
+
+The action handler can carry out a variety of functions from the `main` process, and can also send messages to handlers in the `renderer` process (see the [info on track-level handlers above](/sdk/defining#handlers)). There is no template for how to write your action's handler, as the possibilities are too varied, but **almost all action handlers should likely start with the following:**
+
+<Callout type="warning" emoji="⚠️">
+  Ignoring these initial steps in track handlers is a common pitfall. Make sure
+  to read the comments in the following snippet, as they are crucially important
+  to creating a successful Action!
+</Callout>
+
+```ts
+// ...
+async handler(handle, prompt) {
+    // Send the prompt's raw JSON to the renderer to display the prompt in the UX. Note, only messages with sender: "user" are expected to be JSON.
+    handle.sendMessageToRenderer("new-message", {
+        sender: "user",
+        content: prompt._json,
+    });
+
+    // Optionally, use prompt.appendText(...) here to add instructions to the prompt that will go _after_ the context items but _before_ the text entered by the user
+
+    // Hydrate the prompt, i.e. resolve all the custom tokens and fill out the prompt's context & text
+    await prompt.hydrate(handle);
+
+    // *AFTER* calling prompt.hydrate(handle), you can use prompt.toString() to generate a stringified version of the Prompt, to send to an LLM or use in another way.
+    // Calling prompt.toString() before hydrating the prompt will lead to errors.
+}
+// ...
+```
+
+and the corresponding `new-message` handler defined at the track level:
+
+```ts
+// ...
+handlers: {
+    // ...
+    renderer: {
+        // ...
+        "new-message": async (rendererHandle, message) => {
+            rendererHandle.ui?.chat.setHistory((prev) => [...prev, message]);
+        },
+        // ...
+    }
+},
+// ...
+```
+
+To reiterate, make sure your Action handler hydrates the prompt (and awaits completion of this operation) before calling `prompt.toString()` or otherwise attempting to use the stringified prompt.

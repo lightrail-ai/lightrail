@@ -1,0 +1,279 @@
+# Process Handle and Prompt APIs
+
+## Prompt
+
+The `Prompt` object holds a prompt, and allows you to manipulate it in ways that will play nice with other tracks that might also be involved in the user's action.
+
+### `prompt._json`
+
+Prompt objects are initialized from JSON data structures that are serialized versions of the user's input in the Lightrail UX. This JSON is stored as `prompt._json`. The format of the JSON is currently undocumented and subject to frequent change, so don't rely on it and definitely don't try to set or alter it manually. calling `prompt.hydrate(...)` handles taking the JSON and filling out the prompt's text and context accordingly, to prepare for stringifying. This property is only available because some UX elements (e.g. the chat log) expect raw prompt JSON in order to display the prompt in a way that resembled the user's entry. **Do not do anything with `prompt._json` except for passing it un-modified to Lightrail API functions that require it.**
+
+### `prompt.appendContextItem(item: PromptContextItem): void`
+
+Inserts a new item into the prompt's context. `PromptContextItem` has the following definition:
+
+```ts
+type PromptContextItem = {
+  title: string;
+  type: "code" | "text";
+  content: string;
+  metadata?: any; // Not included in stringified prompt, but can be accessed in actions
+};
+```
+
+### `prompt.appendText(text: string): void`
+
+Append `text` to the prompt's main body (i.e. the part that comes after the context and contains the user's input)
+
+### `prompt.hydrate(handle: LightrailMainProcessHandle): Promise<void>`
+
+This asynchronous function processes the raw `prompt._json` and hydrates all the custom-tokens that it contains, thereby filling the prompt's context and text so that it can be properly transformed into a string. It can only be called from the `main` process, and requires a `LightrailMainProcessHandle` (which is passed as an argument to action handlers).
+
+### `prompt.toString(): string`
+
+Transforms the prompt to a string, which can then be used for sending to an LLM (see the llm methods in LightrailMainProcessHandle below) or for any other purpose. **Make sure you've hydrated the prompt (i.e. called `prompt.hydrate(...)`) before calling this!**
+
+## LightrailMainProcessHandle
+
+The `LightrailMainProcessHandle` allows your track to use the various helpers and utilities provided by Lightrail to make LLM-based workflows easy to develop. For example, it provides access to prompting an LLM, interacting with the Knowledge Base, transforming LLM output, etc. An instance of `LightrailMainProcessHandle` is passed in to the action handlers in your track, as well as any handlers defined at the track level in the `main` process.
+
+### `lightrailMainProcessHandle.sendMessageToRenderer( messageName: string, messageBody?: any ): void`
+
+Send a message to a track-level handler defined on the `renderer` process. The message body is optional. Sending messages from the main process to the renderer does **not** allow for responses. This method returns immediately.
+
+### `lightrailMainProcessHandle.sendMessageToExternalClient( clientName: string, messageName: string, messageBody?: any ): Promise<any>`
+
+This function sends a message to an external client. The clientName parameter is the identifier of the external client, which is set when the client connects to Lightrail (see the [Client API docs](/sdk/client)). messageName is the identifier of the message to be sent, which should correspond to a handler defined in the client. Client handlers can return values, so this method returns a promise that resolved to the value returned by the client handler.
+
+### `lightrailMainProcessHandle.getTrackTokens(): Token[]`
+
+Returns an array of all tokens associated with the current track (your track).
+
+### `lightrailMainProcessHandle.getTrackActions(): Action[];`
+
+Returns an array of all actions associated with the current track (your track).
+
+### `lightrailMainProcessHandle.getTokenByName(name: string): Token | undefined`;
+
+Returns a Token object with the specified name if it exists. If no such token exists, the function returns undefined. Only returns a token if it belongs to the current track (your track).
+
+### `lightrailMainProcessHandle.getActionByName(name: string): Action | undefined`;
+
+Returns an Action object with the specified name if it exists. If no such action exists, the function returns undefined. Only returns an action if it belongs to the current track (your track).
+
+### `lightrailMainProcessHandle.llm: LightrailLLM`
+
+This object provides access to the LLM instance configured by the Lightrail end-user. Under the hood, it uses [Langchain](https://js.langchain.com/docs/get_started/introduction) and mostly just offers some convenience methods on top of the Langchain API (for state/history management across tracks, etc). The underlying Langchain chat model instance can be accessed directly at `lightrailMainProcessHandle.llm.chat.model`;
+
+#### `llm.chat.converse(messages: BaseMessage[], options?: BaseLanguageModelCallOptions ): Promise<BaseMessage>`
+
+A thin wrapper on the Langchain chat model's `.call` method, described [here](https://js.langchain.com/docs/modules/model_io/models/chat/#call). Using `.converse` will automatically add conversation history and will try to manage long histories in a smart/automated fashion, so it's recommended to use `.converse` instead of calling `.model.call` directly.
+
+Possible options are described in the [BaseLanguageModelCallOptions docs](https://js.langchain.com/docs/api/base_language/interfaces/BaseLanguageModelCallOptions), and the interface of `BaseMessage` is available [here](https://js.langchain.com/docs/api/schema/classes/BaseMessage).
+
+#### `llm.chat.model: BaseChatModel`
+
+The underlying [Langchain Chat Model (click to view docs)](https://js.langchain.com/docs/api/chat_models_base/classes/BaseChatModel)
+
+#### `llm.chat.reset(): void`
+
+Reset the chat model's conversation history
+
+### `lightrailMainProcessHandle.fs: LightrailFS`
+
+The `fs` object provides some convenience methods for handling file operations within Lightrail. Note that for most operations, you can just `require('fs')` from within the `main` process handler and use Node libraries directly; these helpers are only for operations that are Lightrail-specific.
+
+#### `fs.writeTempFile(data: string, originalPath?: string): Promise<string>`
+
+This function writes data to a temporary file and returns a Promise that resolves to the path of the created file. It takes the following parameters:
+
+- `data`: The string data to be written to the file.
+- `originalPath`(optional): The original path of the file.
+
+### `lightrailMainProcessHandle.logger: MainLogger`
+
+This object provides access to the logging instance for the `main` process. You can use it for logging errors, warnings, info, and debug messages against Lightrail. These will be stored in the Lightrail logs, and also printed to console if Lightrail is launched from the console.
+
+This logger is an instance of [electron-log](https://github.com/megahertz/electron-log). See their documentation for further detail (in summary, just call `logger.info(message: string)` to log with the `info` log-level, or use the analogous methods for log-levels `silly`, `warn`, `debug`, `error`, or `verbose`).
+
+### `lightrailMainProcessHandle.store: LightrailDataStores`
+
+This object gives access to a simple key-value data store and the Lightrail Knowledge Base (KB) data store, a vector-based store. Use it to store or query data as part of your track
+
+#### `store.kv.get(key: string): Promise<any>`
+
+Returns a Promise that resolves to the value of the given key from the key-value store.
+
+#### `store.kv.set(key: string, value: any): Promise<void>`
+
+Sets a value for a given key in the key-value store.
+
+#### `store.kb.addItems(items: LightrailKBItem[]): Promise<void>`
+
+This function adds new items into the knowledge base data store. These items are vectorized, when they are added, and querying later will use a vector-based search. Items can be given tags, and then future queries can be limited to only certain tags.
+
+`LightrailKBItem` is defined as:
+
+```ts
+interface LightrailKBItem {
+  title: string;
+  type: "code" | "text";
+  content: string;
+  metadata?: any;
+  tags: string[];
+}
+```
+
+#### `store.kb.query(query: string, tags?: string[]): Promise<LightrailKBItem[]>`
+
+This function queries the knowledge base with a given query string and an optional array of tags. Though the tags array is technically optional, in practice it should almost always be provided, as querying the entire KB will likely return data you do not intend to fetch (and might be disallowed in the future).
+
+### `lightrailMainProcessHandle.transform: LightrailTransform`
+
+The `transform` object provides convenience methods for manipulating and transforming content (with a focus on LLM responses or scraped data).
+
+#### `transform.toChunks(text: string, sourceOptions: TransformSourceOptions): Promise<DocumentChunk[]>`
+
+This method splits the given `text` into chunks, each identified by its position in the document (specified by `line` and `char`). `sourceOptions` is an object of options related to the source of the text, currently only `path` is supported to denote the path of the source file.
+
+Returns a promise that resolves to an array of `DocumentChunk` where each chunk is an object having: `content` of chunk, `from` position, and `to` position.
+
+#### `transform.toMarkdown(text: string, sourceOptions: TransformSourceOptions): Promise<string>`
+
+This method converts the input `text` to markdown. `sourceOptions` is an object of options related to the source of the text, currently only `path` is supported to denote the path of the source file. Returns a promise that resolves to a string of the converted markdown text.
+
+#### `transform.tokenizeMarkdown(markdown: string): TokensList`
+
+This method tokenizes the given `markdown` string, breaking it down into its component parts using the [marked](https://github.com/markedjs/marked) library. Passes input to `marked`'s Lexer, see documentation here: [Lexer](https://marked.js.org/using_pro#lexer)
+
+## LightrailRendererProcessHandle
+
+The `LightrailRendererProcessHandle` provides access to the Lightrail UI, to help you create LLM-driven UX for your tracks. Specific use-cases include creating UI controls, displaying notifications, and handling chat history.
+
+### `lightrailRendererProcessHandle.sendMessageToMain( messageName: string, messageBody?: any ): Promise<any>`
+
+This function sends a message to a main process handler. `messageName` should correspond to a handler defined in the main process. This function returns a promise that resolves to the response from the main process handler. Main process handlers **can** return responses, so this method returns a promise that resolves to the handler's return value.
+
+### `lightrailRendererProcessHandle.getTrackTokens(): TokenHandle[]`
+
+Returns an array of all tokens associated with the current track (your track).
+
+### `lightrailRendererProcessHandle.getTrackActions(): ActionHandle[]`
+
+Returns an array of all actions associated with the current track (your track).
+
+### `lightrailRendererProcessHandle.getTokenByName(name: string): TokenHandle | undefined`
+
+Returns a handle to a Token object with the specified name if it exists. If no such token exists, the function returns undefined. Only returns a token if it belongs to the current track (your track).
+
+### `lightrailRendererProcessHandle.getActionByName(name: string): ActionHandle | undefined`
+
+Returns a handle to an Action object with the specified name if it exists. If no such action exists, the function returns undefined. Only returns an action if it belongs to the current track (your track).
+
+### `lightrailRendererProcessHandle.logger: RendererLogger`
+
+This object provides access to the logging instance for the `renderer` process. You can use it for logging errors, warnings, info, and debug messages. These will be stored in the Lightrail logs, and also printed to console if Lightrail is launched from the console.
+
+This logger is an instance of [electron-log](https://github.com/megahertz/electron-log). See their documentation for further detail (in summary, just call `logger.info(message: string)` to log with the `info` log-level, or use the analogous methods for log-levels `silly`, `warn`, `debug`, `error`, or `verbose`).
+
+### `lightrailRendererProcessHandle.ui: LightrailUI | undefined`
+
+`ui` gives your track access to UI management tools. This includes resetting the UI, managing chat history, setting controls, managing tasks, and sending notifications. LightrailUI is undefined until the UI has fully rendered, so access it using [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining).
+
+#### `ui.reset(): void`
+
+This method resets the entire UI to its initial state, including clearing conversation history etc. Use sparingly, only if necessary.
+
+#### `ui.chat.setHistory((previousHistory: ChatHistoryItem[]) => ChatHistoryItem[]): void`
+
+Update the chat history log. The argument should be a function that accepts the old log and returns the new, updated log. **Note that this only updates the _visible_ log displayed to the user, and does not change the underlying conversation history**.
+
+`ChatHistoryItem` is defined as:
+
+```ts
+interface UserChatHistoryItem {
+  sender: "user";
+  content: object; // Prompt JSON (from prompt._json)
+}
+
+interface AIChatHistoryItem {
+  sender: "ai";
+  content: string; // markdown
+}
+
+type ChatHistoryItem = UserChatHistoryItem | AIChatHistoryItem;
+```
+
+All `ChatHistoryItem` instances have a `sender` and a `content`. If the `sender` is `"user"`, the `content` should be a raw Prompt JSON (i.e. from `prompt._json`, see above). If `sender` is `"ai"`, then `content` should be a markdown string
+
+#### `ui.chat.setPartialMessage(msg: string)`
+
+Set a partial message in the UX, useful for streaming responses. Make sure to set this to an empty string when the complete message is added with `setHistory`, or the message will appear doubled. `msg` can be plaintext or markdown.
+
+#### `ui.controls.setControls((previousControls: LightrailControl[]) => LightrailControl[])`
+
+Update the controls visible in the Lightrail UX. Controls include things like buttons, tables, and output boxes, and are displayed in a section separate from the chat log. Use the controls functionality to provide a rich UX for LLM workflows that go beyond text-in-text-out. The argument should be a function that accepts the old set of controls and returns the new one.
+
+`LightrailControl` is defined as:
+
+```ts
+interface ButtonGroupControl {
+  type: "button-group" | "buttons";
+  buttons: {
+    label: string;
+    color?: "primary" | "secondary" | (string & Record<never, never>);
+    onClick: () => void;
+  }[];
+}
+
+interface SliderControl {
+  type: "slider";
+}
+
+interface CustomControl {
+  type: "custom";
+}
+
+interface OutputControl {
+  type: "output";
+  stdout: string;
+  stderr: string;
+}
+
+interface DataTableControl {
+  type: "data-table";
+  data: any[];
+}
+
+type LightrailControl =
+  | ButtonGroupControl
+  | SliderControl
+  | CustomControl
+  | OutputControl
+  | DataTableControl;
+```
+
+So, a control must have a `type`, and all other keys depend on the specific type (as shown in the type definitions above).
+
+#### `ui.tasks.startTask: () => TaskHandle`
+
+Create a progress indicator for a new task. Use the returned `TaskHandle` to update progress and provide messages in the progress indicator. `TaskHandle` has the following interface:
+
+```ts
+export interface TaskHandle {
+  id: string;
+  setProgress(progress: number | [number, number] | undefined): void;
+  setMessage(message: string): void;
+  finishTask(): void;
+}
+```
+
+For `setProgress`, progress can either be a number (a percent, from 0-100), or a pair of numbers (`[finished, total]`), or `undefined` to hude the progress bar.
+
+#### `ui.tasks.getTaskHandle: (id: string) => TaskHandle | undefined`
+
+get a `TaskHandle` for an existing task, by id. See directly above for `TaskHandle` documentation.
+
+#### `ui.notify: (message: string) => void`
+
+Send a notification to the user.

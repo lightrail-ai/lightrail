@@ -1,3 +1,8 @@
 {
-  "comingsoon": "Coming Soon"
+  "intro": "Introduction / Concepts",
+  "workflow": "Development Workflow",
+  "defining": "Defining Tracks, Tokens, & Actions",
+  "api": "Process Handle & Prompt APIs",
+  "client": "Integration / Client APIs",
+  "publishing": "Publishing a Track"
 }

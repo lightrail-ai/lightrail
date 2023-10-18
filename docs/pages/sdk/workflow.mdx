@@ -1,0 +1,49 @@
+import { FileTree } from "nextra/components";
+
+# Development Workflow
+
+## Initializing a Project
+
+The easiest way to get started with a track is by using the provided [Lightrail Track Starter](https://github.com/lightrail-ai/lightrail/tree/main/tracks/starter). Lightrail development requires a functioning install of `Node` / `npm`. Assuming you have a recent version of `npm` available on your system, just `cd` to the directory you'd like to create your project in, then run this command to fetch the starter from the lightrail repository:
+
+```bash
+npx gitget lightrail-ai/lightrail/tracks/starter your_project_name
+```
+
+Then `cd` into your newly created project directory, and run `npm install` to install required dependencies.
+
+## Project Structure
+
+Having done this, you'll be presented with roughly the following project structure (plus a few files we can ignore for now, like `.gitignore` and `package-lock.json`):
+
+<FileTree>
+  <FileTree.Folder name="your_project_name" defaultOpen>
+    <FileTree.Folder name="track-dist" />
+    <FileTree.File name="package.json" />
+    <FileTree.File name="index.ts" />
+  </FileTree.Folder>
+</FileTree>
+
+- `track-dist` is the output directory for your bundled, minified track. Don't put anything in it yourself; it'll be filled by the build process for your track.
+
+- `package.json` should be familiar from other Node projects; edit the name to the desired track name (or a derivative of the track name, e.g. `lightrail-...-track` — it doesn't need to match exactly). You can also see the scripts defined in here—the important ones are `npm run build` (to build the output files in track-dist, for distribution) and `npm run dev` (which just runs `build` with file-watchers, to rebuild on changes).
+
+- `index.ts` is the focal point; this is where your track gets defined. Of course, you can define functionality across other files, and simply import it here, but the final track definition must be the **default export of `index.ts`**. The starter project contains a mostly-empty placeholder here; The next section of the documentation goes into detail on how to implement your desired functionality within that structure.
+
+## Development
+
+Currently, the development workflow for Lightrail tracks is a bit rough around the edges; better tooling / workflows are coming soon. For now, follow these steps to test your track locally and iterate:
+
+1. Find the track directory for your installation of Lightrail. To locate this from within the Lightrail application, click the gear icon in the main prompt input and make sure the `Tracks` section of the configuration UX is open. Near the top of the section, the path to your tracks directory should be visible; for example, on Fedora, it should be something like `/home/yourusername/.config/lightrail-core/tracks`.
+
+2. Make a symlink in this directory that points to your track's folder. For example, if your track is defined in my Documents folder, you might run something like this:
+
+```bash
+ln -s /home/yourusername/Documents/your_project_name /home/yourusername/.config/lightrail-core/tracks/your_project_name
+```
+
+**Make sure to replace both paths with the appropriate ones for your system!**
+
+3. From your track directory, run `npm run dev`
+
+4. Relaunch Lightrail, and your track should be active in your Lightrail installation. To view logs from your track (or from the Lightrail system), make sure to run Lightrail from the command-line. Whenever you make changes to your track, they'll automatically be built into the appropriate format for Lightrail; just relaunch Lightrail and you'll see the updates (Hot-reloading of tracks coming soon).

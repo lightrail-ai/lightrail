@@ -63,12 +63,10 @@ Some common issues, and how to fix them:
 
 Any other issues? Let me know [on Discord](https://discord.gg/57bNyxgb7g) or [make an issue](https://github.com/lightrail-ai/lightrail/issues) and I'll address it ASAP!
 
-## Writing Tracks
+## Writing Tracks & Clients
 
-The `lightrail-sdk` npm package makes it easy to create additional tracks and extend lightrail's functionality.
-
-- To get started, copy this project layout: [starter](https://github.com/lightrail-ai/lightrail/tree/main/tracks/starter)
-- See this repository's [tracks](https://github.com/lightrail-ai/lightrail/tree/main/tracks) for example usage of the SDK (**More Documentation Coming Soon**)
+The `lightrail-sdk` npm package makes it easy to create additional tracks and extend Lightrail's functionality, or to make Clients that integrate Lightrail with other platforms.
+For thorough documentation on creating Tracks & Clients, [see our developer documentation here](https://docs.lightrail.ai/sdk/intro).
 
 ## Contributing
 

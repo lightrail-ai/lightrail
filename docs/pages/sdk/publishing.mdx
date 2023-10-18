@@ -1,0 +1,15 @@
+# Building & Publishing
+
+Finished creating your Lightrail track, and ready to distribute it to the world? Here's how you can get other Lightrail users up and running with your new track.
+
+## Distribution Format
+
+Lightrail tracks are distributed as zip files. New tracks can be installed by providing Lightrail with the URL of a track's zip file (in the "Install from URL" input box on the Tracks pane). The zip file can be generated manually, or via Github Actions for an automated deployment workflow.
+
+To generate an installable zipfile for your track manually, simply run `npm run build` to build the final bundled JS for your track, then create a zip-file containing the `track-dist` directory as well as the `package.json` file from your track. This zip-file can be hosted on any file-hosting service (S3, Github, etc) and made available for downloads/installs.
+
+To automate this with Github Actions, use the workflow [here](https://github.com/lightrail-ai/lightrail/blob/main/.github/workflows/release-track.yaml) in your track repository. To see sample usage, check Lightrail's own track release workflow for first-party tracks [here](https://github.com/lightrail-ai/lightrail/blob/main/.github/workflows/release-track.yaml)
+
+## The Lightrail Track Repository
+
+Tracks can also be added to the Lightrail Track Repository, which will make them installable with one click from the Lightrail UX. To add a track to the Repository, just make a PR in the [lightrail GitHub repo](https://github.com/lightrail-ai/lightrail) that edits [track-repository.json](https://github.com/lightrail-ai/lightrail/blob/main/track-repository.json) to add a new entry containing your track's name and zip file URL. Make sure the name doesn't conflict with anything already in the repository! PRs will be approved/rejected within 48 hours.

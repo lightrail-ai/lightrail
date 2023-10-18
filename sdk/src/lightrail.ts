@@ -1,26 +1,3 @@
-/* The Lightrail Track Paradigm
- * ============================
- * A Track is an extension of Lightrail's functionality.
- *
- * The user-facing aspect of a Track is a set of Tokens and Actions.
- * Tokens are used to augment prompts with additional information / context
- * Actions define how a prompt is used and/or how the response is handled
- * Tokens and Actions are registered with the Lightrail instance to make them available to the user
- * Actions can define their arguments, but their first argument will always be a free-form prompt of some kind.
- * Tokens can also define arguments as well as a function to transform the prompt using provided helpers.
- *
- * Tracks can also define message handlers, which are similarly registered with the Lightrail instance.
- * message handlers are called when a certain message occurs, and are passed the message object as an argument.
- * message names can be predefined Lightrail messages, or custom messages. Custom messages are strings, but should be namespaced to avoid collisions (i.e. extension-name:message-name-kabob).
- * messages can also be sent by third-party code / extensions to trigger actions or other functionality.
- *
- *
- * A Track is initialized by calling its init() method, which registers its Tokens and Actions with the Lightrail instance
- * The Lightrail instance is passed to the Track constructor, and is defined by the interface below.
- *
- * Tracks should be designed with the Unix Philosphy in mind, i.e. composability, modularity, and reusability, with a focus on doing one thing well and using text as the universal interface.
- */
-
 import type { MainLogger } from "electron-log";
 import type { RendererLogger } from "electron-log";
 import type { Dispatch, SetStateAction } from "react";

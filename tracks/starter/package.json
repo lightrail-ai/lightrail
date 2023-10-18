@@ -17,6 +17,6 @@
     "esbuild": "^0.19.2"
   },
   "dependencies": {
-    "lightrail-sdk": "^0.0.6"
+    "lightrail-sdk": "^0.0.12"
   }
 }

@@ -1,0 +1,37 @@
+# Lightrail: Core Concepts
+
+## Tracks
+
+Lightrail's functionality is almost entirely built around the concept of `Tracks`. A `Track` can be thought of as a provider of workflows and context, as a narrowly defined LLM agent, or as an application that leverages Lightrail's UX to provide end-users with functionality. Basically, if you'd like Lightrail to do something that it doesn't currently do, you can probably achieve this goal by writing a `Track`. Lightrail comes pre-installed with several `Tracks`, including a VS Code track (for integrating with VS Code), a Shell track (for writing and executing shell scripts), a Files track (for accessing the local filesystem), and a SQL track (for interacting with SQL databases).
+
+New tracks are written in TypeScript (or JavaScript) and distributed as zip files which can be installed from URLs. A Track definition exports a single object that conforms to the type definitions defined in the SDK (See ). Lightrail also maintains a simple [Track Repository](https://github.com/lightrail-ai/lightrail/blob/main/track-repository.json), and new tracks can be added to it via PR (see [Publishing](/sdk/publishing) for more info).
+
+## Tokens & Actions
+
+A Lightrail `Track` exposes functionality to the end user in two ways: via a `Token` or via an `Action`.
+
+In an LLM context, a `Token` refers generally to each individual unit of meaning in the user's prompt (e.g. a word or meaningful part of a word). By default, tokens entered into the Lightrail interface are treated as plain text. However, tracks can provide custom types of tokens that users can use to enrich their prompts. Often, custom tokens result in additional context being pulled into a prompt, or in some way refer to things on the user's computer that the user would like to reference. Examples can include URLs, documents in an open application, or file paths.
+
+an `Action`, meanwhile, is a specific workflow/command that the user can execute. Actions are defined with handlers that receive the prompt entered by the user, as well as any other optional arguments they might require. The handler should first _hydrate_ the prompt, which handles all the custom tokens in the prompt and adds all the required context to the user's text input, then use the hydrated prompt to carry out whatever steps the action requires (and render whatever UX is necessary).
+
+See the [first-party tracks](https://github.com/lightrail-ai/lightrail/tree/main/tracks) for examples that demonstrate defining both `Tokens` and `Actions`.
+
+## The Main & Renderer Processes
+
+Lightrail tracks run in an Electron environment, and their functionality is split between two processes: `Main` & `Renderer`. For more information on this distiction, see [this Electron article](https://www.electronjs.org/docs/latest/tutorial/process-model). Essentially, code that runs in the `Renderer` process can control the user-facing UX (i.e. showing notifications, adding messages to the chat log, exposing controls), and code that runs in the `Main` process can interact with the machine / filesystem (use Node APIs, interact with `Clients` (see below), etc). You can also think of the `Main` process as the "server side" process, while the `Renderer` process is "client side" and should only rely on functionality available in a browser. Communication between the two processes occurs via `Handlers`.
+
+## Handlers & Message Passing
+
+Tracks communicate between these two processes via `Handlers` that they define. Handlers can be defined in either the `Main` or `Renderer` process, and have access to only the functionality of their respective process. From within a `Handler`, you can send a message to any other handler, and receive a response (asynchronously). `Handlers` can be given arbitrary names and arguments. Each `Action` also includes its own handler, which runs in the `Main` process when that `Action` is used.
+
+## Process Handles
+
+When a handler is run, it receives as an argument a `ProcessHandle` (either a `LightrailMainProcessHandle` or a `LightrailRendererProcessHandle`, depending on the Process it's running in). This handle is the primary way in which tracks interface with Lightrail's functionality and UX. The methods available in these handlers are defined in the [Track Definition APIs](/sdk/api) section of the documentation.
+
+## Clients
+
+In addition to communicating internally via `Handlers`, Lightrail tracks can also communicate with external programs called `Clients`. `Clients` are also defined with the Lightrail SDK, and typically take the form of extensions for other platforms/software (though they can also be standalone applications if needed). They communicate with tracks via a websocket connection. Examples of clients include the [lightrail-bridge VSCode extension](https://github.com/lightrail-ai/lightrail/tree/main/vscode), the [chrome extension](https://github.com/lightrail-ai/lightrail/tree/main/chrome), or the [JupyterLab extension](https://github.com/lightrail-ai/lightrail/tree/main/jupyterlab). All three are defined in their respective platforms' extension format, but they use the Client API provided by the Lightrail SDK. Further information about `Client` development is found in the [Client](/sdk/client) section of the documentation.
+
+Once you're basically familiar with these concepts, you're ready to [define a new track](/sdk/defining). If you run into any issues or have any questions, you can always reach out in [our Discord](https://discord.gg/57bNyxgb7g) -- we tend to respond very quickly to questions.
+
+Happy coding!

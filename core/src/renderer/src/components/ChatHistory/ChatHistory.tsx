@@ -6,6 +6,9 @@ import ReactMarkdown from "react-markdown";
 import CodeViewer from "../CodeViewer/CodeViewer";
 import type { ChatHistoryItem } from "lightrail-sdk";
 import Button from "../ui-elements/Button/Button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClipboard, faCopy } from "@fortawesome/free-regular-svg-icons";
+import { trpcClient } from "@renderer/util/trpc-client";
 
 export interface ChatHistoryProps {
   items: ChatHistoryItem[];
@@ -33,7 +36,7 @@ function ChatHistory({ items, partialMessage, onReset }: ChatHistoryProps) {
       case "ai":
         return (
           <div
-            className="mx-4 px-2 my-2 border-l-4 border-l-neutral-500 prose prose-invert prose-pre:bg-transparent prose-pre:py-0 prose-pre:my-0"
+            className="mx-4 relative px-2 my-2 border-l-4 border-l-neutral-500 prose prose-invert prose-pre:bg-transparent prose-pre:py-0 prose-pre:my-0"
             key={index}
           >
             <ReactMarkdown
@@ -54,6 +57,13 @@ function ChatHistory({ items, partialMessage, onReset }: ChatHistoryProps) {
             >
               {item.content}
             </ReactMarkdown>
+            <div
+              onClick={() => trpcClient.clipboard.mutate(item.content)}
+              title="Copy Markdown"
+              className="absolute right-0 bottom-0 opacity-30 hover:opacity-100 cursor-pointer active:text-green-500"
+            >
+              <FontAwesomeIcon icon={faCopy} />
+            </div>
           </div>
         );
     }

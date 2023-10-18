@@ -1,0 +1,27 @@
+# Lightrail Clients
+
+In the Lightrail ecosystem, a `Client` is a piece of software that runs outside of the `Lightrail` program and communicates with the `Lightrail` application. Typically, they tend to be extensions for other platforms, to serve as bridges between those platforms and `Lightrail`. Examples of clients include the [lightrail-bridge VSCode extension](https://github.com/lightrail-ai/lightrail/tree/main/vscode), the [chrome extension](https://github.com/lightrail-ai/lightrail/tree/main/chrome), or the [JupyterLab extension](https://github.com/lightrail-ai/lightrail/tree/main/jupyterlab). Clients currently must be written in TS/JS, because they depend on the `lightrail-sdk` which is only available in those languages. However, communication with Lightrail occurs over websocket, so porting to other languages should be fairly simple. [Let use know](mailto:me@vishnumenon.com) if you require support for a different language/platform, and we'll help you get it up and running.
+
+## Implementation
+
+Currently, creating a Lightrail Client requires two packages: [`lightrail-sdk`](https://www.npmjs.com/package/lightrail-sdk) as well as [`socket.io-client`](https://www.npmjs.com/package/socket.io-client). To get started, install both using your preferred package manager (`npm`, `yarn`, etc.) in the project that you'd like to communicate with Lightrail from. Then, use this snippet to establish a new client connection to a local Lightrail instance, with `client-name` replaced with an identifier for your client:
+
+```ts
+import { LightrailClient } from "lightrail-sdk";
+import { io } from "socket.io-client";
+
+let lightrailClient = new LightrailClient(
+  "client-name",
+  io("ws://localhost:1218") as any
+);
+```
+
+`LightrailClient` has only two methods, described here:
+
+### `lightrailClient.sendMessageToMain(trackName: string, messageName: string, messageBody: any ): Promise<any>`
+
+Send a message to a `main` process handler, in the specified track. Since `main` process handlers can return values, this method returns a promise that resolves to the return value of the handler.
+
+### `lightrailClient.registerHandler(messageName: string, handler: (messageBody: any) => Promise<any> ): void`
+
+Register a new handler on the client, that tracks can send messages to from Lightrail's `main` process. Handlers will be identified from the `main` process by both client name and handler name. The handler can return a promise that resolves to a value, and this value will be made available as a response when this handler is called from a Lightrail track.
