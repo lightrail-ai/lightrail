@@ -6,7 +6,7 @@
     "src/renderer/src/**/*.tsx",
     "src/preload/index.ts",
     "src/preload/typedefs.ts",
-    "src/main/*.ts",
+    "src/main/**/*.ts",
     "src/util/*.ts",
     "src/basic-tracks/**/*.ts" ],
   "compilerOptions": {

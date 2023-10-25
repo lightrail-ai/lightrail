@@ -277,12 +277,28 @@ export interface ListItemHandle {
 export type TokenHandle = Token & ListItemHandle;
 export type ActionHandle = Action & ListItemHandle;
 
+export interface LightrailKBSource {
+  recursive: boolean;
+  uri: string;
+  frequency: "daily" | "weekly";
+  tags: string[];
+}
+
+export interface LightrailKBDocument {
+  uri: string;
+  title: string | undefined;
+  type: "code" | "text";
+  tags: string[];
+  sourceId?: number;
+}
+
 export interface LightrailKBItem {
   title: string;
   type: "code" | "text";
   content: string;
   metadata?: any;
   tags: string[];
+  documentId?: number;
 }
 
 export interface LightrailDataStores {
@@ -291,6 +307,22 @@ export interface LightrailDataStores {
     set(key: string, value: any): Promise<void>;
   };
   kb: {
+    addSource(
+      sourceDescription: LightrailKBSource,
+      options?: {
+        onProgress?: (progressUpdate: {
+          message: string;
+          progress: [number, number] | undefined;
+        }) => void;
+      }
+    ): Promise<void>;
+    addDocument(
+      documentDescription: LightrailKBDocument,
+      content?: string,
+      options?: {
+        skipAddingItems?: boolean;
+      }
+    ): Promise<LightrailKBItem[]>;
     addItems(items: LightrailKBItem[]): Promise<void>;
     query(query: string, tags?: string[]): Promise<LightrailKBItem[]>;
   };
@@ -300,7 +332,7 @@ export interface TransformSourceOptions {
   path?: string;
 }
 
-interface DocumentChunk {
+export interface DocumentChunk {
   content: string;
   from: { line: number; char: number | undefined };
   to: { line: number; char: number | undefined };
