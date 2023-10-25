@@ -1,5 +1,30 @@
 import { Callout } from "nextra/components";
 
-<Callout type="warning" emoji="⚠️">
-  These docs are still under construction - check back soon!
+### Data Science 
+
+There is an optional data science track that supports generating code cells for Jupyter or RMarkdown notebooks. There are 3 Actions and 1 Token in this track. 
+
+<Callout type="info" emoji="ℹ️">
+  If you'd like to use the data science track, follow the installation instructions [here](/installation). 
 </Callout>
+
+**Actions**:
+ 1. `Edit Notebook`: Reference a `.ipynb` or `.Rmd` notebook file path that's stored on your computer & describe the changes you'd like to make.
+ 2. `Edit Current JupyterLab Notebook`: When JupyterLab is running, edit a notebook that is currently open in JupyterLab.
+ 3. `Edit VSCode Notebook`: Edit a `.ipynb` or `.Rmd` notebook that is open in VSCode. 
+ 
+**Token**: 
+ 1. `/datasci.notebook`: Reference a `.ipynb` or `.Rmd` notebook file path that's stored on your computer for use in arbitrary Actions. 
+
+### Recipe
+
+1. Open up a notebook in Jupyter Lab 
+2. Describe the changes you'd like to make in Lightrail
+3. Accept / reject the changes
+
+<iframe 
+  src="https://www.loom.com/embed/d3607d9aa7174f81b0cb2d2f08b34cff?sid=e327b095-38e5-419e-a973-1d85efc0ea1c" 
+  frameborder="0" 
+  allowfullscreen 
+  style={{ width:'100%', height:'500px' }} 
+/>

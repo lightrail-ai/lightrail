@@ -1,3 +1,7 @@
 {
-  "vscode": "VSCode"
+  "vscode": "VSCode",
+  "chrome": "Google Chrome",
+  "kb": "Knowledge Base", 
+  "shell": "Shell", 
+  "datasci": "Data Science"
 }
