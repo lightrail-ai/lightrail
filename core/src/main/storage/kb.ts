@@ -341,8 +341,6 @@ export class LightrailKB implements LightrailKBType {
       skipAddingItems?: boolean;
     }
   ) {
-    console.log(document.uri);
-
     const [protocol, path] = document.uri.split("://", 2);
 
     // Filling content
