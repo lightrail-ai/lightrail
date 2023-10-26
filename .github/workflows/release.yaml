@@ -210,6 +210,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: npm --prefix ./core run build:linux
 
+      - name: Multi-Platform Sharp Install
+        if: matrix.os == 'macos-latest'
+        run: npm --prefix ./core uninstall sharp && npm --prefix ./core install --platform=darwin --arch=x64 sharp && npm --prefix ./core rebuild --platform=darwin --arch=arm64 sharp
+
       - name: build-mac
         env:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
