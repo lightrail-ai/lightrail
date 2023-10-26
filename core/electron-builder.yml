@@ -15,15 +15,7 @@ asar: false
 asarUnpack:
   - resources/**
 afterSign: build/notarize.js
-# win:
-#   executableName: lightrail-core
-# nsis:
-#   artifactName: ${name}-${version}-setup.${ext}
-#   shortcutName: ${productName}
-#   uninstallDisplayName: ${productName}
-#   createDesktopShortcut: always
 mac:
-  artifactName: ${name}-${arch}.${ext}
   category: "public.app-category.developer-tools"
   hardenedRuntime: true
   gatekeeperAssess: false
@@ -35,19 +27,14 @@ mac:
         - x64
         - arm64
 dmg:
-  artifactName: ${name}.${ext}
+  artifactName: ${name}-${arch}.${ext}
 linux:
   artifactName: ${name}.${ext}
   target:
-    # - AppImage
-    # - snap
     - deb
     - rpm
   maintainer: electronjs.org
   category: Utility
-# appImage:
-#   artifactName: ${name}-${version}.${ext}
-npmRebuild: false
 publish:
   provider: generic
   url: https://example.com/auto-updates
