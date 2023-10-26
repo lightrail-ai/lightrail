@@ -23,6 +23,7 @@ afterSign: build/notarize.js
 #   uninstallDisplayName: ${productName}
 #   createDesktopShortcut: always
 mac:
+  artifactName: ${name}-${arch}.${ext}
   category: "public.app-category.developer-tools"
   hardenedRuntime: true
   gatekeeperAssess: false

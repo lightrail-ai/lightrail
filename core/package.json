@@ -1,6 +1,6 @@
 {
   "name": "lightrail-core",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A universal AI command bar for developers",
   "main": "./out/main/index.js",
   "author": "lightrail.ai",
@@ -97,7 +97,7 @@
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.14",
     "electron": "^24.6.2",
-    "electron-builder": "^23.6.0",
+    "electron-builder": "^24.6.4",
     "electron-vite": "^1.0.25",
     "eslint": "^8.44.0",
     "eslint-config-prettier": "^8.8.0",
