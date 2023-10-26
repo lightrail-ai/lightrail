@@ -17,6 +17,9 @@ function Controls({ controls }: ControlsProps) {
     <div className="" ref={parent}>
       {controls.map((control, index) => (
         <div key={index} className="px-4 py-2">
+          {control.label && (
+            <div className="pb-4 pt-2 text-sm">{control.label}</div>
+          )}
           {(control.type === "button-group" || control.type === "buttons") && (
             <div className="flex flex-row gap-4">
               {control.buttons.map((button, buttonIndex) => (

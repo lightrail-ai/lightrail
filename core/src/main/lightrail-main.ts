@@ -18,7 +18,7 @@ import { LightrailMessagingHub } from "../util/messaging";
 import { TracksManager } from "../util/tracks";
 import jsonStorage from "electron-json-storage";
 import type { SettingsObject } from "./api";
-import { LightrailDataStoresInterface } from "./storage";
+import { LightrailDataStoresInterface } from "./storage/interface";
 import transforms from "./transforms";
 import { Tiktoken, getEncoding } from "js-tiktoken";
 

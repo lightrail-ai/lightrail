@@ -15,7 +15,7 @@ import log from "./logger";
 import { MainHandle, mainTracksManager } from "./lightrail-main";
 import { TRACKS_DIR } from "./track-admin";
 import setUpUpdates from "update-electron-app";
-import { fetchTrackUpdates } from "./updates";
+import { fetchUpdates } from "./updates";
 import { debounce } from "throttle-debounce";
 
 setUpUpdates();
@@ -67,7 +67,7 @@ function postConfigure(window: BrowserWindow) {
   );
 
   window.on("show", () => {
-    fetchTrackUpdates();
+    fetchUpdates(window);
   });
 }
 

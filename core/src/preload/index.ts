@@ -7,6 +7,10 @@ const ipcApi = {
     ipcRenderer.removeAllListeners("lightrail-message");
     ipcRenderer.on("lightrail-message", callback);
   },
+  onNewNotice: (callback) => {
+    ipcRenderer.removeAllListeners("new-notice");
+    ipcRenderer.on("new-notice", callback);
+  },
 };
 
 export type ipcApiType = typeof ipcApi;

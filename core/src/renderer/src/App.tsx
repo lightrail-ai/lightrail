@@ -172,7 +172,6 @@ function App(): JSX.Element {
         );
       }
     );
-
     (async () => {
       log.silly("Running setup routine");
       await trpcClient.setup.mutate();
@@ -190,6 +189,41 @@ function App(): JSX.Element {
       setTimeout(() => setReady(true), 500);
     })();
   }, []);
+
+  useEffect(() => {
+    if (ready) {
+      (async () => {
+        processNotice(await trpcClient.notices.pop.mutate());
+        window.electronIpc.onNewNotice(async () => {
+          processNotice(await trpcClient.notices.pop.mutate());
+        });
+      })();
+    }
+  }, [ready]);
+
+  function processNotice(notice: string | undefined) {
+    if (!notice) return;
+    setPartialMessage(notice);
+    setTimeout(
+      () =>
+        setControls([
+          {
+            type: "buttons",
+            buttons: [
+              {
+                label: "Dismiss",
+                onClick: async () => {
+                  setControls([]);
+                  setPartialMessage(null);
+                  processNotice(await trpcClient.notices.pop.mutate());
+                },
+              },
+            ],
+          },
+        ]),
+      2000
+    );
+  }
 
   function appendToHistory(prompt: any) {
     trpcClient.history.append.mutate(prompt);
@@ -263,7 +297,7 @@ function App(): JSX.Element {
               }}
             />
             <Controls controls={controls} />
-            <ErrorDisplay error={error} />
+            <ErrorDisplay error={error} onDismiss={() => setError(null)} />
             <NotificationsDisplay ref={notificationsDisplayRef} />
             <PromptInput onAction={executePromptAction} />
             <TasksDisplay statuses={taskStatuses} />

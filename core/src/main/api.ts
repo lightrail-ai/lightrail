@@ -22,8 +22,12 @@ import {
   TokenHandle,
 } from "lightrail-sdk";
 import { TRACKS_DIR, installTrack, loadTracks } from "./track-admin";
-import { LightrailKVStore } from "./storage";
+import { LightrailKVStore } from "./storage/kv";
 import os from "os";
+import { noticeQueue } from "./updates";
+import { markComplete } from "./checklist";
+import { openDb } from "./storage/sqlite";
+import { lightrailKBInstance } from "./storage/interface";
 
 const t = initTRPC.create({
   isServer: true,
@@ -131,6 +135,15 @@ export const getRouter = (window: BrowserWindow) =>
       }),
     }),
 
+    clients: t.procedure.query(() => {
+      log.silly("tRPC Call: clients");
+      const clients = {};
+      for (const [name, socket] of Object.entries(mainMessagingHub._clients)) {
+        clients[name] = socket.connected;
+      }
+      return clients;
+    }),
+
     startSocketServer: t.procedure.mutation(() => {
       log.silly("tRPC Call: startSocketServer");
       if (!loadingStatus.socketServer) {
@@ -139,6 +152,41 @@ export const getRouter = (window: BrowserWindow) =>
         startWSServer();
       }
       return true;
+    }),
+
+    notices: t.router({
+      pop: t.procedure.mutation(async () => {
+        log.silly("tRPC Call: notices.pop");
+        const notice = noticeQueue.shift();
+        if (notice) {
+          await markComplete(notice.id);
+        }
+        return notice?.content;
+      }),
+    }),
+
+    kb: t.router({
+      reset: t.procedure.mutation(async () => {
+        log.silly("tRPC Call: kb.reset");
+
+        const sqliteDb = await openDb();
+        await sqliteDb.exec("DELETE FROM KBSource");
+        await sqliteDb.exec("DELETE FROM KBDocument");
+        await sqliteDb.exec("DELETE FROM KBItem");
+        await sqliteDb.exec("DELETE FROM KBTags");
+        await sqliteDb.exec("DELETE FROM KBSource_KBTags");
+        await sqliteDb.exec("DELETE FROM KBDocument_KBTags");
+        await sqliteDb.exec("DELETE FROM KBItem_KBTags");
+
+        await lightrailKBInstance._vectorStore.reset(
+          lightrailKBInstance._className
+        );
+
+        const trackKVStore = new LightrailKVStore(
+          mainTracksManager.getTrack("kb")!
+        );
+        await trackKVStore.set(`argHistory-#key-kb-tag`, []);
+      }),
     }),
 
     clientEvent: t.procedure

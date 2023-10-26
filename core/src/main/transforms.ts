@@ -1,7 +1,13 @@
-import { TransformSourceOptions } from "lightrail-sdk";
+import { DocumentChunk, TransformSourceOptions } from "lightrail-sdk";
 import { marked } from "marked";
 
 import Parser, { SyntaxNode } from "web-tree-sitter";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+
+const splitter = RecursiveCharacterTextSplitter.fromLanguage("markdown", {
+  chunkSize: 512 * 3,
+  chunkOverlap: 0,
+});
 
 class Span {
   start: number; // line number, 0-indexed, inclusive
@@ -197,7 +203,10 @@ export async function chunkCode(
 }
 
 export default {
-  async toChunks(text: string, sourceOptions: TransformSourceOptions) {
+  async toChunks(
+    text: string,
+    sourceOptions: TransformSourceOptions
+  ): Promise<DocumentChunk[]> {
     if (sourceOptions.path) {
       const extension = sourceOptions.path.split(".").pop();
       if (extension && CHUNKABLE_CODE_EXTENSIONS.includes(extension)) {
@@ -215,7 +224,18 @@ export default {
         }));
       }
     }
-    return [];
+
+    return (await splitter.createDocuments([text])).map((doc) => ({
+      content: doc.pageContent,
+      from: {
+        line: doc.metadata.loc.lines.from,
+        char: undefined,
+      },
+      to: {
+        line: doc.metadata.loc.lines.to,
+        char: undefined,
+      },
+    }));
   },
   async toMarkdown(text: string, sourceOptions: TransformSourceOptions) {
     return text;

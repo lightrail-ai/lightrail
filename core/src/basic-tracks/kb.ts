@@ -1,15 +1,88 @@
 import type {
+  LightrailKBDocument,
   LightrailMainProcessHandle,
   LightrailTrack,
-  PromptContextItem,
   TaskHandle,
 } from "lightrail-sdk";
-import type { LightrailKBItem } from "lightrail-sdk";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { HumanMessage } from "langchain/schema";
-import { CHUNKABLE_CODE_EXTENSIONS, chunkCode } from "../main/transforms";
 
 let currentTask: TaskHandle | undefined;
+
+const timeout = (prom, time) =>
+  Promise.race([
+    prom,
+    new Promise((_r, rej) => setTimeout(() => rej(new Error()), time)),
+  ]);
+
+interface sourceSpec {
+  uri: string;
+  recursive: boolean | undefined;
+}
+
+interface documentSpec {
+  title: string;
+  content: string;
+}
+
+async function attemptToAddToKB(
+  mainHandle: LightrailMainProcessHandle,
+  sourceSpecs: sourceSpec[],
+  documentSpecs: documentSpec[],
+  tags: string[]
+) {
+  try {
+    for (let spec of sourceSpecs) {
+      if (spec.recursive === undefined) {
+        mainHandle.sendMessageToRenderer("clarify-recursiveness", [
+          sourceSpecs,
+          documentSpecs,
+          tags,
+        ]);
+        return;
+      }
+    }
+
+    mainHandle.sendMessageToRenderer("start-task");
+    for (let spec of sourceSpecs) {
+      await mainHandle.store.kb.addSource(
+        {
+          frequency: "daily",
+          tags,
+          uri: spec.uri,
+          recursive: !!spec.recursive,
+        },
+        {
+          onProgress({ message, progress }) {
+            mainHandle.sendMessageToRenderer("update-progress", {
+              message,
+              progress,
+            });
+          },
+        }
+      );
+    }
+
+    for (let doc of documentSpecs) {
+      await mainHandle.store.kb.addDocument(
+        {
+          tags,
+          title: doc.title,
+          type: "text",
+          uri: "",
+        },
+        doc.content
+      );
+    }
+    mainHandle.sendMessageToRenderer("end-task");
+    mainHandle.sendMessageToRenderer(
+      "new-notification",
+      "Your content has successfully been added to the knowledge base!"
+    );
+  } catch (e) {
+    mainHandle.sendMessageToRenderer("end-task");
+    throw e;
+  }
+}
 
 export default <LightrailTrack>{
   name: "kb",
@@ -29,12 +102,6 @@ export default <LightrailTrack>{
       icon: "lightbulb",
       async handler(mainHandle: LightrailMainProcessHandle, prompt, args) {
         const fs = require("fs/promises");
-        const pdf2md = require("@opendocsg/pdf2md");
-        const { join } = require("path");
-        const { glob } = require("glob");
-        let context: PromptContextItem[] = [];
-
-        mainHandle.sendMessageToRenderer("start-task");
 
         try {
           mainHandle.sendMessageToRenderer(
@@ -42,142 +109,97 @@ export default <LightrailTrack>{
             "Your content is being added to the knowledge base. This may take a while, depending on the number & size of new items - see the progress indicator below for more information."
           );
 
-          const addFileToContext = (path: string) => {
-            const ext = path.split(".").pop();
-            if (!ext) return;
-            if (CHUNKABLE_CODE_EXTENSIONS.includes(ext)) {
-              context.push({
-                title: path,
-                type: "code",
-                content: "",
-                metadata: {
-                  path,
-                },
-              });
-            } else {
-              context.push({
-                title: path,
-                type: "text",
-                content: "",
-                metadata: {
-                  path,
-                },
-              });
-            }
-          };
-
           await prompt.hydrate(mainHandle, {
             files: {
-              path: async (handle, args, prompt, origHydrate) => {
-                const pathString = args.path;
-
-                const isDirectory = (await fs.lstat(pathString)).isDirectory();
-                if (isDirectory) {
-                  (
-                    await glob(
-                      `**/*.{${[
-                        ...CHUNKABLE_CODE_EXTENSIONS,
-                        "md",
-                        "txt",
-                        "pdf",
-                      ].join(",")}}`,
-                      {
-                        ignore: [
-                          "**/node_modules/**",
-                          "**/dist/**",
-                          "**/track-dist/**",
-                          "**/out/**",
-                          "**/build/**",
-                          "**/builds/**",
-                          "**/package-lock.json",
-                          "**/*.min.*",
-                        ],
-                        dot: false,
-                        nodir: true,
-                        cwd: pathString,
-                      }
-                    )
-                  ).forEach((p) => {
-                    addFileToContext(join(pathString, p));
+              path: async (handle, args, prompt, _origHydrate) => {
+                prompt.appendContextItem({
+                  content: "",
+                  title: args.path,
+                  type: "text",
+                });
+              },
+            },
+            vscode: {
+              "selected-files": async (handle, args, prompt, _origHydrate) => {
+                try {
+                  const selectedFiles = await timeout(
+                    handle.sendMessageToExternalClient(
+                      "vscode-client",
+                      "get-selected-files"
+                    ),
+                    3000
+                  );
+                  // read file contents
+                  selectedFiles.forEach((path) => {
+                    prompt.appendContextItem({
+                      type: "code",
+                      title: path,
+                      content: "",
+                    });
                   });
-                } else {
-                  addFileToContext(pathString);
+                } catch (e) {
+                  throw new Error(
+                    "VSCode failed to respond, please make sure VSCode is currently running with the Lightrail Bridge extension installed & up-to-date!"
+                  );
                 }
-
-                await origHydrate(handle, args, prompt);
               },
             },
           });
 
-          context.push(...prompt._context);
-
-          const splitter = RecursiveCharacterTextSplitter.fromLanguage(
-            "markdown",
-            {
-              chunkSize: 512 * 3,
-              chunkOverlap: 0,
+          let documentSpecs: documentSpec[] = [];
+          let sourceURIs: string[] = [];
+          prompt._context.forEach((c) => {
+            if (c.title.startsWith("/") || c.title.startsWith("http")) {
+              sourceURIs.push(c.title.replace(/:[-0-9]+$/, ""));
+            } else if (c.content) {
+              documentSpecs.push({
+                title: c.title + "(saved)",
+                content: c.content,
+              });
             }
-          );
+          });
 
-          const items: LightrailKBItem[] = [];
+          sourceURIs = [...new Set(sourceURIs)];
 
-          for (const c of context) {
-            if (c.content === "" && c.metadata?.path) {
-              if (c.metadata.path.endsWith(".pdf")) {
-                const pdfBuffer = await fs.readFile(c.metadata.path);
-                c.content = await pdf2md(pdfBuffer);
-              } else {
-                c.content = await fs.readFile(c.metadata.path, "utf-8");
-              }
-            }
-            if (c.type === "code") {
-              const chunks = await chunkCode(c.content, c.title);
-              items.push(
-                ...chunks.map((chunk) => ({
-                  ...c,
-                  content: chunk.extractLines(c.content).join("\n"),
-                  tags: args.tag ? [args.tag] : [],
-                }))
-              );
-            } else {
-              const docs = await splitter.createDocuments([c.content]);
-              items.push(
-                ...docs.map((d) => ({
-                  ...c,
-                  content: d.pageContent,
-                  metadata: { ...(c.metadata ?? {}), ...d.metadata },
-                  tags: args.tag ? [args.tag] : [],
-                }))
-              );
+          let sourceSpecs: sourceSpec[] = [];
+
+          for (const uri of sourceURIs) {
+            if (uri.startsWith("/")) {
+              const path = uri;
+              const isDirectory = (await fs.lstat(path)).isDirectory();
+              sourceSpecs.push({
+                uri: `file://${path}`,
+                recursive: isDirectory,
+              });
+            } else if (uri.startsWith("http")) {
+              sourceSpecs.push({
+                uri,
+                recursive: uri.endsWith(".pdf") ? false : undefined,
+              });
             }
           }
 
-          if (mainHandle.store.kb["_vectorizer"] === undefined) {
-            mainHandle.sendMessageToRenderer("update-progress", {
-              message: "Initializing vectorizer...",
-              progress: [0, items.length],
-            });
-          } else {
-            mainHandle.sendMessageToRenderer("update-progress", {
-              message: `Vectorizing content (${items.length} chunks)...`,
-              progress: [0, items.length],
+          if (
+            prompt._json["content"].length === 1 &&
+            prompt._json["content"][0].type === "text"
+          ) {
+            documentSpecs.push({
+              title: "Saved note",
+              content: prompt._json["content"][0].text,
             });
           }
 
-          const batchSize = 30;
-          for (let i = 0; i < items.length; i += batchSize) {
-            const chunk = items.slice(i, i + batchSize);
-            await mainHandle.store.kb.addItems(chunk);
-            mainHandle.sendMessageToRenderer("update-progress", {
-              message: `Vectorizing content (${items.length} chunks)...`,
-              progress: [Math.min(i + batchSize, items.length), items.length],
-            });
+          if (sourceSpecs.length === 0 && documentSpecs.length === 0) {
+            throw new Error(
+              "Lightrail wasn't able to add anything from your prompt to the knowledge base. Try using tokens such as /file.path or /chrome.current-page."
+            );
           }
 
-          mainHandle.sendMessageToRenderer("end-task");
-          mainHandle.sendMessageToRenderer(
-            "new-notification",
-            "Your content has successfully been added to the knowledge base!"
+          await attemptToAddToKB(
+            mainHandle,
+            sourceSpecs,
+            documentSpecs,
+            args.tag ? [args.tag] : []
           );
         } catch (e) {
           mainHandle.sendMessageToRenderer("end-task");
@@ -218,8 +240,6 @@ export default <LightrailTrack>{
           str,
           args.tag ? [args.tag] : undefined
         );
-
-        console.log(results);
 
         for (const r of results) {
           prompt.appendContextItem(r);
@@ -303,7 +323,7 @@ export default <LightrailTrack>{
       },
       "start-task": async (rendererHandle) => {
         currentTask = rendererHandle.ui?.tasks.startTask();
-        currentTask?.setMessage("Chunking content...");
+        currentTask?.setMessage("Loading documents...");
       },
       "update-progress": async (
         _rendererHandle,
@@ -315,6 +335,66 @@ export default <LightrailTrack>{
       "end-task": async (_rendererHandle) => {
         currentTask?.finishTask();
         currentTask = undefined;
+      },
+      "clarify-recursiveness": async (
+        rendererHandle,
+        [sourceSpecs, documentSpecs, tags]: [
+          sourceSpec[],
+          documentSpec[],
+          string[]
+        ]
+      ) => {
+        const firstUnclearSourceIndex = sourceSpecs.findIndex(
+          (s) => s.recursive === undefined
+        );
+        if (firstUnclearSourceIndex >= 0) {
+          rendererHandle.ui?.controls.setControls([
+            {
+              type: "buttons",
+              label: `For ${sourceSpecs[firstUnclearSourceIndex].uri}, recursively add linked pages to Knowledge Base?`,
+              buttons: [
+                {
+                  label: "URL + Linked Pages",
+                  onClick: () => {
+                    rendererHandle.ui?.controls.setControls([]);
+                    sourceSpecs[firstUnclearSourceIndex].recursive = true;
+                    rendererHandle.sendMessageToMain("attempt-to-add-to-kb", [
+                      sourceSpecs,
+                      documentSpecs,
+                      tags,
+                    ]);
+                  },
+                },
+                {
+                  label: "URL Only",
+                  onClick: () => {
+                    rendererHandle.ui?.controls.setControls([]);
+                    sourceSpecs[firstUnclearSourceIndex].recursive = false;
+                    rendererHandle.sendMessageToMain("attempt-to-add-to-kb", [
+                      sourceSpecs,
+                      documentSpecs,
+                      tags,
+                    ]);
+                  },
+                },
+              ],
+            },
+          ]);
+        } else {
+          rendererHandle.sendMessageToMain("attempt-to-add-to-kb", [
+            sourceSpecs,
+            documentSpecs,
+            tags,
+          ]);
+        }
+      },
+    },
+    main: {
+      "attempt-to-add-to-kb": async (
+        mainHandle,
+        [sourceSpecs, documentSpecs, tags]
+      ) => {
+        await attemptToAddToKB(mainHandle, sourceSpecs, documentSpecs, tags);
       },
     },
   },

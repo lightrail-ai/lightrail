@@ -7,6 +7,8 @@ import { useSetRecoilState } from "recoil";
 import classNames from "classnames";
 import TrackAdmin from "../TrackAdmin/TrackAdmin";
 import { trpcClient } from "@renderer/util/trpc-client";
+import KBAdmin from "../KBAdmin/KBAdmin";
+import ClientAdmin from "../ClientAdmin/ClientAdmin"; // Import the ClientAdmin component
 
 const TabButton = ({ label, currentTab, setTab }) => (
   <button
@@ -32,9 +34,12 @@ const Configuration = () => {
   return (
     <div className="min-w-[600px] py-4">
       <div className="flex flex-row items-stretch">
-        <div className="px-6 py-2 flex flex-col gap-4 border-r border-r-neutral-700">
+        <div className="px-6 py-2 flex flex-col items-start gap-4 border-r border-r-neutral-700">
           <TabButton label="Tracks" currentTab={tab} setTab={setTab} />
+          <TabButton label="Knowledge Base" currentTab={tab} setTab={setTab} />
+          <TabButton label="Clients" currentTab={tab} setTab={setTab} />
           <TabButton label="Settings" currentTab={tab} setTab={setTab} />
+          {/* Add a new tab button for Clients */}
           <div className="flex-1" />
           <div className="text-xs opacity-40 text-center">v{version}</div>
         </div>
@@ -52,8 +57,10 @@ const Configuration = () => {
             </button>
             <div className="text-neutral-50">{tab}</div>
           </div>
-          {tab === "Settings" && <Settings />}
           {tab === "Tracks" && <TrackAdmin />}
+          {tab === "Knowledge Base" && <KBAdmin />}
+          {tab === "Clients" && <ClientAdmin />}
+          {tab === "Settings" && <Settings />}
         </div>
       </div>
     </div>
