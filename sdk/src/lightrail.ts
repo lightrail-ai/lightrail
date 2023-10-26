@@ -219,12 +219,13 @@ interface DataTableControl {
   data: any[];
 }
 
-export type LightrailControl =
+export type LightrailControl = (
   | ButtonGroupControl
   | SliderControl
   | CustomControl
   | OutputControl
-  | DataTableControl;
+  | DataTableControl
+) & { label?: string };
 
 export interface LightrailUI {
   reset(): void;

@@ -1,15 +1,88 @@
 import type {
+  LightrailKBDocument,
   LightrailMainProcessHandle,
   LightrailTrack,
-  PromptContextItem,
   TaskHandle,
 } from "lightrail-sdk";
-import type { LightrailKBItem } from "lightrail-sdk";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { HumanMessage } from "langchain/schema";
-import { CHUNKABLE_CODE_EXTENSIONS, chunkCode } from "../main/transforms";
 
 let currentTask: TaskHandle | undefined;
+
+const timeout = (prom, time) =>
+  Promise.race([
+    prom,
+    new Promise((_r, rej) => setTimeout(() => rej(new Error()), time)),
+  ]);
+
+interface sourceSpec {
+  uri: string;
+  recursive: boolean | undefined;
+}
+
+interface documentSpec {
+  title: string;
+  content: string;
+}
+
+async function attemptToAddToKB(
+  mainHandle: LightrailMainProcessHandle,
+  sourceSpecs: sourceSpec[],
+  documentSpecs: documentSpec[],
+  tags: string[]
+) {
+  try {
+    for (let spec of sourceSpecs) {
+      if (spec.recursive === undefined) {
+        mainHandle.sendMessageToRenderer("clarify-recursiveness", [
+          sourceSpecs,
+          documentSpecs,
+          tags,
+        ]);
+        return;
+      }
+    }
+
+    mainHandle.sendMessageToRenderer("start-task");
+    for (let spec of sourceSpecs) {
+      await mainHandle.store.kb.addSource(
+        {
+          frequency: "daily",
+          tags,
+          uri: spec.uri,
+          recursive: !!spec.recursive,
+        },
+        {
+          onProgress({ message, progress }) {
+            mainHandle.sendMessageToRenderer("update-progress", {
+              message,
+              progress,
+            });
+          },
+        }
+      );
+    }
+
+    for (let doc of documentSpecs) {
+      await mainHandle.store.kb.addDocument(
+        {
+          tags,
+          title: doc.title,
+          type: "text",
+          uri: "",
+        },
+        doc.content
+      );
+    }
+    mainHandle.sendMessageToRenderer("end-task");
+    mainHandle.sendMessageToRenderer(
+      "new-notification",
+      "Your content has successfully been added to the knowledge base!"
+    );
+  } catch (e) {
+    mainHandle.sendMessageToRenderer("end-task");
+    throw e;
+  }
+}
 
 export default <LightrailTrack>{
   name: "kb",
@@ -29,11 +102,6 @@ export default <LightrailTrack>{
       icon: "lightbulb",
       async handler(mainHandle: LightrailMainProcessHandle, prompt, args) {
         const fs = require("fs/promises");
-        // const pdf2md = require("@opendocsg/pdf2md");
-        // const { join } = require("path");
-        // let context: PromptContextItem[] = [];
-
-        mainHandle.sendMessageToRenderer("start-task");
 
         try {
           mainHandle.sendMessageToRenderer(
@@ -43,7 +111,7 @@ export default <LightrailTrack>{
 
           await prompt.hydrate(mainHandle, {
             files: {
-              path: async (handle, args, prompt, origHydrate) => {
+              path: async (handle, args, prompt, _origHydrate) => {
                 prompt.appendContextItem({
                   content: "",
                   title: args.path,
@@ -51,56 +119,87 @@ export default <LightrailTrack>{
                 });
               },
             },
+            vscode: {
+              "selected-files": async (handle, args, prompt, _origHydrate) => {
+                try {
+                  const selectedFiles = await timeout(
+                    handle.sendMessageToExternalClient(
+                      "vscode-client",
+                      "get-selected-files"
+                    ),
+                    3000
+                  );
+                  // read file contents
+                  selectedFiles.forEach((path) => {
+                    prompt.appendContextItem({
+                      type: "code",
+                      title: path,
+                      content: "",
+                    });
+                  });
+                } catch (e) {
+                  throw new Error(
+                    "VSCode failed to respond, please make sure VSCode is currently running with the Lightrail Bridge extension installed & up-to-date!"
+                  );
+                }
+              },
+            },
           });
 
-          for (let contextItem of prompt._context) {
-            if (contextItem.title.startsWith("/")) {
-              const path = contextItem.title;
-              const isDirectory = (await fs.lstat(path)).isDirectory();
-              await mainHandle.store.kb.addSource(
-                {
-                  frequency: "daily",
-                  tags: args.tag ? [args.tag] : [],
-                  uri: `file://${path}`,
-                  recursive: isDirectory,
-                },
-                {
-                  onProgress({ message, progress }) {
-                    mainHandle.sendMessageToRenderer("update-progress", {
-                      message,
-                      progress,
-                    });
-                  },
-                }
-              );
+          let documentSpecs: documentSpec[] = [];
+          let sourceURIs: string[] = [];
+          prompt._context.forEach((c) => {
+            if (c.title.startsWith("/") || c.title.startsWith("http")) {
+              sourceURIs.push(c.title.replace(/:[-0-9]+$/, ""));
+            } else if (c.content) {
+              documentSpecs.push({
+                title: c.title + "(saved)",
+                content: c.content,
+              });
             }
+          });
 
-            if (contextItem.title.startsWith("http")) {
-              const uri = contextItem.title;
-              await mainHandle.store.kb.addSource(
-                {
-                  frequency: "daily",
-                  tags: args.tag ? [args.tag] : [],
-                  uri,
-                  recursive: true,
-                },
-                {
-                  onProgress({ message, progress }) {
-                    mainHandle.sendMessageToRenderer("update-progress", {
-                      message,
-                      progress,
-                    });
-                  },
-                }
-              );
+          sourceURIs = [...new Set(sourceURIs)];
+
+          let sourceSpecs: sourceSpec[] = [];
+
+          for (const uri of sourceURIs) {
+            if (uri.startsWith("/")) {
+              const path = uri;
+              const isDirectory = (await fs.lstat(path)).isDirectory();
+              sourceSpecs.push({
+                uri: `file://${path}`,
+                recursive: isDirectory,
+              });
+            } else if (uri.startsWith("http")) {
+              sourceSpecs.push({
+                uri,
+                recursive: uri.endsWith(".pdf") ? false : undefined,
+              });
             }
           }
 
-          mainHandle.sendMessageToRenderer("end-task");
+          if (
+            prompt._json["content"].length === 1 &&
+            prompt._json["content"][0].type === "text"
+          ) {
+            documentSpecs.push({
+              title: "Saved note",
+              content: prompt._json["content"][0].text,
+            });
+          }
 
-          mainHandle.sendMessageToRenderer(
-            "new-notification",
-            "Your content has successfully been added to the knowledge base!"
+          if (sourceSpecs.length === 0 && documentSpecs.length === 0) {
+            throw new Error(
+              "Lightrail wasn't able to add anything from your prompt to the knowledge base. Try using tokens such as /file.path or /chrome.current-page."
+            );
+          }
+
+          await attemptToAddToKB(
+            mainHandle,
+            sourceSpecs,
+            documentSpecs,
+            args.tag ? [args.tag] : []
           );
         } catch (e) {
           mainHandle.sendMessageToRenderer("end-task");
@@ -141,8 +240,6 @@ export default <LightrailTrack>{
           str,
           args.tag ? [args.tag] : undefined
         );
-
-        console.log(results);
 
         for (const r of results) {
           prompt.appendContextItem(r);
@@ -238,6 +335,66 @@ export default <LightrailTrack>{
       "end-task": async (_rendererHandle) => {
         currentTask?.finishTask();
         currentTask = undefined;
+      },
+      "clarify-recursiveness": async (
+        rendererHandle,
+        [sourceSpecs, documentSpecs, tags]: [
+          sourceSpec[],
+          documentSpec[],
+          string[]
+        ]
+      ) => {
+        const firstUnclearSourceIndex = sourceSpecs.findIndex(
+          (s) => s.recursive === undefined
+        );
+        if (firstUnclearSourceIndex >= 0) {
+          rendererHandle.ui?.controls.setControls([
+            {
+              type: "buttons",
+              label: `For ${sourceSpecs[firstUnclearSourceIndex].uri}, recursively add linked pages to Knowledge Base?`,
+              buttons: [
+                {
+                  label: "URL + Linked Pages",
+                  onClick: () => {
+                    rendererHandle.ui?.controls.setControls([]);
+                    sourceSpecs[firstUnclearSourceIndex].recursive = true;
+                    rendererHandle.sendMessageToMain("attempt-to-add-to-kb", [
+                      sourceSpecs,
+                      documentSpecs,
+                      tags,
+                    ]);
+                  },
+                },
+                {
+                  label: "URL Only",
+                  onClick: () => {
+                    rendererHandle.ui?.controls.setControls([]);
+                    sourceSpecs[firstUnclearSourceIndex].recursive = false;
+                    rendererHandle.sendMessageToMain("attempt-to-add-to-kb", [
+                      sourceSpecs,
+                      documentSpecs,
+                      tags,
+                    ]);
+                  },
+                },
+              ],
+            },
+          ]);
+        } else {
+          rendererHandle.sendMessageToMain("attempt-to-add-to-kb", [
+            sourceSpecs,
+            documentSpecs,
+            tags,
+          ]);
+        }
+      },
+    },
+    main: {
+      "attempt-to-add-to-kb": async (
+        mainHandle,
+        [sourceSpecs, documentSpecs, tags]
+      ) => {
+        await attemptToAddToKB(mainHandle, sourceSpecs, documentSpecs, tags);
       },
     },
   },

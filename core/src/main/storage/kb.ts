@@ -13,6 +13,7 @@ import * as fs from "fs/promises";
 import { CHUNKABLE_CODE_EXTENSIONS } from "../transforms";
 import { RecursiveUrlLoader } from "langchain/document_loaders/web/recursive_url";
 import transforms from "../transforms";
+import pdf2md from "@opendocsg/pdf2md";
 
 export const INDEXABLE_FILE_EXTENSIONS = [
   ...CHUNKABLE_CODE_EXTENSIONS,
@@ -341,29 +342,64 @@ export class LightrailKB implements LightrailKBType {
     }
   ) {
     console.log(document.uri);
+
     const [protocol, path] = document.uri.split("://", 2);
 
+    // Filling content
+    const isPdf = document.uri.endsWith(".pdf");
     if (!content) {
       if (protocol === "file") {
-        content = await fs.readFile(path, "utf-8");
+        if (isPdf) {
+          content = await pdf2md(await fs.readFile(path));
+        } else {
+          content = await fs.readFile(path, "utf-8");
+        }
       } else if (protocol === "http" || protocol === "https") {
-        content = await (await fetch(document.uri)).text();
+        if (isPdf) {
+          content = await pdf2md(
+            await (await fetch(document.uri)).arrayBuffer()
+          );
+        } else {
+          content = await (await fetch(document.uri)).text();
+        }
       } else {
         throw new Error(
           `Unsupported protocol '${protocol}': URI for a document must start with 'file://', 'http://', or 'https://'`
         );
       }
     }
+    if (protocol.startsWith("http") && !isPdf) {
+      const { Readability } = await import("@mozilla/readability");
+      const { parseHTML } = await import("linkedom");
+      const { NodeHtmlMarkdown } = await import("node-html-markdown");
+
+      let { document: htmlDoc } = parseHTML(
+        `<html><body>${content}</body></html>`
+      );
+
+      let reader = new Readability(htmlDoc);
+      let article = reader.parse();
+      if (article?.content) {
+        content = NodeHtmlMarkdown.translate(article.content);
+      } else {
+        content = htmlDoc.body.textContent || "(no content)";
+      }
+    }
+    content = content ?? "";
 
     // get content hash
     const hash = createHash("md5").update(content).digest("hex");
 
     // Check if the document already exists
     const sqliteDb = await openDb();
-    const existingDoc = await sqliteDb.get(
-      "SELECT * FROM KBDocument WHERE uri = ? AND sourceId = ?",
-      [document.uri, document.sourceId]
-    );
+
+    const existingDoc =
+      document.uri && document.sourceId
+        ? await sqliteDb.get(
+            "SELECT * FROM KBDocument WHERE uri = ? AND sourceId = ?",
+            [document.uri, document.sourceId]
+          )
+        : undefined;
 
     let documentId: number = existingDoc?.id;
     let items: LightrailKBItem[] = [];
