@@ -1,3 +1,5 @@
+import { Callout } from "nextra/components";
+
 # Installation
 
 Lightrail depends on bridge extensions to interact with other software on your machine. To use the built-in VSCode and Chrome integrations, the VSCode and Chrome extensions must be installed separately.
@@ -6,12 +8,25 @@ Lightrail depends on bridge extensions to interact with other software on your m
    - OS X: [lightrail-core.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.dmg)
    - Ubuntu: [lightrail-core.deb](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.deb)
    - Fedora: [lightrail-core.rpm](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.rpm)
+   - _Note: Lightrail does not currently support Windows_
 2. **Install the VSCode Extension:**
-   1. Install this extension in VSCode: [https://marketplace.visualstudio.com/items?itemName=lightrail.lightrail-vscode](https://marketplace.visualstudio.com/items?itemName=lightrail.lightrail-vscode)
-      - To do this, press ⌘/ctrl-p to open the VSCode Quick Open UI, then paste in the following command and hit Enter/Return: `ext install lightrail.lightrail-vscode`
+   - Install this extension in VSCode: [https://marketplace.visualstudio.com/items?itemName=lightrail.lightrail-vscode](https://marketplace.visualstudio.com/items?itemName=lightrail.lightrail-vscode)
+     - To do this, press ⌘/ctrl-p to open the VSCode Quick Open UI, then paste in the following command and hit Enter/Return: `ext install lightrail.lightrail-vscode`
 3. **Install the Chrome Extension:**
-   1. Download this file: [lightrail-chrome.zip](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-chrome.zip)
-   2. Unzip `lightrail-chrome.zip`. It should contain a folder called `dist`.
-   3. In Chrome, go to `chrome://extensions`. There should be a toggle in the upper-right labelled `Developer Mode`. Toggle it so that `Developer Mode` is enabled.
-   4. Click the `Load unpacked` button, and select the `dist` folder (from step 2).
-   5. Done! For more details / pictures, see: [https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked)
+   - Download this file: [lightrail-chrome.zip](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-chrome.zip)
+   - Unzip `lightrail-chrome.zip`. It should contain a folder called `dist`.
+   - In Chrome, go to `chrome://extensions`. There should be a toggle in the upper-right labelled `Developer Mode`. Toggle it so that `Developer Mode` is enabled.
+   - Click the `Load unpacked` button, and select the `dist` folder (from step 2).
+   - Done! For more details / pictures, see: [https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked)
+4. **Install the JupyterLab Extension & DataSci Track (Optional)**: Lightrail also has a DataSci Track available, for manipulating data notebooks, but it is not included in the default installation. The DataSci track can work with Jupyter/iPython notebooks as well as RMarkdown notebooks. If you'd like to use this functionality, follow these steps:
+   - If you're interested in JupyterLab integration, go to the `Extensions` pane in JupyterLab, search for `lightrail-jupyterlab`, click `Install`, and refresh the page
+   - In the Lightrail app, open the Configuration UI by clicking on the gear icon in the prompt input box.
+   - In the `Tracks` pane (which will open by default), under 'Available', locate the track titled `datasci` and click the install button next to it.
+   - You're all set!
+
+<Callout type="info" emoji="ℹ️">
+  If Lightrail is not visible in the JupyterLab extension search pane, it's
+  likely because our extension doesn't support your version of Jupyterlab. Close
+  Jupyter, run `pip install --upgrade jupyterlab` in the terminal, and then
+  follow the above instructions.
+</Callout>

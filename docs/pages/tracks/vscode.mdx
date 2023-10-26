@@ -1,5 +1,36 @@
 import { Callout } from "nextra/components";
 
-<Callout type="warning" emoji="⚠️">
-  These docs are still under construction - check back soon!
+## VSCode 
+
+There is 1 default Action and 3 supported Tokens for VSCode. 
+
+ 
+<Callout type="info" emoji="ℹ️">
+  Note: The Lightrail VSCode extension must be installed (instructions are [here](/installation)). 
 </Callout>
+
+**Action**:
+ 1. `Propose Changes`: Describe the changes you would like to make in your VSCode project. 
+
+**Tokens**: 
+ 1. `/vscode.selection`: Highlighted code
+ 2. `/vscode.current-file`: The most recent tab / file open 
+ 3. `/vscode.selected-files`: You can select multiple files using `Ctrl/Cmd` with `click`.
+
+<Callout type="warning" emoji="⚠︎">
+  `/vscode.selected-files` does not support selecting directories. To select a directory & all of its contents, use the token `/files.path`.  
+</Callout>
+
+### Recipe
+
+To edit your VSCode project: 
+1. Select the `Propose Changes` Action in Lightrail
+2. Add the relevant files that you would like to edit via Tokens and describe the changes you'd like to make
+3. Review the diff of the suggested changes in VSCode - you can accept or reject the changes file by file
+
+<iframe 
+  src="https://www.loom.com/embed/fdcdb212f7ef409bba487ce4bf9e5908?sid=c760efa4-6c0a-47ab-ac84-6869ce0a3b72" 
+  frameborder="0" 
+  allowfullscreen 
+  style={{ width:'100%', height:'500px' }} 
+/>
