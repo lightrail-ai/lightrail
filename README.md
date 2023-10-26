@@ -19,8 +19,8 @@ Lightrail is an open-source AI command bar that seeks to simplifies software dev
 Lightrail depends on bridge extensions to interact with other software on your machine. To use the built-in VSCode and Chrome integrations, the VSCode and Chrome extensions must be installed separately.
 
 1. **Download & install the appropriate Lightrail Core package for your operating system:**
-   - OS X (Apple Silicon / M1 / M2): [lightrail-core.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-arm64.dmg)
-   - OS X (Intel): [lightrail-core.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-x64.dmg)
+   - OS X (Apple Silicon / M1 / M2): [lightrail-core-arm64.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-arm64.dmg)
+   - OS X (Intel): [lightrail-core-x64.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-x64.dmg)
    - Ubuntu: [lightrail-core.deb](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.deb)
    - Fedora: [lightrail-core.rpm](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.rpm)
 2. **Install the VSCode Extension:**

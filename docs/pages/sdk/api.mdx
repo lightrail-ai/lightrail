@@ -108,7 +108,51 @@ Returns a Promise that resolves to the value of the given key from the key-value
 
 Sets a value for a given key in the key-value store.
 
+#### `store.kb.addSource(sourceDescription: LightrailKBSource, options?: AddSourceOptions): Promise<void>`
+
+This function adds a new data source to Lightrail's Knowledge Base (a vector-based data store). Whenever possible, use this function to add data to the KB. A source is defined by a URI, and can be refreshed later in a way that prevents duplicate information from being added to the KB and also prevents unnecessary vectorization of unchanged content. Sources must fit this definition:
+
+```ts
+interface LightrailKBSource {
+  uri: string;
+  recursive: boolean;
+  frequency: "daily" | "weekly";
+  tags: string[];
+}
+```
+
+Here, `uri` should start with a protocol (`file://`, `http://`, or `https://` are the only supported protocols currently) followed by a path or a url. For example, valid `uri` values include `https://en.wikipedia.org/wiki/The_Secret_History` or `file:///home/donna/Desktop/notes.md`. See `addDocument` below for filetypes that can be properly indexed.
+
+The value of `recursive` has different implications for different URI protocols. For files, if the URI points to a directory, `recursive` must be `true` (to recursively index all contents of the directory), otherwise `recursive` must be `false`. For web URLs, if `recursive` is true, linked pages will also be indexed, and if `recursive` is false, only the content at the provided URL will be indexed.
+
+`frequency` is not currently used, but will be used to auto-refresh sources in a future release.
+
+Sources should be given `tags` to allow users to search by tag when querying the KB. All documents added by a source will have that source's `tags`.
+
+`addSource` also accepts an optional object of options. Currently, the only supported option is `onProgress`, which expects a function that accepts a `message` as well as a `[completed, total]` tuple of numbers. This function will be called to provide progress updates on the processing of a source.
+
+#### `store.kb.addDocument(documentDescription: LightrailKBDocument, options?: AddDocumentOptions): Promise<LightrailKBItem[]>`
+
+This function adds a new document to Lightrail's Knowledge Base (a vector-based data store). When the document has a reliable URI, adding a source instead (with `addSource`) is recommended, as this will allow for auto-updating and other conveniences. `addDocument` is appropriate for adding ephemeral text / code to the KB. The argument data types are defined as:
+
+```ts
+interface LightrailKBDocument {
+  uri: string;
+  title: string | undefined;
+  type: "code" | "text";
+  tags: string[];
+}
+
+interface AddDocumentOptions {
+  skipAddingItems?: boolean; // `false` by default
+}
+```
+
+For an explanation of `uri` and `tags`, see `addSource` above. If `skipAddingItems` is set to true, then Lightrail will record the document in the KB and chunk the content, but will skip vectorizing and inserting the individual chunks. This method always returns an array of `LightrailKBItems`, so if you use `skipAddingItems`, make sure to add these `LightrailKBItems` manually using `addItems` (however, make sure you have a good reason for taking this approach).
+
 #### `store.kb.addItems(items: LightrailKBItem[]): Promise<void>`
+
+**Note: The API allows adding KBItems directly, but this should almost never be required. Instead, see `addDocument` or `addSource` above; these are almost certainly more appropriate for your usecase**
 
 This function adds new items into the knowledge base data store. These items are vectorized, when they are added, and querying later will use a vector-based search. Items can be given tags, and then future queries can be limited to only certain tags.
 
