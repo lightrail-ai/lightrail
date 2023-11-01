@@ -25,7 +25,7 @@ import { TRACKS_DIR, installTrack, loadTracks } from "./track-admin";
 import { LightrailKVStore } from "./storage/kv";
 import os from "os";
 import { noticeQueue } from "./updates";
-import { markComplete } from "./checklist";
+import { isComplete, markComplete } from "./checklist";
 import { openDb } from "./storage/sqlite";
 import { lightrailKBInstance } from "./storage/interface";
 
@@ -100,14 +100,27 @@ export const getRouter = (window: BrowserWindow) =>
       }
       // Make sure track directory exists
       await fs.mkdir(TRACKS_DIR, { recursive: true });
-      // If track directory is empty, install the default tracks
+      // If track directory is empty, we want to run the onboarding flow
       const trackDirs = await fs.readdir(TRACKS_DIR);
-      if (trackDirs.length === 0) {
-        log.silly("No tracks found, installing default starter tracks");
-        await installTrack(
-          "https://github.com/lightrail-ai/lightrail/releases/latest/download/starter-tracks.zip"
-        );
+      const hasOnboarded = await isComplete("onboarding");
+      if (trackDirs.length === 0 && !hasOnboarded) {
+        log.silly("No tracks found, running onboarding flow");
+        return {
+          onboard: true,
+        };
+      } else {
+        log.silly("Tracks found, not running onboarding flow");
+        return {
+          onboard: false,
+        };
       }
+    }),
+
+    onboarding: t.router({
+      complete: t.procedure.mutation(() => {
+        log.silly("tRPC Call: onboarding.complete");
+        return markComplete("onboarding");
+      }),
     }),
 
     tracks: t.router({
