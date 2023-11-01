@@ -32,6 +32,7 @@ import TasksDisplay, {
 import NotificationsDisplay, {
   NotificationsDisplayRef,
 } from "./components/NotificationsDisplay/NotificationsDisplay";
+import { OnboardingScript, mainOnboardingScript } from "./onboarding-script";
 
 library.add(far);
 
@@ -75,12 +76,26 @@ function App(): JSX.Element {
   }, []);
 
   const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
+
   const [controls, setControls] = useState<LightrailControl[]>([]);
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([]);
   const [error, setError] = useState<string | null>(null);
   const notificationsDisplayRef = useRef<NotificationsDisplayRef>(null);
 
   const [partialMessage, setPartialMessage] = useState<string | null>(null);
+
+  const [isOnboarding, setIsOnboarding] = useState(false);
+  const [onboardingHistory, setOnboardingHistory] = useState<ChatHistoryItem[]>(
+    []
+  );
+  const [onboardingPartialMessage, setOnboardingPartialMessage] = useState<
+    string | null
+  >(null);
+  const [currentOnboardingScript, setCurrentOnboardingScript] =
+    useState<OnboardingScript | null>(null);
+  const [onboardingStepIndex, setOnboardingStepIndex] = useState(0);
+  const [isInputDisabledDuringOnboarding, setIsInputDisabledDuringOnboarding] =
+    useState(true);
 
   const getTaskHandle = (id: string) => ({
     id: id,
@@ -174,7 +189,11 @@ function App(): JSX.Element {
     );
     (async () => {
       log.silly("Running setup routine");
-      await trpcClient.setup.mutate();
+      const setupStatus = await trpcClient.setup.mutate();
+      if (setupStatus.onboard) {
+        log.silly("Onboarding...");
+        processOnboardingScript(mainOnboardingScript);
+      }
       log.silly("Sending event to load tracks on main process...");
       const trackPaths = await trpcClient.tracks.load.mutate();
       log.silly("Received track listing: ", trackPaths);
@@ -224,6 +243,81 @@ function App(): JSX.Element {
       2000
     );
   }
+
+  function processOnboardingScript(onboardingScript: OnboardingScript) {
+    setCurrentOnboardingScript(onboardingScript);
+    setOnboardingStepIndex(0);
+    setIsOnboarding(true);
+  }
+
+  async function typeOutOnboardingMessage(message?: string) {
+    if (message) {
+      const delay = 100;
+      const words = message.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        setOnboardingPartialMessage(words.slice(0, i + 1).join(" "));
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (isOnboarding && currentOnboardingScript) {
+      setOnboardingHistory([]);
+      setControls([]);
+      setIsInputDisabledDuringOnboarding(true);
+      typeOutOnboardingMessage(
+        currentOnboardingScript.steps[onboardingStepIndex].content
+      ).then(() => {
+        setOnboardingPartialMessage(null);
+        let content =
+          currentOnboardingScript.steps[onboardingStepIndex].content;
+        if (content) {
+          setOnboardingHistory([
+            {
+              content,
+              sender: "ai",
+            },
+          ]);
+        }
+        setIsInputDisabledDuringOnboarding(
+          !!currentOnboardingScript.steps[onboardingStepIndex].disableInput
+        );
+        const stepControls = currentOnboardingScript.steps[
+          onboardingStepIndex
+        ].getControls(
+          () => {
+            if (
+              onboardingStepIndex + 1 <
+              currentOnboardingScript.steps.length
+            ) {
+              setOnboardingStepIndex(onboardingStepIndex + 1);
+            } else {
+              setIsOnboarding(false);
+              setCurrentOnboardingScript(null);
+              setOnboardingStepIndex(0);
+              setOnboardingHistory([]);
+              setControls([]);
+            }
+          },
+          (name) => {
+            const stepIndex = currentOnboardingScript?.steps.findIndex(
+              (step) => step.name === name
+            );
+            if (stepIndex !== undefined && stepIndex !== -1) {
+              setOnboardingStepIndex(stepIndex);
+            }
+          }
+        );
+        setControls(stepControls);
+        stepControls.forEach((control) => {
+          if (control.type === "loading") {
+            control.task();
+          }
+        });
+      });
+    }
+  }, [isOnboarding, currentOnboardingScript, onboardingStepIndex]);
 
   function appendToHistory(prompt: any) {
     trpcClient.history.append.mutate(prompt);
@@ -285,21 +379,30 @@ function App(): JSX.Element {
         return (
           <>
             <ChatHistory
-              items={chatHistory}
-              partialMessage={partialMessage}
-              onReset={() => {
-                trpcClient.action.mutate({
-                  track: "lightrail",
-                  name: "Reset Conversation",
-                  prompt: null,
-                  args: {},
-                });
-              }}
+              items={isOnboarding ? onboardingHistory : chatHistory}
+              partialMessage={
+                isOnboarding ? onboardingPartialMessage : partialMessage
+              }
+              onReset={
+                isOnboarding
+                  ? undefined
+                  : () => {
+                      trpcClient.action.mutate({
+                        track: "lightrail",
+                        name: "Reset Conversation",
+                        prompt: null,
+                        args: {},
+                      });
+                    }
+              }
             />
             <Controls controls={controls} />
             <ErrorDisplay error={error} onDismiss={() => setError(null)} />
             <NotificationsDisplay ref={notificationsDisplayRef} />
-            <PromptInput onAction={executePromptAction} />
+            <PromptInput
+              onAction={executePromptAction}
+              disabled={isOnboarding && isInputDisabledDuringOnboarding}
+            />
             <TasksDisplay statuses={taskStatuses} />
           </>
         );

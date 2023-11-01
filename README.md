@@ -12,31 +12,16 @@
 
 🚧 Lightrail is currently pre-release - expect (and report) bugs / inconsistencies! 🚧
 
-Lightrail is an open-source AI command bar that seeks to simplifies software development. It is designed to be a general-purpose, extensible platform for integrating LLM-based tooling into engineering/development workflows. It does this by focusing on three components of working with LLMs: Providing sources of context, constructing effective prompts, and interfacing with external services. Lightrail accomplishes these goals through an extension framework called Tracks. Tracks can provide `Tokens`, which are sources of dynamically generated context for a prompt, as well as `Actions`, which are functions that can modify a prompt, send it to an LLM, and use the LLM's response to execute functionality. All Lightrail functionality is delivered via the Tracks system, so a plain install of the Lightrail Core is essentially nonfunctional. Therefore, Lightrail's default installation includes a few commonly used tracks (Chat, VSCode, Chrome). More tracks are in development and will be installable through the Lightrail application.
+Lightrail is an open-source AI command bar that seeks to simplifies software development. It is designed to be a general-purpose, extensible platform for integrating LLM-based tooling into engineering/development workflows. It does this by focusing on three components of working with LLMs: Providing sources of context, constructing effective prompts, and interfacing with external services. Lightrail accomplishes these goals through an extension framework called Tracks. Tracks can provide `Tokens`, which are sources of dynamically generated context for a prompt, as well as `Actions`, which are functions that can modify a prompt, send it to an LLM, and use the LLM's response to execute functionality. Currently available Tracks include integrations with VS Code, Jupyterlab, PostgreSQL, and more.
 
 ## Installation
 
-Lightrail depends on bridge extensions to interact with other software on your machine. To use the built-in VSCode and Chrome integrations, the VSCode and Chrome extensions must be installed separately.
+To get started, just download the appropriate Lightrail package for your operating system:
 
-1. **Download & install the appropriate Lightrail Core package for your operating system:**
-   - OS X (Apple Silicon / M1 / M2): [lightrail-core-arm64.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-arm64.dmg)
-   - OS X (Intel): [lightrail-core-x64.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-x64.dmg)
-   - Ubuntu: [lightrail-core.deb](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.deb)
-   - Fedora: [lightrail-core.rpm](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.rpm)
-2. **Install the VSCode Extension:**
-   1. Install this extension in VSCode: [https://marketplace.visualstudio.com/items?itemName=lightrail.lightrail-vscode](https://marketplace.visualstudio.com/items?itemName=lightrail.lightrail-vscode)
-      - To do this, press ⌘/ctrl-p to open the VSCode Quick Open UI, then paste in the following command and hit Enter/Return: `ext install lightrail.lightrail-vscode`
-3. **Install the Chrome Extension:**
-   1. Download this file: [lightrail-chrome.zip](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-chrome.zip)
-   2. Unzip `lightrail-chrome.zip`. It should contain a folder called `dist`.
-   3. In Chrome, go to `chrome://extensions`. There should be a toggle in the upper-right labelled `Developer Mode`. Toggle it so that `Developer Mode` is enabled.
-   4. Click the `Load unpacked` button, and select the `dist` folder (from step 2).
-   5. Done! For more details / pictures, see: [https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked)
-4. **Install the Jupyter Extension & DataSci Track (Optional)**: Lightrail also has a DataSci Track available, for manipulating data notebooks, but it is not included in the default installation. The DataSci track can work with Jupyter/iPython notebooks as well as RMarkdown notebooks. If you'd like to use this functionality, follow these steps:
-   1. If you're interested in JupyterLab integration, go to the `Extensions` pane in JupyterLab, search for `lightrail-jupyterlab`, click `Install`, and refresh the page
-   2. In the Lightrail app, open the Configuration UI by clicking on the gear icon in the prompt input box.
-   3. In the `Tracks` pane (which will open by default), under 'Available', locate the track titled `datasci` and click the install button next to it.
-   4. You're all set!
+- OS X (Apple Silicon / M1 / M2): [lightrail-core-arm64.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-arm64.dmg)
+- OS X (Intel): [lightrail-core-x64.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-x64.dmg)
+- Ubuntu: [lightrail-core.deb](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.deb)
+- Fedora: [lightrail-core.rpm](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.rpm)
 
 ## Usage
 
@@ -54,8 +39,8 @@ Lightrail depends on bridge extensions to interact with other software on your m
 
 Some common issues, and how to fix them:
 
-- **Q: I click on an action and I get `i is not iterable` as an error**
-- **A:** This occurs when the action expects a prompt but one isn't provided. Almost all actions currently available only work if the user has entered a prompt. For example, to use the VSCode Propose Changes action, first type "refactor /vscode.current-file" as the prompt _then_ click the action.
+- **Q: I get `i is not iterable` as an error**
+- **A:** This occurs when the action expects a prompt but one isn't provided. Almost all actions currently available only work if the user has entered a prompt, so make sure you're providing one before you hit `enter/return`.
 - **Q: I'm on Linux and the keyboard shortcut to open Lightrail isn't working for me**
 - **A:** If you're using Wayland, this is a known bug, caused by [this issue](https://github.com/electron/electron/issues/15863). Currently, the only fix is using your system's settings to manually assign a keyboard shortcut to launching Lightrail. If you have any idea how to work-around this bug, I'd love to hear it!
 

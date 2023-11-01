@@ -200,6 +200,33 @@ interface ButtonGroupControl {
   }[];
 }
 
+export interface CheckboxOption {
+  name: string;
+  value: any;
+  description: string;
+}
+
+interface CheckboxGroupControl {
+  type: "checkbox-group" | "checkboxes";
+  options: CheckboxOption[];
+  onSubmit: (options: CheckboxOption[]) => void;
+  submitLabel?: string;
+}
+
+interface ClientStatusControl {
+  type: "client-status";
+  client: string;
+  continueLabel?: string;
+  skipLabel?: string;
+  onContinue: () => void;
+  onSkip: () => void;
+}
+
+interface LoadingControl {
+  type: "loading";
+  task: () => Promise<void>;
+}
+
 interface SliderControl {
   type: "slider";
 }
@@ -225,6 +252,9 @@ export type LightrailControl = (
   | CustomControl
   | OutputControl
   | DataTableControl
+  | CheckboxGroupControl
+  | ClientStatusControl
+  | LoadingControl
 ) & { label?: string };
 
 export interface LightrailUI {

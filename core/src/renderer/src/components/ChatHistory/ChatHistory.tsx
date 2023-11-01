@@ -13,7 +13,7 @@ import { trpcClient } from "@renderer/util/trpc-client";
 export interface ChatHistoryProps {
   items: ChatHistoryItem[];
   partialMessage: string | null;
-  onReset: () => void;
+  onReset?: () => void;
 }
 
 function ChatHistory({ items, partialMessage, onReset }: ChatHistoryProps) {
@@ -74,7 +74,7 @@ function ChatHistory({ items, partialMessage, onReset }: ChatHistoryProps) {
       {items.length > 0 && (
         <div className="flex-shrink-0 flex items-center text-sm border-b border-b-neutral-800">
           <div className="flex-1 px-2 opacity-25 text-xs">Lightrail</div>
-          <Button onClick={onReset}>Reset Conversation</Button>
+          {onReset && <Button onClick={onReset}>Reset Conversation</Button>}
         </div>
       )}
       <div className="flex-grow flex-shrink min-h-0 overflow-auto flex flex-col-reverse">
