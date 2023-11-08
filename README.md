@@ -1,18 +1,33 @@
-# Lightrail - The Universal AI Command Bar
+# Lightrail - A Platform for Cross-App AI Actions
 
-[![Discord](https://img.shields.io/discord/1126247706789167264?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/57bNyxgb7g)
+[![Discord](https://img.shields.io/discord/1126247706789167264?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/WPCCe7jZuS)
 
 <div style="text-align: center; padding: 24px 0">
     <img src="./assets/screenshot5-with-bg.jpeg" height="280" />
 </div>
 
-[**Demo Screencast**](https://vimeo.com/861792302?share=copy) | [**Documentation**](https://docs.lightrail.ai)
+<br />
 
-## Description
+* Run [AI Actions](https://docs.lightrail.ai/sdk/intro) that can manipulate & pull context from your existing tools/editors/apps
+* Write & distribute new Actions with a [simple Typescript SDK](https://docs.lightrail.ai/sdk/workflow)
+* [Read more here](https://docs.lightrail.ai/)
 
-🚧 Lightrail is currently pre-release - expect (and report) bugs / inconsistencies! 🚧
+<br />
 
-Lightrail is an open-source AI command bar that seeks to simplifies software development. It is designed to be a general-purpose, extensible platform for integrating LLM-based tooling into engineering/development workflows. It does this by focusing on three components of working with LLMs: Providing sources of context, constructing effective prompts, and interfacing with external services. Lightrail accomplishes these goals through an extension framework called Tracks. Tracks can provide `Tokens`, which are sources of dynamically generated context for a prompt, as well as `Actions`, which are functions that can modify a prompt, send it to an LLM, and use the LLM's response to execute functionality. Currently available Tracks include integrations with VS Code, Jupyterlab, PostgreSQL, and more.
+[**Download for OS X** (Apple Silicon)](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-arm64.dmg) | [**Download for OS X** (Intel)](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-x64.dmg) | [**Download for Ubuntu**](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.deb) | [**Download for Fedora**](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.rpm)
+
+[**Demo Video**](https://vimeo.com/861792302?share=copy) | [**Documentation**](https://docs.lightrail.ai)
+
+## Features
+
+* Always-available launcher-style desktop app to run AI actions
+* Integrations with [VS Code](https://docs.lightrail.ai/tracks/vscode), [JupyterLab](https://docs.lightrail.ai/tracks/datasci), [PostgreSQL](https://docs.lightrail.ai/tracks/sql), [Chrome](https://docs.lightrail.ai/tracks/chrome), and more!
+    * [video - VS Code + Chrome](https://vimeo.com/861792302?share=copy)
+* Use screenshots in prompts to `gpt-4-vision-preview` (✨ new ✨) 
+    * Only available for users that provide their own API key
+*  Long-term memory / [Knowledge Base](https://docs.lightrail.ai/tracks/kb) using a local vector DB (⚠️ pre-release, please report bugs!)
+*  [simple Typescript SDK](https://docs.lightrail.ai/sdk/workflow) for building new Actions & custom sources of context (Tokens)
+
 
 ## Installation
 
@@ -29,7 +44,7 @@ To get started, just download the appropriate Lightrail package for your operati
 - When Lightrail is running on your system, it can be activated at any time by pressing the keyboard combination `Cmd/Ctrl-Shift-Space`.
 - Use the up- and down-arrow keys to browse actions, and hit `enter/return` to select one (while in 'Choose an action' mode).
 - To change the action afterwards, press `esc` or `@`, or click on the current action
-- After selecting an action, enter the prompt (or any other required arguments). Your prompt can include tokens, which pull in additional context from external sources:
+- After selecting an action, enter the prompt (or any other required arguments). Your prompt can include special Tokens, which pull in additional context from external sources:
   - Type the forward-slash at any point in a prompt (`/`) to open the Tokens menu. Use the arrow keys to select a token and hit enter to insert that token into your prompt.
   - In general, try to be explicit about what sources of content you'd like to include for best results.
 - `Cmd/Ctrl-Up` and `Cmd/Ctrl-Down` cycle through the prompt history.
@@ -44,7 +59,7 @@ Some common issues, and how to fix them:
 - **Q: I'm on Linux and the keyboard shortcut to open Lightrail isn't working for me**
 - **A:** If you're using Wayland, this is a known bug, caused by [this issue](https://github.com/electron/electron/issues/15863). Currently, the only fix is using your system's settings to manually assign a keyboard shortcut to launching Lightrail. If you have any idea how to work-around this bug, I'd love to hear it!
 
-Any other issues? Let me know [on Discord](https://discord.gg/57bNyxgb7g) or [make an issue](https://github.com/lightrail-ai/lightrail/issues) and I'll address it ASAP!
+Any other issues? Let me know [on Discord](https://discord.gg/WPCCe7jZuS) or [make an issue](https://github.com/lightrail-ai/lightrail/issues) and I'll address it ASAP!
 
 ## Writing Tracks & Clients
 
