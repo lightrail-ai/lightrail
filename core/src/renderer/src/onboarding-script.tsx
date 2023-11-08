@@ -284,7 +284,7 @@ Once the extension is installed, open a iPython notebook in JupyterLab & wait un
 You're all set up! Want more info on how to get the most out of Lightrail? Run into any issues? Feature requests? Check out:
 
 * [Our Docs](https://docs.lightrail.ai)
-* [Our Discord](https://discord.com/invite/57bNyxgb7g)`,
+* [Our Discord](https://discord.gg/WPCCe7jZuS)`,
       disableInput: true,
       getControls: (next) => [
         {

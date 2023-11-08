@@ -24,7 +24,7 @@ function ErrorDisplay({ error, onDismiss }: ErrorProps) {
         Does this seem like a bug?{" "}
         <a
           className="inline-block bg-neutral-50 bg-opacity-10 px-2 py-0 hover:bg-opacity-20 rounded hover:text-neutral-300"
-          href="https://discord.com/invite/57bNyxgb7g"
+          href="https://discord.gg/WPCCe7jZuS"
         >
           Let us know!
         </a>

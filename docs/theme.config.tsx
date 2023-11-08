@@ -27,7 +27,7 @@ const config: DocsThemeConfig = {
     link: "https://github.com/lightrail-ai/lightrail",
   },
   chat: {
-    link: "https://discord.gg/57bNyxgb7g",
+    link: "https://discord.gg/WPCCe7jZuS",
   },
   docsRepositoryBase:
     "https://github.com/lightrail-ai/lightrail/tree/main/docs",
