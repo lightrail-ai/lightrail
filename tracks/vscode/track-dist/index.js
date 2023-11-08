@@ -2788,11 +2788,13 @@ var vscode_default = {
           throw new Error(FAILED_TO_RESPOND);
         }
         const data = fs.readFileSync(currentFile, "utf8");
-        const chunks = await handle.transform.toChunks(data, {
-          path: currentFile
-        });
+        let chunks = null;
+        if (data.split("\n").length > 24) {
+          chunks = await handle.transform.toChunks(data, {
+            path: currentFile
+          });
+        }
         if (chunks) {
-          console.log(chunks);
           chunks.forEach((chunk) => {
             prompt.appendContextItem({
               type: "code",

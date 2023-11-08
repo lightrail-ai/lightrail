@@ -8,9 +8,9 @@
 
 <br />
 
-* Run [AI Actions](https://docs.lightrail.ai/sdk/intro) that can manipulate & pull context from your existing tools/editors/apps
-* Write & distribute new Actions with a [simple Typescript SDK](https://docs.lightrail.ai/sdk/workflow)
-* [Read more here](https://docs.lightrail.ai/)
+- Run [AI Actions](https://docs.lightrail.ai/sdk/intro) that can manipulate & pull context from your existing tools/editors/apps
+- Write & distribute new Actions with a [simple Typescript SDK](https://docs.lightrail.ai/sdk/workflow)
+- [Read more here](https://docs.lightrail.ai/)
 
 <br />
 
@@ -20,14 +20,16 @@
 
 ## Features
 
-* Always-available launcher-style desktop app to run AI actions
-* Integrations with [VS Code](https://docs.lightrail.ai/tracks/vscode), [JupyterLab](https://docs.lightrail.ai/tracks/datasci), [PostgreSQL](https://docs.lightrail.ai/tracks/sql), [Chrome](https://docs.lightrail.ai/tracks/chrome), and more!
-    * [video - VS Code + Chrome](https://vimeo.com/861792302?share=copy)
-* Use screenshots in prompts to `gpt-4-vision-preview` (✨ new ✨) 
-    * Only available for users that provide their own API key
-*  Long-term memory / [Knowledge Base](https://docs.lightrail.ai/tracks/kb) using a local vector DB (⚠️ pre-release, please report bugs!)
-*  [simple Typescript SDK](https://docs.lightrail.ai/sdk/workflow) for building new Actions & custom sources of context (Tokens)
-
+- Always-available launcher-style desktop app to run AI actions
+- Integrations with [VS Code](https://docs.lightrail.ai/tracks/vscode), [JupyterLab](https://docs.lightrail.ai/tracks/datasci), [PostgreSQL](https://docs.lightrail.ai/tracks/sql), [Chrome](https://docs.lightrail.ai/tracks/chrome), and more!
+  - [video - VS Code + Chrome](https://vimeo.com/861792302?share=copy)
+  - [video - JupyterLab](https://vimeo.com/882695481?share=copy)
+- Use screenshots in prompts to `gpt-4-vision-preview` (✨ new ✨)
+  - Only available for users that provide their own API key
+  - [video](https://vimeo.com/882694040?share=copy)
+- Long-term memory / [Knowledge Base](https://docs.lightrail.ai/tracks/kb) using a local vector DB (⚠️ pre-release, please report bugs!)
+  - [video](https://vimeo.com/882693396?share=copy)
+- [simple Typescript SDK](https://docs.lightrail.ai/sdk/workflow) for building new Actions & custom sources of context (Tokens)
 
 ## Installation
 

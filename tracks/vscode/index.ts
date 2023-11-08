@@ -1,4 +1,4 @@
-import { LightrailTrack } from "lightrail-sdk";
+import { DocumentChunk, LightrailTrack } from "lightrail-sdk";
 import { HumanMessage } from "langchain/schema";
 import { getChangeProposal, getCodeBlocks } from "./util";
 
@@ -112,12 +112,15 @@ export default {
         // read file contents
         const data = fs.readFileSync(currentFile, "utf8");
 
-        const chunks = await handle.transform.toChunks(data, {
-          path: currentFile,
-        });
+        let chunks: DocumentChunk[] | null = null;
+
+        if (data.split("\n").length > 24) {
+          chunks = await handle.transform.toChunks(data, {
+            path: currentFile,
+          });
+        }
 
         if (chunks) {
-          console.log(chunks);
           chunks.forEach((chunk) => {
             prompt.appendContextItem({
               type: "code",
