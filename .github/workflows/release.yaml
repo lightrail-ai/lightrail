@@ -34,7 +34,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20.x
+          node-version: 21.x
 
       - name: Install dependencies (files)
         working-directory: ./tracks/files
@@ -117,7 +117,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20.x
+          node-version: 21.x
           cache: "npm"
           cache-dependency-path: vscode/package-lock.json
 
@@ -150,7 +150,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20.x
+          node-version: 21.x
           cache: "npm"
           cache-dependency-path: chrome/package-lock.json
 
@@ -189,7 +189,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20.x
+          node-version: 21.x
 
       - name: Configure Node caching
         uses: actions/cache@v3
