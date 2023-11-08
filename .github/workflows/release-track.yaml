@@ -18,7 +18,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 19
+          node-version: 20.x
           cache: "npm"
           cache-dependency-path: ${{ inputs.directory }}/package-lock.json
 
