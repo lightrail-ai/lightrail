@@ -5,13 +5,12 @@ import {
   LightrailMainProcessHandle,
   LightrailTrack,
   Token,
-  TransformSourceOptions,
 } from "lightrail-sdk";
 import log from "./logger";
 import path from "path";
 import { writeFile } from "fs/promises";
 import { app } from "electron";
-import { ChatOpenAI } from "langchain/chat_models/openai";
+import { ChatOpenAI, OpenAIChatInput } from "langchain/chat_models/openai";
 import { BaseMessage } from "langchain/schema";
 import { BrowserWindow } from "electron/main";
 import { LightrailMessagingHub } from "../util/messaging";
@@ -24,6 +23,7 @@ import { Tiktoken, getEncoding } from "js-tiktoken";
 
 const tokenLimits = {
   "gpt-4": 8192,
+  "gpt-4-vision-preview": 8192,
   "gpt-3.5-turbo-16k": 16385,
   "gpt-3.5-turbo": 4097,
 };
@@ -45,12 +45,18 @@ export class LightrailChatLLMInterface {
 
   static initializeModel() {
     const settings = jsonStorage.getSync("settings") as SettingsObject;
+    let options: Partial<OpenAIChatInput> = {
+      openAIApiKey: settings?.apiKeys?.[settings?.provider] ?? "EMPTY",
+      streaming: true,
+      modelName: settings?.model,
+    };
+
+    if (settings?.model === "gpt-4-vision-preview") {
+      options.maxTokens = 4096;
+    }
+
     return new ChatOpenAI(
-      {
-        openAIApiKey: settings?.apiKeys?.[settings?.provider] ?? "EMPTY",
-        streaming: true,
-        modelName: settings?.model,
-      },
+      options,
       settings?.provider === "lightrail"
         ? {
             basePath: "https://proxy.lightrail.ai/v1/",

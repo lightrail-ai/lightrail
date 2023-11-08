@@ -15,8 +15,8 @@
     "esbuild": "^0.19.2"
   },
   "dependencies": {
-    "langchain": "^0.0.138",
-    "lightrail-sdk": "^0.0.5",
+    "langchain": "^0.0.182-rc.1",
+    "lightrail-sdk": "^0.1.0",
     "marked": "^7.0.5"
   }
 }

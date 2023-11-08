@@ -34,7 +34,7 @@ export type ActionArgument = TokenArgument;
 
 export type PromptContextItem = {
   title: string;
-  type: "code" | "text";
+  type: "code" | "text" | "image";
   content: string;
   metadata?: any; // Not included in prompt, only for use in actions
 };
@@ -140,6 +140,46 @@ export class Prompt {
     output += this._body;
 
     return output;
+  }
+
+  toMessage(): {
+    content: any[];
+  } {
+    if (!this._hydrated) {
+      throw new Error(
+        "Prompt must be hydrated before converting to message; call `await prompt.hydrate(handle)` first."
+      );
+    }
+
+    let content: {
+      type: "text" | "image_url";
+      text?: string;
+      image_url?: {
+        url: string;
+        detail: string;
+      };
+    }[] = [
+      {
+        type: "text",
+        text: this.toString(),
+      },
+    ];
+
+    this._context
+      .filter((item) => item.type === "image")
+      .forEach((item) => {
+        content.push({
+          type: "image_url",
+          image_url: {
+            url: item.content,
+            detail: "high",
+          },
+        });
+      });
+
+    return {
+      content,
+    };
   }
 }
 
@@ -440,3 +480,5 @@ export interface LightrailTrack {
     };
   };
 }
+
+export { BaseMessage, HumanMessage } from "langchain/schema";

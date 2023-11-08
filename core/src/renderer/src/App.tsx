@@ -388,7 +388,7 @@ function App(): JSX.Element {
                   ? undefined
                   : () => {
                       trpcClient.action.mutate({
-                        track: "lightrail",
+                        track: "system",
                         name: "Reset Conversation",
                         prompt: null,
                         args: {},

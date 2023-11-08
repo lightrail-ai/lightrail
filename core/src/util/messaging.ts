@@ -130,10 +130,14 @@ export class LightrailMessagingHub {
 
     if (broadcast) {
       for (const t of Object.values(this._tracks)) {
-        const handler = t.handlers?.[this._env]?.[track + ":" + messageName];
+        const handlerName = messageName.includes(":")
+          ? messageName
+          : `${track}:${messageName}}`;
+        const handler = t.handlers?.[this._env]?.[handlerName];
+
         if (handler) {
           this._logger.silly(
-            `Found handler for message '${track}:${messageName}' in track '${t.name}, executing...`
+            `Found handler for message '${handlerName}' in track '${t.name}', executing...`
           );
           const lightrailHandle = tracksManager.getProcessHandle(t.name);
           if (

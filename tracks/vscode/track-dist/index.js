@@ -2858,7 +2858,8 @@ var vscode_default = {
           "\n\nOutput your response as a single code block. Your response will be inserted into an existing file by the user. " + (currentFile ? " It will be inserted into " + currentFile : "") + (currentFile && range ? " at line " + range.start.line : "") + (currentFile ? ". " : "") + "Do not leave comments or symbols that indicate code before or after the code you generate -- just output the requested code. Do not output any explanation or context outside of the code block. "
         );
         const response = await handle.llm.chat.converse(
-          [new HumanMessage(prompt.toString())],
+          // @ts-ignore
+          [new HumanMessage(prompt.toMessage())],
           {
             callbacks: [
               {
@@ -2909,7 +2910,8 @@ var vscode_default = {
           "\n\nOutput your response as a series of file paths (in backticks, i.e. as inline code) followed by code blocks of the updated file contents you'd like to propose, like this: \n\n`/path/to/file1.js`\n```js\nconst x = 1;\n```\n\n`/path/to/file2.py`\n```python\nprint(\"Hello World\")\n```\n\nDon't output any other content in your response outside of the code blocks. Any explanation should be provided as comments only. If editing a section of a file that was provided with line-numbers, please output the line-numbers in the file path, like this: `/path/to/file1.js:1-3`. The file might be provided to you as a series of chunks in your context. If so, only output chunks that correspond directly to chunks in the context. Do not create your own chunks or combine chunks. Output as few chunks as possible to completely fulfill the request. Only output a codeblock/chunk if it contains changes. To propose creation of a new file, just output the (proposed) file path and contents as above. Do not ever skip any lines that belong in a given code block (i.e. do not use ellipses (...) or comments of any kind to indicate omitted code). "
         );
         const response = await handle.llm.chat.converse(
-          [new HumanMessage(prompt.toString())],
+          // @ts-ignore
+          [new HumanMessage(prompt.toMessage())],
           {
             callbacks: [
               {

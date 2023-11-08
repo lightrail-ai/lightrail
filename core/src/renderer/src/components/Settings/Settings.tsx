@@ -10,6 +10,7 @@ import { trpcClient } from "@renderer/util/trpc-client";
 import SelectInput from "../ui-elements/SelectInput/SelectInput";
 
 const models = ["gpt-3.5-turbo-16k", "gpt-4", "gpt-3.5-turbo"];
+const own_key_models = [...models, "gpt-4-vision-preview"];
 
 export interface SettingsProps {}
 
@@ -44,7 +45,7 @@ function Settings({}: SettingsProps) {
           </div>
           <div className="px-6 py-2">
             <SelectInput
-              options={models}
+              options={settings.provider === "openai" ? own_key_models : models}
               value={settings.model}
               onChange={(newVal) =>
                 setSettings({

@@ -246,7 +246,8 @@ export default <LightrailTrack>{
         }
 
         const response = await mainHandle.llm.chat.converse(
-          [new HumanMessage(prompt.toString())],
+          // @ts-ignore
+          [new HumanMessage(prompt.toMessage())],
           {
             callbacks: [
               {

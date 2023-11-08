@@ -1,6 +1,6 @@
 {
   "name": "lightrail-sdk",
-  "version": "0.0.14",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/lightrail-sdk.umd.cjs",
   "module": "./dist/lightrail-sdk.js",

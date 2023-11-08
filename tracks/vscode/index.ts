@@ -199,7 +199,8 @@ export default {
         );
 
         const response = await handle.llm.chat.converse(
-          [new HumanMessage(prompt.toString())],
+          // @ts-ignore
+          [new HumanMessage(prompt.toMessage())],
           {
             callbacks: [
               {
@@ -263,7 +264,8 @@ export default {
         );
 
         const response = await handle.llm.chat.converse(
-          [new HumanMessage(prompt.toString())],
+          // @ts-ignore
+          [new HumanMessage(prompt.toMessage())],
           {
             callbacks: [
               {

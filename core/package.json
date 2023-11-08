@@ -50,7 +50,7 @@
     "jsdom": "^22.1.0",
     "json5": "^2.2.3",
     "langchain": "^0.0.154",
-    "lightrail-sdk": "^0.0.14",
+    "lightrail-sdk": "^0.0.18",
     "linkedom": "^0.16.1",
     "marked": "^7.0.5",
     "myers-diff": "^2.1.0",

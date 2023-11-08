@@ -1,6 +1,5 @@
-import { LightrailTrack } from "lightrail-sdk";
+import { LightrailTrack, HumanMessage } from "lightrail-sdk";
 import parseDatabaseUrl from "./parse-database-url";
-import { HumanMessage } from "langchain/schema";
 import { marked } from "marked";
 
 declare function require(module: string): any;
@@ -175,7 +174,8 @@ export default {
         );
 
         const response = await handle.llm.chat.converse(
-          [new HumanMessage(userPrompt.toString())],
+          // @ts-ignore
+          [new HumanMessage(userPrompt.toMessage())],
           {
             callbacks: [
               {

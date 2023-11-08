@@ -2,6 +2,7 @@ import {
   LightrailMainProcessHandle,
   LightrailTrack,
   Prompt,
+  HumanMessage,
 } from "lightrail-sdk";
 import { timeout } from "./util";
 import {
@@ -11,7 +12,6 @@ import {
   renderJupyterNotebookOutputs,
 } from "./notebook-util";
 import { ICell, INotebookContent } from "@jupyterlab/nbformat";
-import { HumanMessage } from "langchain/schema";
 
 declare function require(module: string): any;
 
@@ -250,7 +250,8 @@ async function editNotebookWithLLM(
   );
 
   const response = await handle.llm.chat.converse(
-    [new HumanMessage(prompt.toString())],
+    // @ts-ignore
+    [new HumanMessage(prompt.toMessage())],
     {
       callbacks: [
         {

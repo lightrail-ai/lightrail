@@ -36,7 +36,12 @@ const t = initTRPC.create({
 const providersZodType = z.enum(["lightrail", "openai"]);
 const SettingsSchema = z.object({
   provider: providersZodType,
-  model: z.enum(["gpt-3.5-turbo-16k", "gpt-4", "gpt-3.5-turbo"]),
+  model: z.enum([
+    "gpt-3.5-turbo-16k",
+    "gpt-4",
+    "gpt-3.5-turbo",
+    "gpt-4-vision-preview",
+  ]),
   apiKeys: z.record(providersZodType, z.string()),
 });
 
