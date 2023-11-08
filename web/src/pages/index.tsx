@@ -35,7 +35,7 @@ export default function Home() {
               >
                 <span className="text-sm font-extrabold uppercase ">guide</span>
               </a>
-              <a href="https://discord.gg/57bNyxgb7g">
+              <a href="https://discord.gg/Khq4cKQBwz">
                 <FontAwesomeIcon icon={faDiscord} size={"2x"} />
               </a>
               <a href="https://github.com/lightrail-ai/lightrail">
