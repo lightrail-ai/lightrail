@@ -1,6 +1,6 @@
 {
   "name": "lightrail-core",
-  "version": "0.2.8",
+  "version": "0.3.0",
   "description": "A universal AI command bar for developers",
   "main": "./out/main/index.js",
   "author": "lightrail.ai",
