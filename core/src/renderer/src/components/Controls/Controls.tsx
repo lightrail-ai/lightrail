@@ -6,6 +6,7 @@ import DataTableControl from "./DataTableControl";
 import ClientStatusControl from "./ClientStatusControl";
 import Spinner from "../Spinner/Spinner";
 import LoadingControl from "./LoadingControl";
+import classNames from "classnames";
 
 interface ControlsProps {
   controls: LightrailControl[];
@@ -28,7 +29,16 @@ function Controls({ controls }: ControlsProps) {
             <div className="pb-4 pt-2 text-sm">{control.label}</div>
           )}
           {(control.type === "button-group" || control.type === "buttons") && (
-            <div className="flex flex-row gap-4">
+            <div
+              className={classNames("flex gap-4", {
+                "flex-col":
+                  control.buttons.length > 4 ||
+                  control.buttons.some((b) => b.label.length > 24),
+                "flex-row":
+                  control.buttons.length <= 4 &&
+                  control.buttons.every((b) => b.label.length <= 24),
+              })}
+            >
               {control.buttons.map((button, buttonIndex) => (
                 <Button
                   primary={button.color === "primary"}
