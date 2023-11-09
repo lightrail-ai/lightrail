@@ -63,6 +63,12 @@ Some common issues, and how to fix them:
 
 Any other issues? Let me know [on Discord](https://discord.gg/WPCCe7jZuS) or [make an issue](https://github.com/lightrail-ai/lightrail/issues) and I'll address it ASAP!
 
+### Reporting Bugs
+
+When [creating an issue](https://github.com/lightrail-ai/lightrail/issues) or describing a but on Discord, please include the contents of the Lightrail log file, available at the following location: 
+* **on Linux:** ~/.config/lightrail-core/logs/main.log
+* **on macOS:** ~/Library/Logs/lightrail-core/main.log
+
 ## Writing Tracks & Clients
 
 The `lightrail-sdk` npm package makes it easy to create additional tracks and extend Lightrail's functionality, or to make Clients that integrate Lightrail with other platforms.
