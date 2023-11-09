@@ -66,8 +66,8 @@ Any other issues? Let me know [on Discord](https://discord.gg/WPCCe7jZuS) or [ma
 ### Reporting Bugs
 
 When [creating an issue](https://github.com/lightrail-ai/lightrail/issues) or describing a but on Discord, please include the contents of the Lightrail log file, available at the following location: 
-* **on Linux:** ~/.config/lightrail-core/logs/main.log
-* **on macOS:** ~/Library/Logs/lightrail-core/main.log
+* **on Linux:** `~/.config/lightrail-core/logs/main.log`
+* **on macOS:** `~/Library/Logs/lightrail-core/main.log`
 
 ## Writing Tracks & Clients
 
