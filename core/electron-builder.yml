@@ -27,7 +27,9 @@ mac:
         - x64
         - arm64
 dmg:
-  artifactName: ${name}-${arch}.${ext}
+  artifactName: ${name}-osx-${arch}.${ext}
+zip:
+  artifactName: ${name}-osx-${arch}.${ext}
 linux:
   artifactName: ${name}.${ext}
   target:
