@@ -35,8 +35,8 @@
 
 To get started, just download the appropriate Lightrail package for your operating system:
 
-- OS X (Apple Silicon / M1 / M2): [lightrail-core-arm64.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-arm64.dmg)
-- OS X (Intel): [lightrail-core-x64.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-x64.dmg)
+- OS X (Apple Silicon / M1 / M2): [lightrail-core-arm64.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-osx-arm64.dmg)
+- OS X (Intel): [lightrail-core-x64.dmg](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-osx-x64.dmg)
 - Ubuntu: [lightrail-core.deb](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.deb)
 - Fedora: [lightrail-core.rpm](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.rpm)
 
