@@ -14,7 +14,7 @@
 
 <br />
 
-[**Download for OS X** (Apple Silicon)](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-arm64.dmg) | [**Download for OS X** (Intel)](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-x64.dmg) | [**Download for Ubuntu**](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.deb) | [**Download for Fedora**](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.rpm)
+[**Download for OS X** (Apple Silicon)](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-osx-arm64.dmg) | [**Download for OS X** (Intel)](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core-osx-x64.dmg) | [**Download for Ubuntu**](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.deb) | [**Download for Fedora**](https://github.com/lightrail-ai/lightrail/releases/latest/download/lightrail-core.rpm)
 
 [**Demo Video**](https://vimeo.com/861792302?share=copy) | [**Documentation**](https://docs.lightrail.ai)
 
