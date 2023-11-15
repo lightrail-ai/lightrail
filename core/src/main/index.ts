@@ -42,10 +42,10 @@ const toggleWindow = debounce(
       createWindow();
     } else if (mainWindow.isVisible()) {
       mainWindow.hide();
-      log.silly("Window hidden");
+      log.info("Window hidden");
     } else {
       mainWindow.show();
-      log.silly("Window shown");
+      log.info("Window shown");
     }
   },
   {
@@ -72,7 +72,7 @@ function postConfigure(window: BrowserWindow) {
 }
 
 function createWindow(): void {
-  log.silly("Creating window");
+  log.info("Creating window");
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 600,
@@ -98,22 +98,22 @@ function createWindow(): void {
   mainTracksManager.processHandleFactory = (track) =>
     new MainHandle(track, mainWindow);
 
-  log.silly("Creating IPC handler");
+  log.info("Creating IPC handler");
   createIPCHandler({
     router: getRouter(mainWindow),
     windows: [mainWindow],
   });
 
   mainWindow.on("ready-to-show", () => {
-    log.silly("Window ready to show");
+    log.info("Window ready to show");
     mainWindow.show();
-    log.silly("Window shown");
+    log.info("Window shown");
   });
 
   if (!is.dev) {
     mainWindow.on("blur", () => {
       mainWindow.hide();
-      log.silly("Window hidden");
+      log.info("Window hidden");
     });
   }
 
@@ -121,10 +121,10 @@ function createWindow(): void {
   postConfigure(mainWindow);
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    log.silly("Loading renderer from " + process.env["ELECTRON_RENDERER_URL"]);
+    log.info("Loading renderer from " + process.env["ELECTRON_RENDERER_URL"]);
     mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
   } else {
-    log.silly(
+    log.info(
       "Loading renderer from " + join(__dirname, "../renderer/index.html")
     );
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
@@ -135,11 +135,11 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  log.silly("App ready");
-  log.silly("Registering global shortcut");
+  log.info("App ready");
+  log.info("Registering global shortcut");
   globalShortcut.register("CommandOrControl+Shift+Space", toggleWindow);
   // Set app user model id for windows
-  log.silly("Setting app user model id");
+  log.info("Setting app user model id");
   electronApp.setAppUserModelId("com.lightrail");
 
   // Default open or close DevTools by F12 in development

@@ -1,6 +1,6 @@
 {
   "name": "lightrail-core",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "A universal AI command bar for developers",
   "main": "./out/main/index.js",
   "author": "lightrail.ai",
@@ -72,6 +72,7 @@
     "socket.io": "^4.7.2",
     "sqlite": "^5.0.1",
     "sqlite3": "^5.1.6",
+    "stopword": "^2.0.8",
     "throttle-debounce": "^5.0.0",
     "turndown": "^7.1.2",
     "undici": "^5.24.0",

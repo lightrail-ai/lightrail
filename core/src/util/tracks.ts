@@ -47,7 +47,7 @@ export class TracksManager {
       );
       return;
     }
-    this._logger.silly(
+    this._logger.info(
       `Registering track with tracks manager (${this._env}): ` + track.name
     );
     this._tracks[track.name] = track;

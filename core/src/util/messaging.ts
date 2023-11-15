@@ -40,14 +40,14 @@ export class LightrailMessagingHub {
       );
       return;
     }
-    this._logger.silly(
+    this._logger.info(
       `Registering track with messaging hub (${this._env}): ` + track.name
     );
     this._tracks[track.name] = track;
   }
 
   registerClient(name: string, client: Socket) {
-    this._logger.silly(
+    this._logger.info(
       `Registering client with messaging hub (${this._env}): ` + name
     );
     this._clients[name] = client;
@@ -58,7 +58,7 @@ export class LightrailMessagingHub {
     messageName: string,
     messageBody?: any
   ): Promise<any> {
-    this._logger.silly(
+    this._logger.debug(
       `Sending message to external client (${clientName}): `,
       messageName,
       messageBody
@@ -68,13 +68,13 @@ export class LightrailMessagingHub {
         this._logger.error(`Client ${clientName} not found!`);
         resolve(undefined);
       } else {
-        this._logger.silly("Sending message " + messageName + " to client...");
+        this._logger.debug("Sending message " + messageName + " to client...");
         this._clients[clientName].emit(
           "lightrail-message",
           messageName,
           messageBody,
           (response: any) => {
-            this._logger.silly(
+            this._logger.debug(
               "Message " + messageName + " sent, received response: ",
               response
             );
@@ -92,7 +92,7 @@ export class LightrailMessagingHub {
     messageBody?: any,
     broadcast?: boolean
   ): Promise<any> {
-    this._logger.silly(
+    this._logger.debug(
       `Routing message in track '${track}': `,
       messageName,
       messageBody,
@@ -103,7 +103,7 @@ export class LightrailMessagingHub {
 
     const handler = this._tracks[track]?.handlers?.[this._env]?.[messageName];
     if (handler) {
-      this._logger.silly(
+      this._logger.debug(
         `Found handler for message '${messageName}' in track '${track}', executing...`
       );
       const lightrailHandle = tracksManager.getProcessHandle(track);
@@ -123,7 +123,7 @@ export class LightrailMessagingHub {
         this._logger.error("Invalid handle provided for message handler!");
       }
     } else {
-      this._logger.silly(
+      this._logger.debug(
         `No handler found for message '${messageName}' in track '${track}'.`
       );
     }
@@ -136,7 +136,7 @@ export class LightrailMessagingHub {
         const handler = t.handlers?.[this._env]?.[handlerName];
 
         if (handler) {
-          this._logger.silly(
+          this._logger.debug(
             `Found handler for message '${handlerName}' in track '${t.name}', executing...`
           );
           const lightrailHandle = tracksManager.getProcessHandle(t.name);

@@ -11,7 +11,7 @@ async function getWorker() {
     if (!initialized) {
       throw new Error("Failed to initialize vectorizer worker");
     } else {
-      log.silly("Initialized vectorizer worker");
+      log.info("Initialized vectorizer worker");
     }
   }
   return pool;

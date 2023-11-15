@@ -12,22 +12,22 @@ import AdmZip from "adm-zip";
 export const TRACKS_DIR = path.join(app.getPath("userData"), "tracks");
 
 export async function loadTracks() {
-  log.silly("(Re)loading tracks");
+  log.info("(Re)loading tracks");
   // Load tracks from disk
   const tracksRoot = TRACKS_DIR;
   // List tracks from tracks folder
   const trackDirs = await fs.readdir(tracksRoot);
-  log.silly("Found Tracks: " + JSON.stringify(trackDirs));
+  log.info("Found Tracks: " + JSON.stringify(trackDirs));
   let pathsForRenderer: string[] = [];
   for (const trackDir of trackDirs) {
-    log.silly("Loading track from dir: " + trackDir);
+    log.info("Loading track from dir: " + trackDir);
     const trackDirPath = path.join(tracksRoot, trackDir);
     const packageJson = JSON.parse(
       await fs.readFile(path.join(trackDirPath, "package.json"), "utf-8")
     );
     const mainPath = path.resolve(trackDirPath, packageJson.main);
     const browserPath = path.resolve(trackDirPath, packageJson.browser);
-    log.silly("Loading track from path: " + mainPath);
+    log.info("Loading track from path: " + mainPath);
     pathsForRenderer.push(
       "lightrailtrack://" + path.relative(tracksRoot, browserPath)
     );
@@ -46,12 +46,12 @@ export async function loadTracks() {
     mainMessagingHub.registerTrack(track);
     mainTracksManager.registerTrack(track);
   }
-  log.silly("Tracks loaded");
+  log.info("Tracks loaded");
   return pathsForRenderer;
 }
 
 export async function installTrack(zipPath: string) {
-  log.silly("Installing track(s) from url: " + zipPath);
+  log.info("Installing track(s) from url: " + zipPath);
   const resp = await fetch(zipPath);
   const ab = await resp.arrayBuffer();
   const zip = new AdmZip(Buffer.from(ab));

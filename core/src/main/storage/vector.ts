@@ -37,9 +37,12 @@ export class LightrailVectorStore {
 
   async _getClient() {
     if (!this._client) {
-      const options = new EmbeddedOptions();
+      const options = new EmbeddedOptions({
+        version: "1.22.3",
+      });
       this._client = weaviate.client(options);
       await this._client?.embedded.start();
+      log.info(await this._client?.misc.metaGetter().do());
     }
     return this._client!;
   }
@@ -96,7 +99,7 @@ export class LightrailVectorStore {
       });
     }
     const res = await batcher.do();
-    log.silly("Finished weaviate batch insert");
+    log.info("Finished weaviate batch insert");
     res.forEach((r) => r.result?.errors && log.error(r.result?.errors));
   }
 

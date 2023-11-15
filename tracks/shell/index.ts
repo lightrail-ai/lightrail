@@ -57,7 +57,7 @@ export default {
       "run-script": async (handle, script) => {
         const path = await handle.fs.writeTempFile(script, "script.sh");
         const { exec } = require("child_process");
-        handle.logger.silly("Running Shell Script...");
+        handle.logger.info("Running Shell Script...");
         exec(`bash ${path}`, (error, stdout, stderr) => {
           if (error) {
             console.log(`exec error: ${error}`);

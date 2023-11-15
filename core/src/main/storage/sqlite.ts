@@ -11,7 +11,7 @@ export async function openDb() {
   });
 }
 (async () => {
-  log.silly("Initializing SQLite DB...");
+  log.info("Initializing SQLite DB...");
   const db = await openDb();
   db.run(`PRAGMA foreign_keys = ON;`);
   // Create LightrailKBSource Table
@@ -88,5 +88,5 @@ export async function openDb() {
       PRIMARY KEY(itemId, tagId)
     )
   `);
-  log.silly("Done initializing SQLite DB.");
+  log.info("Done initializing SQLite DB.");
 })();

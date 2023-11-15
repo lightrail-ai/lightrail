@@ -58,44 +58,44 @@ let loadingStatus = {
 export const getRouter = (window: BrowserWindow) =>
   t.router({
     version: t.procedure.query(() => {
-      log.silly("tRPC Call: version");
+      log.info("tRPC Call: version");
       return app.getVersion();
     }),
     size: t.router({
       set: t.procedure
         .input(z.object({ height: z.number(), width: z.number() }))
         .mutation((req) => {
-          log.silly("tRPC Call: size: " + JSON.stringify(req.input));
+          log.debug("tRPC Call: size: " + JSON.stringify(req.input));
           const { input } = req;
           window.setSize(input.width, input.height);
           window.center();
         }),
       get: t.procedure.query(() => {
-        log.silly("tRPC Call: size");
+        log.info("tRPC Call: size");
         const { width, height } = window.getBounds();
         return { width, height };
       }),
     }),
     clipboard: t.procedure.input(z.string()).mutation((req) => {
-      log.silly("tRPC Call: clipboard");
+      log.info("tRPC Call: clipboard");
       const { input } = req;
       clipboard.writeText(input);
     }),
 
     screenSize: t.procedure.query(() => {
-      log.silly("tRPC Call: screenSize");
+      log.debug("tRPC Call: screenSize");
       const { screen } = require("electron");
       const screenSize = screen.getPrimaryDisplay().workAreaSize;
-      log.silly("Screen size: " + JSON.stringify(screenSize));
+      log.debug("Screen size: " + JSON.stringify(screenSize));
       return screenSize;
     }),
 
     setup: t.procedure.mutation(async () => {
-      log.silly("tRPC Call: setup");
+      log.info("tRPC Call: setup");
       // Initialize settings
       const settings = jsonStorage.getSync("settings") as SettingsObject;
       if (!settings || !settings.provider || !settings.model) {
-        log.silly("No valid settings found, (re)initializing settings");
+        log.info("No valid settings found, (re)initializing settings");
         await promisify(jsonStorage.set)("settings", {
           provider: "lightrail",
           model: "gpt-4",
@@ -109,12 +109,12 @@ export const getRouter = (window: BrowserWindow) =>
       const trackDirs = await fs.readdir(TRACKS_DIR);
       const hasOnboarded = await isComplete("onboarding");
       if (trackDirs.length === 0 && !hasOnboarded) {
-        log.silly("No tracks found, running onboarding flow");
+        log.info("No tracks found, running onboarding flow");
         return {
           onboard: true,
         };
       } else {
-        log.silly("Tracks found, not running onboarding flow");
+        log.info("Tracks found, not running onboarding flow");
         return {
           onboard: false,
         };
@@ -123,23 +123,23 @@ export const getRouter = (window: BrowserWindow) =>
 
     onboarding: t.router({
       complete: t.procedure.mutation(() => {
-        log.silly("tRPC Call: onboarding.complete");
+        log.info("tRPC Call: onboarding.complete");
         return markComplete("onboarding");
       }),
     }),
 
     tracks: t.router({
       location: t.procedure.query(() => {
-        log.silly("tRPC Call: tracks.location");
+        log.info("tRPC Call: tracks.location");
         return TRACKS_DIR;
       }),
       load: t.procedure.mutation(async () => {
-        log.silly("tRPC Call: tracks.load");
+        log.info("tRPC Call: tracks.load");
         const paths = await loadTracks();
         return paths;
       }),
       install: t.procedure.input(z.string()).mutation(async (req) => {
-        log.silly("tRPC Call: tracks.install");
+        log.info("tRPC Call: tracks.install");
         await installTrack(req.input);
         const paths = await loadTracks();
         return paths;
@@ -154,7 +154,7 @@ export const getRouter = (window: BrowserWindow) =>
     }),
 
     clients: t.procedure.query(() => {
-      log.silly("tRPC Call: clients");
+      log.info("tRPC Call: clients");
       const clients = {};
       for (const [name, socket] of Object.entries(mainMessagingHub._clients)) {
         clients[name] = socket.connected;
@@ -163,9 +163,9 @@ export const getRouter = (window: BrowserWindow) =>
     }),
 
     startSocketServer: t.procedure.mutation(() => {
-      log.silly("tRPC Call: startSocketServer");
+      log.info("tRPC Call: startSocketServer");
       if (!loadingStatus.socketServer) {
-        log.silly("Attempting to start socket server");
+        log.info("Attempting to start socket server");
         loadingStatus.socketServer = true;
         startWSServer();
       }
@@ -174,7 +174,7 @@ export const getRouter = (window: BrowserWindow) =>
 
     notices: t.router({
       pop: t.procedure.mutation(async () => {
-        log.silly("tRPC Call: notices.pop");
+        log.info("tRPC Call: notices.pop");
         const notice = noticeQueue.shift();
         if (notice) {
           await markComplete(notice.id);
@@ -185,7 +185,7 @@ export const getRouter = (window: BrowserWindow) =>
 
     kb: t.router({
       reset: t.procedure.mutation(async () => {
-        log.silly("tRPC Call: kb.reset");
+        log.info("tRPC Call: kb.reset");
 
         const sqliteDb = await openDb();
         await sqliteDb.exec("DELETE FROM KBSource");
@@ -217,9 +217,9 @@ export const getRouter = (window: BrowserWindow) =>
         })
       )
       .mutation((req) => {
-        log.silly("tRPC Call: clientEvent");
+        log.info("tRPC Call: clientEvent");
         const { input } = req;
-        log.silly(
+        log.info(
           "Client Event: ",
           input.track,
           input.name,
@@ -247,8 +247,8 @@ export const getRouter = (window: BrowserWindow) =>
       .mutation(async (req) => {
         const { input } = req;
         const { track, name, prompt, args } = input;
-        log.silly("tRPC Call: action");
-        log.silly("Action Name: " + name);
+        log.info("tRPC Call: action");
+        log.info("Action Name: " + name);
 
         const processHandle = mainTracksManager.getProcessHandle(track);
         const handler = mainTracksManager.getActionHandle(track, name)?.handler;
@@ -270,12 +270,12 @@ export const getRouter = (window: BrowserWindow) =>
       }),
     settings: t.router({
       get: t.procedure.query(() => {
-        log.silly("tRPC Call: settings.get");
+        log.info("tRPC Call: settings.get");
         const settings = jsonStorage.getSync("settings") as SettingsObject;
         return settings;
       }),
       set: t.procedure.input(SettingsSchema).mutation(async (req) => {
-        log.silly("tRPC Call: settings.set");
+        log.info("tRPC Call: settings.set");
         const { input } = req;
         await promisify(jsonStorage.set)("settings", input);
         chatManager.model = LightrailChatLLMInterface.initializeModel();
@@ -284,20 +284,20 @@ export const getRouter = (window: BrowserWindow) =>
 
     history: t.router({
       get: t.procedure.query(() => {
-        log.silly("tRPC Call: history.get");
+        log.info("tRPC Call: history.get");
         const history = jsonStorage.getSync("history") as HistoryObject;
-        log.silly("History length: " + history.prompts?.length);
+        log.info("History length: " + history.prompts?.length);
         return history.prompts ?? [];
       }),
       set: t.procedure.input(z.array(z.any())).mutation((req) => {
-        log.silly("tRPC Call: history.set");
+        log.info("tRPC Call: history.set");
         const { input } = req;
         return promisify(jsonStorage.set)("history", {
           prompts: input,
         });
       }),
       append: t.procedure.input(z.any()).mutation((req) => {
-        log.silly("tRPC Call: history.append");
+        log.info("tRPC Call: history.append");
         const { input } = req;
         const history = jsonStorage.getSync("history") as HistoryObject;
 
@@ -317,7 +317,7 @@ export const getRouter = (window: BrowserWindow) =>
           })
         )
         .query(async (req) => {
-          log.silly("tRPC Call: argHistory.get");
+          log.info("tRPC Call: argHistory.get");
           const { track, path, arg } = req.input;
           const trackKVStore = new LightrailKVStore(
             mainTracksManager.getTrack(track)!
@@ -341,7 +341,7 @@ export const getRouter = (window: BrowserWindow) =>
           })
         )
         .mutation(async (req) => {
-          log.silly("tRPC Call: argHistory.append", req.input);
+          log.info("tRPC Call: argHistory.append", req.input);
           const { track, path, arg, option } = req.input;
 
           const trackKVStore = new LightrailKVStore(
@@ -375,7 +375,7 @@ export const getRouter = (window: BrowserWindow) =>
         })
       )
       .query(async (req) => {
-        log.silly("tRPC Call: handlers");
+        log.info("tRPC Call: handlers");
         const { track, token, action, arg: argName, input } = req.input;
         let handle: TokenHandle | ActionHandle | undefined;
         if (token) {
@@ -397,7 +397,7 @@ export const getRouter = (window: BrowserWindow) =>
 
     files: t.router({
       list: t.procedure.input(z.string()).query(async (req) => {
-        log.silly("tRPC Call: files.list");
+        log.info("tRPC Call: files.list");
         const { input } = req;
         const canonicalPath = input.replace(/^~/, os.homedir());
 

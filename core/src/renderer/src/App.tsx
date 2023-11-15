@@ -67,7 +67,7 @@ function App(): JSX.Element {
         height: Math.ceil(node.getBoundingClientRect().height),
         width: Math.ceil(node.getBoundingClientRect().width),
       };
-      log.silly("Main Div Resized: ", newDimensions);
+      log.debug("Main Div Resized: ", newDimensions);
       if (newDimensions.height > 0 && newDimensions.width > 0) {
         trpcClient.size.set.mutate(newDimensions);
       }
@@ -171,8 +171,8 @@ function App(): JSX.Element {
 
     window.electronIpc.onLightrailMessage(
       (_event, track, name, body, broadcast) => {
-        log.silly(
-          "Received event: ",
+        log.debug(
+          "Received message: ",
           track,
           name,
           body,
@@ -188,20 +188,20 @@ function App(): JSX.Element {
       }
     );
     (async () => {
-      log.silly("Running setup routine");
+      log.info("Running setup routine");
       const setupStatus = await trpcClient.setup.mutate();
       if (setupStatus.onboard) {
-        log.silly("Onboarding...");
+        log.info("Onboarding...");
         processOnboardingScript(mainOnboardingScript);
       }
-      log.silly("Sending event to load tracks on main process...");
+      log.info("Sending event to load tracks on main process...");
       const trackPaths = await trpcClient.tracks.load.mutate();
-      log.silly("Received track listing: ", trackPaths);
+      log.info("Received track listing: ", trackPaths);
       await loadTracks(trackPaths);
-      log.silly("Sending event to start socket server on main process...");
+      log.info("Sending event to start socket server on main process...");
       await trpcClient.startSocketServer.mutate();
       const { height, width } = await trpcClient.screenSize.query();
-      log.silly("Restoring history...");
+      log.info("Restoring history...");
       setPromptHistory(await trpcClient.history.get.query());
       setMaxHeight(height - 100);
       setMaxWidth(width - 100);
@@ -330,7 +330,7 @@ function App(): JSX.Element {
     args: ArgsValues | undefined
   ) {
     setError(null);
-    log.silly("Executing action: ", action.name);
+    log.info("Executing action: ", action.name);
     if (!action.name) {
       throw new Error("Cannot execute action without a name");
     }

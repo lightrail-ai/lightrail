@@ -38,7 +38,7 @@ interface Notice {
 export let noticeQueue: Notice[] = [];
 
 export async function fetchUpdates(window: BrowserWindow) {
-  log.silly("Checking for lightrail server updates...");
+  log.info("Checking for lightrail server updates...");
   try {
     const mid = await getMID();
     const res = await fetch(
@@ -52,18 +52,21 @@ export async function fetchUpdates(window: BrowserWindow) {
     }
     if (notices && notices.length > 0) {
       noticeQueue = [];
-      log.silly("Notices received from lightrail server.");
+      log.info("Notices received from lightrail server.");
       for (const notice of notices) {
         const complete = await isComplete(notice.id);
         if (!complete) {
-          log.silly("Adding notice to queue: " + notice.id);
+          log.info("Adding notice to queue: " + notice.id);
           noticeQueue.push(notice);
         } else {
-          log.silly("Notice already complete: " + notice.id);
+          log.info("Notice already complete: " + notice.id);
         }
       }
       window.webContents.send("new-notice");
     }
+    log.info(
+      "Finished checking for updates from lightrail server successfully."
+    );
   } catch (e) {
     log.error("Failed to check for updates from lightrail server: " + e);
   }

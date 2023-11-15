@@ -66,14 +66,17 @@ export class LightrailChatLLMInterface {
   }
 
   reset() {
-    log.silly("Resetting current chat model history...");
+    log.info("Resetting current chat model history...");
     this._history = [];
   }
   async converse(messages, options) {
     const settings = jsonStorage.getSync("settings") as SettingsObject;
     const model = settings?.model ?? "gpt-4";
 
-    log.silly("Sending messages to current chat model (converse): ", messages);
+    log.info(
+      `Sending ${messages.length} message(s) to current chat model (${model}) (converse). Content: `
+    );
+    messages.forEach((m) => log.info(m.content));
     this._history.push(...messages);
     let requestMessages = [...this._history];
     while (
@@ -86,7 +89,8 @@ export class LightrailChatLLMInterface {
     }
     const response = await this.model.call(requestMessages, options);
     this._history.push(response);
-    log.silly("Response received from current chat model: ", response);
+    log.info("Response received from current chat model. Content: ");
+    log.info(`'${response.content}'`);
     return response;
   }
 }
@@ -115,18 +119,18 @@ export class MainHandle implements LightrailMainProcessHandle {
 
   fs: LightrailFS = {
     async writeTempFile(data, originalPath) {
-      log.silly("Start writing temp file...");
+      log.info("Start writing temp file...");
       let ext = "";
       if (originalPath) {
-        log.silly("Original path provided, extracting extension...");
+        log.info("Original path provided, extracting extension...");
         ext = path.extname(originalPath);
       }
       const name = Math.random().toString(36).substring(7) + ext;
       const filePath = path.join(app.getPath("temp"), name);
-      log.silly("File path generated: " + filePath);
-      log.silly("Writing to file...");
+      log.info("File path generated: " + filePath);
+      log.info("Writing to file...");
       await writeFile(filePath, data);
-      log.silly("File written successfully. Returning file path.");
+      log.info("File written successfully. Returning file path.");
       return filePath;
     },
   };
@@ -138,7 +142,7 @@ export class MainHandle implements LightrailMainProcessHandle {
     messageBody?: any,
     broadcast?: boolean
   ): void {
-    log.silly("Sending message to renderer: ", messageName, messageBody);
+    log.debug("Sending message to renderer: ", messageName, messageBody);
     this._window.webContents.send(
       "lightrail-message",
       this._track.name,

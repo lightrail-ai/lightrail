@@ -277,9 +277,14 @@ function PromptInput({ onAction, disabled }: PromptInputProps) {
           description: "",
         }));
     } else if (arg.type === "history") {
-      const historyOptions = await trpcClient.argHistory.get.query(
-        getArgHistoryKey(arg, currentToken, currentAction, kind)!
-      );
+      const historyKey = getArgHistoryKey(
+        arg,
+        currentToken,
+        currentAction,
+        kind
+      )!;
+
+      const historyOptions = await trpcClient.argHistory.get.query(historyKey);
 
       return [
         ...(argFilter.length > 0
@@ -293,7 +298,7 @@ function PromptInput({ onAction, disabled }: PromptInputProps) {
           : []),
         ...historyOptions.filter(
           (option) =>
-            argFilter.length > 0 && option.name.trim() !== argFilter.trim()
+            option.name.length > 0 && option.name.trim() !== argFilter.trim()
         ),
       ].map((option) => ({
         ...option,

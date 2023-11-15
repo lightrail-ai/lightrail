@@ -14,6 +14,7 @@ import { CHUNKABLE_CODE_EXTENSIONS } from "../transforms";
 import { RecursiveUrlLoader } from "langchain/document_loaders/web/recursive_url";
 import transforms from "../transforms";
 import pdf2md from "@opendocsg/pdf2md";
+import { removeStopwords } from "stopword";
 
 export const INDEXABLE_FILE_EXTENSIONS = [
   ...CHUNKABLE_CODE_EXTENSIONS,
@@ -53,6 +54,7 @@ export class LightrailKB implements LightrailKBType {
         {
           name: "content",
           dataType: ["text"],
+          indexSearchable: true,
         },
         {
           name: "tags",
@@ -78,7 +80,7 @@ export class LightrailKB implements LightrailKBType {
       }) => void;
     }
   ) {
-    log.silly("Adding source to KB...");
+    log.info("Adding source to KB...");
     const sqliteDb = await openDb();
 
     const protocol = source.uri.split("://")[0];
@@ -107,7 +109,7 @@ export class LightrailKB implements LightrailKBType {
         "SELECT last_insert_rowid() as sourceId"
       ))!);
     } else {
-      log.silly("Source with this uri already exists, updating...");
+      log.info("Source with this uri already exists, updating...");
       sourceId = existingSource.id;
       if (source.frequency !== existingSource.frequency) {
         await sqliteDb.run("UPDATE KBSource SET frequency = ? WHERE uri = ?", [
@@ -412,7 +414,7 @@ export class LightrailKB implements LightrailKBType {
         "UPDATE KBItem SET refreshedAt = unixepoch() WHERE documentId = ?",
         [existingDoc.id]
       );
-      log.silly(
+      log.info(
         `Document at ${document.uri} is unchanged for this source, skipping...`
       );
     } else {
@@ -492,7 +494,7 @@ export class LightrailKB implements LightrailKBType {
   }
 
   async addItems(items: LightrailKBItem[]) {
-    log.silly(`Add a batch of ${items.length} items to KB...`);
+    log.info(`Add a batch of ${items.length} items to KB...`);
 
     await this._setup();
     const sqliteDb = await openDb();
@@ -503,7 +505,7 @@ export class LightrailKB implements LightrailKBType {
 
     const sortedItemIds: number[] = [];
 
-    log.silly("Inserting items into SQLite database");
+    log.info("Inserting items into SQLite database");
     for (const item of sortedItems) {
       // Insert the item into the 'KBItem' table
       await sqliteDb.run(
@@ -543,8 +545,8 @@ export class LightrailKB implements LightrailKBType {
         );
       }
     }
-    log.silly("Done inserting items into SQLite database");
-    log.silly("Vectorizing items");
+    log.info("Done inserting items into SQLite database");
+    log.info("Vectorizing items");
 
     const vectorizer = await this._getVectorizer();
     const vectors: any[] = [];
@@ -556,8 +558,8 @@ export class LightrailKB implements LightrailKBType {
       vectors.push(...vecs);
     }
 
-    log.silly("Done vectorizing items");
-    log.silly("Inserting items into vector store");
+    log.info("Done vectorizing items");
+    log.info("Inserting items into vector store");
 
     await this._vectorStore.insertMany(
       this._className,
@@ -570,7 +572,7 @@ export class LightrailKB implements LightrailKBType {
       vectors as number[][]
     );
 
-    log.silly("Done inserting items into vector store");
+    log.info("Done inserting items into vector store");
   }
 
   async query(query: string, tags?: string[]): Promise<LightrailKBItem[]> {
@@ -578,8 +580,16 @@ export class LightrailKB implements LightrailKBType {
     const vectorizer = await this._getVectorizer();
     const [vector] = await vectorizer.vectorize([query]);
     let getter = await this._vectorStore.query(this._className);
+    let cleanedQuery = removeStopwords(query.split(/\s+/)).join(" ");
+    log.info("Querying KB with cleaned query: ", cleanedQuery);
     getter = getter
-      .withNearVector({ vector: vector, distance: 0.2 })
+      .withHybrid({
+        query: cleanedQuery,
+        properties: ["content"],
+        alpha: 0.5,
+        vector: vector,
+      })
+      .withAutocut(1)
       .withLimit(5)
       .withFields("title type content metadata tags _additional { distance }");
     if (tags) {

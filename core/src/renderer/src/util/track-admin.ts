@@ -10,7 +10,7 @@ import KBTrack from "../../../basic-tracks/kb";
 
 export async function loadTracks(paths: string[]) {
   for (const browserPath of paths) {
-    log.silly("Loading track from path: " + browserPath);
+    log.info("Loading track from path: " + browserPath);
     const imp = await import(/* @vite-ignore */ browserPath);
     const track: LightrailTrack = imp.default;
     if (!track.name) {
@@ -20,7 +20,7 @@ export async function loadTracks(paths: string[]) {
       rendererTracksManager.registerTrack(track);
     }
   }
-  log.silly("Loading built-in tracks...");
+  log.info("Loading built-in tracks...");
   for (const track of [KBTrack, SystemTrack, ChatTrack]) {
     rendererMessagingHub.registerTrack(track);
     rendererTracksManager.registerTrack(track);
