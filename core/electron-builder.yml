@@ -21,15 +21,12 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  artifactName: ${name}-osx-${arch}.${ext}
   target:
     - target: "default"
       arch:
         - x64
         - arm64
-dmg:
-  artifactName: ${name}-osx-${arch}.${ext}
-zip:
-  artifactName: ${name}-osx-${arch}.${ext}
 linux:
   artifactName: ${name}.${ext}
   target:
